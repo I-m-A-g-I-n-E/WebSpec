@@ -22,30 +22,43 @@ When a user first connects a service:
 1. User clicks "Connect Slack"
            │
            ▼
-2. Redirect to Slack OAuth:
-   [https://slack.com/oauth/authorize](https://slack.com/oauth/authorize)
+2. Generate PKCE challenge:
+   code_verifier = random_bytes(32)  // stored in session
+   code_challenge = BASE64URL(SHA256(code_verifier))
+           │
+           ▼
+3. Redirect to Slack OAuth (v2 endpoint required for PKCE):
+   https://slack.com/oauth/v2/authorize
      ?client_id=gimme-tools
-     &redirect_uri=[https://auth.gimme.tools/callback](https://auth.gimme.tools/callback)
+     &redirect_uri=https://auth.gimme.tools/callback
      &scope=chat:write,files:read
      &state={session_id}:{nonce}
+     &code_challenge={code_challenge}
+     &code_challenge_method=S256
            │
            ▼
-3. User authorizes on Slack
+4. User authorizes on Slack
            │
            ▼
-4. Redirect back:
-   [https://auth.gimme.tools/callback](https://auth.gimme.tools/callback)
+5. Redirect back:
+   https://auth.gimme.tools/callback
      ?code=xxx
      &state={session_id}:{nonce}
            │
            ▼
-5. [auth.gimme.tools](http://auth.gimme.tools) exchanges code for tokens:
+6. auth.gimme.tools exchanges code for tokens:
+   POST https://slack.com/api/oauth.v2.access
+   Body: {
+     code: xxx,
+     code_verifier: {stored_verifier}  // PKCE verification
+   }
+   Returns:
    - access_token (for Slack API)
    - refresh_token (for renewal)
    Stored encrypted, associated with user
            │
            ▼
-6. User can now use Slack via [gimme.tools](http://gimme.tools)
+7. User can now use Slack via gimme.tools
 ```
 
 ### Key Points

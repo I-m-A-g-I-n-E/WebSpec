@@ -160,11 +160,11 @@ scopes:
   - messages:write
   - messages:delete
 
-# WebSpec way: method + path
+# WebSpec way: method + host + path
 scopes:
-  - "GET:/messages/*"
-  - "POST:/messages/*"
-  - "DELETE:/messages/*"
+  - "GET:*/messages/*"
+  - "POST:*/messages/*"
+  - "DELETE:*/messages/*"
 ```
 
 See Permission Scoping for details.

@@ -132,9 +132,9 @@ Where:
 | --- | --- |
 | POST slack.gimme.tools/messages | 0.85 |
 | POST slack.gimme.tools/files | 0.82 |
-| POST teams.microsoft.gimme.tools/messages | 0.78 |
-| POST drive.google.gimme.tools/files | 0.65 |
-| POST sheets.google.gimme.tools/spreadsheets | 0.60 |
+| POST teams.gimme.tools/messages | 0.78 |
+| POST gdrive.gimme.tools/files | 0.65 |
+| POST gsheets.gimme.tools/spreadsheets | 0.60 |
 
 ### Step 3: User Classification
 
@@ -152,18 +152,18 @@ User's keychain hints:
 | --- | --- | --- | --- | --- |
 | POST slack.gimme.tools/messages | 0.85 | CONNECTED | 1.0 | **0.85** |
 | POST slack.gimme.tools/files | 0.82 | CONNECTED | 1.0 | **0.82** |
-| POST teams.microsoft.gimme.tools/messages | 0.78 | KEYCHAIN | 0.8 | **0.62** |
-| POST drive.google.gimme.tools/files | 0.65 | CONNECTED | 1.0 | **0.65** |
-| POST sheets.google.gimme.tools/spreadsheets | 0.60 | AVAILABLE | 0.5 | **0.30** |
+| POST teams.gimme.tools/messages | 0.78 | KEYCHAIN | 0.8 | **0.62** |
+| POST gdrive.gimme.tools/files | 0.65 | CONNECTED | 1.0 | **0.65** |
+| POST gsheets.gimme.tools/spreadsheets | 0.60 | AVAILABLE | 0.5 | **0.30** |
 
 ### Step 4: Ranked Results
 
 ```
 1. ✅ POST slack.gimme.tools/messages     (0.85) - Connected
 2. ✅ POST slack.gimme.tools/files        (0.82) - Connected  
-3. ✅ POST drive.google.gimme.tools/files (0.65) - Connected
-4. 🔐 POST teams.microsoft.gimme.tools/messages (0.62) - In keychain
-5. 🔗 POST sheets.google.gimme.tools/spreadsheets (0.30) - Available
+3. ✅ POST gdrive.gimme.tools/files (0.65) - Connected
+4. 🔐 POST teams.gimme.tools/messages (0.62) - In keychain
+5. 🔗 POST gsheets.gimme.tools/spreadsheets (0.30) - Available
 ```
 
 ---
@@ -182,10 +182,10 @@ User's keychain hints:
 │    POST slack.gimme.tools/files?channel=finance       │
 │                                                       │
 │ 📁 Google Drive                      [Save]            │
-│    POST drive.google.gimme.tools/files                │
+│    POST gdrive.gimme.tools/files                      │
 │                                                       │
 │ 🔐 Microsoft Teams (in 1Password)   [Connect - FaceID] │
-│    POST teams.microsoft.gimme.tools/messages          │
+│    POST teams.gimme.tools/messages                    │
 │                                                       │
 └───────────────────────────────────────────────────────┘
 ```

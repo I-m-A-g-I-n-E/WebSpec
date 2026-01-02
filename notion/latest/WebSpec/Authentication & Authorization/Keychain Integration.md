@@ -73,7 +73,7 @@ keychain_entry:
   
 # [gimme.tools](http://gimme.tools) service registry
 service:
-  id: [slack-service.gimme.tools](http://slack-service.gimme.tools)
+  id: [slack.gimme.tools](http://slack.gimme.tools)
   canonical_domains:
     - [slack.com](http://slack.com)
     - "*.[slack.com](http://slack.com)"
@@ -153,7 +153,7 @@ user:
   connected_services:              # OAuth tokens stored
     - service: [slack.gimme.tools](http://slack.gimme.tools)
       token: {encrypted}
-      scopes: ["messages:write", "files:read"]
+      scopes: ["POST:slack.gimme.tools/messages/*", "GET:slack.gimme.tools/files/*"]
       
   keychain_hints:                  # Discovered, not yet connected
     - domain: [notion.so](http://notion.so)
@@ -179,13 +179,13 @@ user:
 ├──────────────────────────────────────────────────────────┤
 │                                                          │
 │ ✅ Slack (connected)                        [Use This]    │
-│    POST /file.slack                                      │
+│    POST slack.gimme.tools/files                          │
 │                                                          │
 │ 🔐 Discord (in 1Password)               [Connect - FaceID]│
-│    POST /file.discord                                    │
+│    POST discord.gimme.tools/files                        │
 │                                                          │
 │ 🔗 Microsoft Teams (available)          [Sign Up / Connect]│
-│    POST /file.teams                                      │
+│    POST teams.gimme.tools/files                          │
 │                                                          │
 └──────────────────────────────────────────────────────────┘
 ```

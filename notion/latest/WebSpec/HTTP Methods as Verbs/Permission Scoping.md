@@ -106,11 +106,11 @@ Token scopes:
 | Request | Check | Result |
 | --- | --- | --- |
 | `GET slack.gimme.tools/messages/123` | GET matches, path matches | ✅ Allowed |
-| `GET gmail.google.gimme.tools/messages/456` | GET matches, path matches | ✅ Allowed |
+| `GET gmail.gimme.tools/messages/456` | GET matches, path matches | ✅ Allowed |
 | `POST slack.gimme.tools/messages` | POST matches, path matches | ✅ Allowed |
-| `POST gmail.google.gimme.tools/messages` | POST matches, path doesn't match | ❌ Denied |
+| `POST gmail.gimme.tools/messages` | POST matches, path doesn't match | ❌ Denied |
 | `DELETE slack.gimme.tools/messages/123` | DELETE not in scopes | ❌ Denied |
-| `GET drive.google.gimme.tools/files/abc` | path doesn't match /messages/* | ❌ Denied |
+| `GET gdrive.gimme.tools/files/abc` | path doesn't match /messages/* | ❌ Denied |
 
 ---
 

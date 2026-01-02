@@ -21,13 +21,13 @@ Every API invents their own scope vocabulary. Parsers required.
 WebSpec permissions:
 
 ```yaml
-# Universal: METHOD:path pattern
+# WebSpec way: method + path
 scopes:
-  - "GET:/message.*"
-  - "POST:/message.*"
-  - "DELETE:/message.*"
-  - "GET:/file.*"
-  - "POST:/file.*"
+  - "GET:*/messages/*"
+  - "POST:*/messages/*"
+  - "DELETE:*/messages/*"
+  - "GET:*/files/*"
+  - "POST:*/files/*"
 ```
 
 The permission IS the method + path. No custom vocabulary. Universal across all services.
@@ -48,11 +48,11 @@ PATH_PATTERN := glob pattern with * and **
 
 | Scope | Meaning |
 | --- | --- |
-| `GET:/message.*` | Read any message type |
-| `POST:/message.slack` | Send Slack messages only |
-| `*:/file.*` | All operations on files |
-| `GET:[slack.gimme.tools/*](http://slack.gimme.tools/*)` | Read anything from Slack |
-| `DELETE:/task/LIN-*` | Delete Linear tasks only |
+| `GET:*/messages/*` | Read any message type (global) |
+| `POST:slack.gimme.tools/messages` | Send Slack messages only |
+| `*:*/files/*` | All operations on files (global) |
+| `GET:slack.gimme.tools/*` | Read anything from Slack |
+| `DELETE:linear.gimme.tools/issues/LIN-*` | Delete Linear tasks only |
 | `*:*` | Full access (dangerous) |
 
 ---
@@ -62,11 +62,11 @@ PATH_PATTERN := glob pattern with * and **
 ```json
 {
   "sub": "user-123",
-  "aud": "[slack.gimme.tools](http://slack.gimme.tools)",
+  "aud": "slack.gimme.tools",
   "scope": [
-    "GET:[slack.gimme.tools/message.*](http://slack.gimme.tools/message.*)",
-    "GET:[slack.gimme.tools/file.*](http://slack.gimme.tools/file.*)",
-    "POST:[slack.gimme.tools/message.*](http://slack.gimme.tools/message.*)"
+    "GET:slack.gimme.tools/messages/*",
+    "GET:slack.gimme.tools/files/*",
+    "POST:slack.gimme.tools/messages"
   ],
   "exp": 1702600000
 }
@@ -99,18 +99,18 @@ Six lines. Domain-agnostic. Works for any service.
 
 ```yaml
 Token scopes:
-  - "GET:/message.*"
-  - "POST:/message.slack"
+  - "GET:*/messages/*"
+  - "POST:slack.gimme.tools/messages"
 ```
 
 | Request | Check | Result |
 | --- | --- | --- |
-| `GET /message.slack/123` | GET matches, path matches | ✅ Allowed |
-| `GET /[message.email/456](http://message.email/456)` | GET matches, path matches | ✅ Allowed |
-| `POST /message.slack` | POST matches, path matches | ✅ Allowed |
-| `POST /[message.email](http://message.email)` | POST matches, path doesn't match | ❌ Denied |
-| `DELETE /message.slack/123` | DELETE not in scopes | ❌ Denied |
-| `GET /file.gdrive/abc` | path doesn't match /message.* | ❌ Denied |
+| `GET slack.gimme.tools/messages/123` | GET matches, path matches | ✅ Allowed |
+| `GET gmail.google.gimme.tools/messages/456` | GET matches, path matches | ✅ Allowed |
+| `POST slack.gimme.tools/messages` | POST matches, path matches | ✅ Allowed |
+| `POST gmail.google.gimme.tools/messages` | POST matches, path doesn't match | ❌ Denied |
+| `DELETE slack.gimme.tools/messages/123` | DELETE not in scopes | ❌ Denied |
+| `GET drive.google.gimme.tools/files/abc` | path doesn't match /messages/* | ❌ Denied |
 
 ---
 
@@ -153,10 +153,10 @@ When connecting a service, users see exactly what's being granted:
 │  Slack wants to:                                │
 ├───────────────────────────────────────────────────┤
 │                                                 │
-│  ✅ GET  /message.*    Read your messages        │
-│  ✅ POST /message.*    Send messages             │
-│  ✅ GET  /file.*       Access shared files       │
-│  ❌ DELETE /message.*  (not requested)           │
+│  ✅ GET  .../messages/*  Read your messages      │
+│  ✅ POST .../messages    Send messages           │
+│  ✅ GET  .../files/*     Access shared files     │
+│  ❌ DELETE .../messages/* (not requested)        │
 │                                                 │
 │              [Authorize]  [Deny]                │
 └───────────────────────────────────────────────────┘
@@ -177,8 +177,8 @@ scopes:
 
 # Good: requesting exactly what's needed
 scopes:
-  - "GET:/message.slack"
-  - "POST:/message.slack"
+  - "GET:slack.gimme.tools/messages/*"
+  - "POST:slack.gimme.tools/messages"
 ```
 
 Services can reject overly broad scope requests.

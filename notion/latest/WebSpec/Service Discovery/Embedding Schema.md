@@ -22,7 +22,7 @@ tool:
   # The WebSpec route
   route:
     method: POST
-    path: /message
+    path: /messages
     types: [text, html, blocks]
   
   # Semantic anchors for embedding generation
@@ -44,6 +44,8 @@ tool:
       - team communication
       - workplace messaging
       - instant messaging
+    urgency: [medium, high]
+    formality: [casual]
   
   # Pre-computed embeddings (generated at registration)
   embeddings:
@@ -220,7 +222,7 @@ tool:
     not:
       - "send email"      # Prevent confusion with email
       - "schedule message" # Different tool
-      - "send file"       # Use /file endpoint instead
+      - "send file"       # Use /files endpoint instead
 ```
 
 Negative examples create "repulsion" in the embedding space.

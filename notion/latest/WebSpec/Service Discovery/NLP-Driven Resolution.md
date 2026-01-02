@@ -39,9 +39,9 @@ Natural language requests are resolved to WebSpec routes through semantic unders
                                 │
                                 ▼
                     ┌───────────────────────┐
-                    │ 1. POST /message.slack │
-                    │ 2. POST /[message.email](http://message.email) │
-                    │ 3. POST /message.sms   │
+                    │ 1. POST slack.gimme.tools/messages
+                    │ 2. POST gmail.google.gimme.tools/messages
+                    │ 3. POST sms.twilio.gimme.tools/messages
                     └───────────┬───────────┘
                                 │
                        5. User Confirmation

@@ -53,8 +53,8 @@ tools:
   - id: "send-message"
     route:
       method: POST
-      path: /message
-      types: [text, html]
+      path: /messages
+      types: [text, html, blocks]
     
     semantics:
       canonical: "send a message via Acme"
@@ -76,7 +76,7 @@ tools:
   - id: "read-messages"
     route:
       method: GET
-      path: /message
+      path: /messages
       types: [text, html]
     
     semantics:
@@ -100,7 +100,7 @@ tools:
   - id: "delete-message"
     route:
       method: DELETE
-      path: /message/{id}
+      path: /messages/{id}
     
     semantics:
       canonical: "delete a message"
@@ -217,6 +217,10 @@ semantics:
   contexts:
     - "workplace"
     - "team communication"
+
+  # Optional: Semantic attributes for ranking
+  urgency: [low, medium, high]
+  formality: [casual, formal]
   
   # Optional: What this tool is NOT (negative examples)
   not:

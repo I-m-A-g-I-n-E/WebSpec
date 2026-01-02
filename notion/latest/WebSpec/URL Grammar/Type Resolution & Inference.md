@@ -15,13 +15,13 @@ When parts of the URL are omitted, WebSpec applies a resolution chain to infer t
 
 ## Examples by Specificity
 
-| Request | Resolution | Notes |
+| User Intent / Input | Resolved Canonical URL | Notes |
 | --- | --- | --- |
-| `POST /message.text.slack` | Fully explicit | No inference needed |
-| `POST /message.slack` | Type inferred | Default to .text |
-| `POST /message` | Provider prompted | "Via Slack, Email, or SMS?" |
-| `POST /.slack` | Object inferred | Slack's default = message |
-| `POST /` with file body | Both inferred | Analyze payload MIME type |
+| `POST slack.gimme.tools/messages` | `POST slack.gimme.tools/messages` | Fully explicit |
+| `POST /messages.slack` | `POST slack.gimme.tools/messages` | Provider suffix interpreted as resolution hint |
+| `POST /messages` | (Prompt: "Via Slack, Email, or SMS?") | Provider prompted |
+| `POST /.slack` | `POST slack.gimme.tools/messages` | Object inferred (Slack default = messages) |
+| `POST /` with file body | (Varies by MIME type) | Analyze payload MIME type |
 
 ---
 
@@ -29,15 +29,15 @@ When parts of the URL are omitted, WebSpec applies a resolution chain to infer t
 
 ### Type → Provider
 
-Certain types strongly suggest providers:
+Certain extensions or pseudo-suffixes strongly suggest providers:
 
 ```yaml
 type_hints:
-  .pdf:    [gdrive, dropbox, local]   # document providers
-  .xlsx:   [gsheets, gdrive, local]   # spreadsheet providers
-  .mp3:    [gdrive, spotify, local]   # audio providers
-  .slack:  [slack]                    # provider IS type
-  .linear: [linear]                   # provider IS type
+  .pdf:    [gdrive, dropbox, local]   # document providers (valid format suffix)
+  .xlsx:   [gsheets, gdrive, local]   # spreadsheet providers (valid format suffix)
+  .mp3:    [gdrive, spotify, local]   # audio providers (valid format suffix)
+  .slack:  [slack]                    # provider hint (pseudo-suffix)
+  .linear: [linear]                   # provider hint (pseudo-suffix)
 ```
 
 ### Provider → Object
@@ -46,11 +46,11 @@ Providers have default object types:
 
 ```yaml
 provider_defaults:
-  slack:   message     # Slack primarily handles messages
-  gdrive:  file        # Drive primarily handles files
-  linear:  task        # Linear primarily handles tasks
-  gcal:    event       # Calendar handles events
-  notion:  document    # Notion handles documents (or pages)
+  slack:   messages    # Slack primarily handles messages
+  gdrive:  files       # Drive primarily handles files
+  linear:  issues      # Linear primarily handles issues
+  gcal:    events      # Calendar handles events
+  notion:  pages       # Notion handles pages
 ```
 
 ### Payload → Object + Type
@@ -59,9 +59,9 @@ Content-Type header or file analysis:
 
 ```yaml
 payload_inference:
-  "application/pdf":     document.pdf
-  "image/png":           image.png
-  "text/plain":          document.text
+  "application/pdf":     documents.pdf
+  "image/png":           images.png
+  "text/plain":          documents.text
   "application/json":    data.json
   "text/csv":            data.csv
 ```
@@ -74,10 +74,10 @@ Users can configure preferred providers per object type:
 
 ```yaml
 user_preferences:
-  message:     slack      # Default messaging to Slack
-  file:        gdrive     # Default file storage to Drive
-  task:        linear     # Default tasks to Linear
-  document:    notion     # Default docs to Notion
+  messages:    slack      # Default messaging to Slack
+  files:       gdrive     # Default file storage to Drive
+  issues:      linear     # Default tasks to Linear
+  pages:       notion     # Default docs to Notion
 ```
 
 When inference reaches step 5, these preferences are applied.
@@ -90,20 +90,20 @@ When resolution cannot determine a unique target, the user is prompted:
 
 ```
 ┌───────────────────────────────────────────────────────┐
-│  Request: POST /message                           │
+│  Request: POST /messages                          │
 │  Body: "Hello team!"                              │
 ├───────────────────────────────────────────────────────┤
 │                                                   │
 │  Send via:                                        │
 │                                                   │
 │  ⭐ Slack (default)              [Send]           │
-│     /message.slack                                │
+│     slack.gimme.tools/messages                    │
 │                                                   │
 │  ✉️  Email                        [Send]           │
-│     /[message.email](http://message.email)                                │
+│     gmail.google.gimme.tools/messages             │
 │                                                   │
 │  📱 SMS                          [Send]           │
-│     /message.sms                                  │
+│     sms.twilio.gimme.tools/messages               │
 │                                                   │
 └───────────────────────────────────────────────────────┘
 ```
@@ -118,11 +118,11 @@ Clients can preview resolution without executing:
 
 ```bash
 # What would this resolve to?
-OPTIONS /message?body=hello
+OPTIONS /resolve?path=/messages&body=hello
 
 # Response:
-X-Gimme-Resolved: /message.text.slack
-X-Gimme-Alternatives: /[message.text.email](http://message.text.email), /message.text.sms
+X-Gimme-Resolved: https://slack.gimme.tools/messages
+X-Gimme-Alternatives: https://gmail.google.gimme.tools/messages, https://sms.twilio.gimme.tools/messages
 X-Gimme-Confidence: 0.85
 ```
 

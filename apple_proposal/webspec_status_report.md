@@ -158,13 +158,13 @@ The WebSpec specification is substantially documented with strong coverage of co
 
 ## Conceptual Frameworks Section (3 pages)
 
-### 22. Permissions as Trust Gradients (Philía Model)
+### 22. Permissions as Trust Gradients (Philia Model)
 **Status:** ✅ POPULATED
 **Summary:** Maps Unix permissions to Greek love concepts (philautia, philia, agape). Owner/Group/Other as trust circles. Read/Write/Execute as vulnerability types. Documents extended mappings, special bits as relational modifiers, pathological cases (narcissism, codependency, 777), and applications for UX, security education, and marketing.
 
 **TODOs Found:**
 - `[TODO:RESEARCH]` Investigate extension to capability-based security, RBAC, zero-trust
-- `[TODO:UX]` Prototype permission prompts with Philía language
+- `[TODO:UX]` Prototype permission prompts with Philia language
 - `[TODO:WRITING]` Develop as standalone essay
 
 ### 23. Philosophical Foundations: Permissions as Love Grammar

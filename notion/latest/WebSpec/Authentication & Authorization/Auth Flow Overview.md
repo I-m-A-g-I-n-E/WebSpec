@@ -27,8 +27,8 @@ When a user first connects a service:
    code_challenge = BASE64URL(SHA256(code_verifier))
            │
            ▼
-3. Redirect to Slack OAuth:
-   https://slack.com/oauth/authorize
+3. Redirect to Slack OAuth (v2 endpoint required for PKCE):
+   https://slack.com/oauth/v2/authorize
      ?client_id=gimme-tools
      &redirect_uri=https://auth.gimme.tools/callback
      &scope=chat:write,files:read

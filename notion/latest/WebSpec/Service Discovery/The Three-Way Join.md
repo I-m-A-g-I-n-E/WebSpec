@@ -68,7 +68,7 @@ def classify_tool(tool, user):
         return Status.CONNECTED  # weight: 1.0
     
     # In user's keychain?
-    if service.canonical_domain in user.keychain_domains:
+    if any(d in user.keychain_domains for d in service.canonical_domains):
         return Status.KEYCHAIN   # weight: 0.8
     
     # Available but not connected?
@@ -130,11 +130,11 @@ Where:
 
 | Tool | Semantic Similarity |
 | --- | --- |
-| POST /message.slack | 0.85 |
-| POST /file.slack | 0.82 |
-| POST /message.teams | 0.78 |
-| POST /file.gdrive | 0.65 |
-| POST /spreadsheet.gsheets | 0.60 |
+| POST slack.gimme.tools/messages | 0.85 |
+| POST slack.gimme.tools/files | 0.82 |
+| POST teams.microsoft.gimme.tools/messages | 0.78 |
+| POST drive.google.gimme.tools/files | 0.65 |
+| POST sheets.google.gimme.tools/spreadsheets | 0.60 |
 
 ### Step 3: User Classification
 
@@ -150,20 +150,20 @@ User's keychain hints:
 
 | Tool | Similarity | Status | Weight | Final |
 | --- | --- | --- | --- | --- |
-| POST /message.slack | 0.85 | CONNECTED | 1.0 | **0.85** |
-| POST /file.slack | 0.82 | CONNECTED | 1.0 | **0.82** |
-| POST /message.teams | 0.78 | KEYCHAIN | 0.8 | **0.62** |
-| POST /file.gdrive | 0.65 | CONNECTED | 1.0 | **0.65** |
-| POST /spreadsheet.gsheets | 0.60 | AVAILABLE | 0.5 | **0.30** |
+| POST slack.gimme.tools/messages | 0.85 | CONNECTED | 1.0 | **0.85** |
+| POST slack.gimme.tools/files | 0.82 | CONNECTED | 1.0 | **0.82** |
+| POST teams.microsoft.gimme.tools/messages | 0.78 | KEYCHAIN | 0.8 | **0.62** |
+| POST drive.google.gimme.tools/files | 0.65 | CONNECTED | 1.0 | **0.65** |
+| POST sheets.google.gimme.tools/spreadsheets | 0.60 | AVAILABLE | 0.5 | **0.30** |
 
 ### Step 4: Ranked Results
 
 ```
-1. ✅ POST /message.slack     (0.85) - Connected
-2. ✅ POST /file.slack        (0.82) - Connected  
-3. ✅ POST /file.gdrive       (0.65) - Connected
-4. 🔐 POST /message.teams    (0.62) - In keychain
-5. 🔗 POST /spreadsheet      (0.30) - Available
+1. ✅ POST slack.gimme.tools/messages     (0.85) - Connected
+2. ✅ POST slack.gimme.tools/files        (0.82) - Connected  
+3. ✅ POST drive.google.gimme.tools/files (0.65) - Connected
+4. 🔐 POST teams.microsoft.gimme.tools/messages (0.62) - In keychain
+5. 🔗 POST sheets.google.gimme.tools/spreadsheets (0.30) - Available
 ```
 
 ---
@@ -176,16 +176,16 @@ User's keychain hints:
 ├───────────────────────────────────────────────────────┤
 │                                                       │
 │ ⭐ Slack - #finance channel         [Send Message]    │
-│    POST /message.slack?channel=finance                │
+│    POST slack.gimme.tools/messages?channel=finance    │
 │                                                       │
 │ 📁 Slack - Upload file              [Upload]          │
-│    POST /file.slack?channel=finance                   │
+│    POST slack.gimme.tools/files?channel=finance       │
 │                                                       │
 │ 📁 Google Drive                      [Save]            │
-│    POST /file.gdrive                                  │
+│    POST drive.google.gimme.tools/files                │
 │                                                       │
 │ 🔐 Microsoft Teams (in 1Password)   [Connect - FaceID] │
-│    POST /message.teams                                │
+│    POST teams.microsoft.gimme.tools/messages          │
 │                                                       │
 └───────────────────────────────────────────────────────┘
 ```

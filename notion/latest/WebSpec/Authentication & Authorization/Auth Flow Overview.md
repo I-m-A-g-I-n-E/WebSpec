@@ -91,8 +91,8 @@ When a user first connects a service:
    POST [https://auth.gimme.tools/token](https://auth.gimme.tools/token)
    Cookie: session=xxx
    Body: {
-     "service": "[slack.gimme.tools](http://slack.gimme.tools)",
-     "scope": ["GET:/message.*", "POST:/message.*"]
+     "service": "slack.gimme.tools",
+     "scope": ["GET:slack.gimme.tools/messages/*", "POST:slack.gimme.tools/messages/*"]
    }
            │
            ▼
@@ -102,18 +102,16 @@ When a user first connects a service:
    - Requested scope ⊆ user's authorized scope?
            │
            ▼
-4. Returns scoped token:
+   4. Returns scoped token:
    {
      "token": "eyJ...",
      "expires_in": 3600,
-     "scope": ["GET:/message.*", "POST:/message.*"]
-   }
-           │
+     "scope": ["GET:slack.gimme.tools/messages/*", "POST:slack.gimme.tools/messages/*"]
+   }           │
            ▼
-5. Client uses token:
-   GET [https://slack.gimme.tools/message](https://slack.gimme.tools/message)
-   Authorization: Bearer eyJ...
-```
+   5. Client uses token:
+   GET https://slack.gimme.tools/messages
+   Authorization: Bearer eyJ...```
 
 ---
 

@@ -57,27 +57,27 @@ srwxr-x--- 1 _gimme_app    _gimme    0 Dec 15 10:00 app.sock
 
 ## Token Routing
 
-The `aud` claim determines which socket receives the request:
+The `aud` claim targets the shared local origin, while paths determine the socket:
 
 ```json
 {
-  "aud": "[file.local.gimme.tools](http://file.local.gimme.tools)",
-  "scope": ["GET:[file.local.gimme.tools/*](http://file.local.gimme.tools/*)"],
+  "aud": "local.gimme.tools",
+  "scope": ["GET:local.gimme.tools/files/*"],
   "device_id": "device-abc123"
 }
 ```
 
 ### Routing Table
 
-| Token Audience | Routes To |
+| Path Prefix | Routes To |
 | --- | --- |
-| [`local.gimme.tools`](http://local.gimme.tools) | `/var/run/gimme/router.sock` (legacy/fallback) |
-| [`file.local.gimme.tools`](http://file.local.gimme.tools) | `/var/run/gimme/file.sock` |
-| [`code.local.gimme.tools`](http://code.local.gimme.tools) | `/var/run/gimme/code.sock` |
-| [`shell.local.gimme.tools`](http://shell.local.gimme.tools) | `/var/run/gimme/shell.sock` |
-| [`app.local.gimme.tools`](http://app.local.gimme.tools) | `/var/run/gimme/app.sock` |
+| `/` | `/var/run/gimme/router.sock` (default) |
+| `/files` | `/var/run/gimme/file.sock` |
+| `/code` | `/var/run/gimme/code.sock` |
+| `/shell` | `/var/run/gimme/shell.sock` |
+| `/app` | `/var/run/gimme/app.sock` |
 
-The cloud-side [`local.gimme.tools`](http://local.gimme.tools) maps the subdomain prefix to the appropriate local socket.
+The router daemon maps the path prefix to the appropriate local socket.
 
 ---
 
@@ -87,14 +87,14 @@ The cloud-side [`local.gimme.tools`](http://local.gimme.tools) maps the subdomai
 Browser
    │
    ▼ HTTPS
-[file.local.gimme.tools](http://file.local.gimme.tools) (cloud)
+local.gimme.tools/files (cloud)
    │
-   │ Validates: aud="[file.local.gimme.tools](http://file.local.gimme.tools)"
+   │ Validates: aud="local.gimme.tools"
    │
    ▼ WebSocket tunnel
-[localhost:7001](http://localhost:7001) (router daemon)
+localhost:7001 (router daemon)
    │
-   │ Routes based on aud claim
+   │ Routes based on path prefix (/files)
    │
    ▼ Unix socket (filesystem permissions)
 /var/run/gimme/file.sock
@@ -105,6 +105,13 @@ gimme-file-service
    └─▶ Can only access: ~/Documents, ~/Desktop
        Cannot: execute code, access shell, see other services
 ```
+
+<aside>
+⚠️
+
+**Security Note**: Because all local tools share the `local.gimme.tools` origin, they are technically in the same browser security context (Same-Origin Policy). The isolation described here protects the *host system* via Unix primitives, but does not prevent XSS in one local tool from accessing cookies/tokens of another local tool.
+
+</aside>
 
 ---
 
@@ -236,7 +243,7 @@ unshare --user --map-root-user -- gimme-file-service
 | --- | --- |
 | Compromised file service tries to execute code | No execute permission, wrong socket |
 | Compromised code service tries to read ~/Documents | Sandbox denies, wrong user |
-| Token for file.local used against code.local | aud mismatch, rejected by router |
+| Token for local.gimme.tools used on wrong path | Router rejects if scopes don't match path |
 | Malicious website tries to connect | No tunnel access, no valid token |
 
 ### Inherited Security

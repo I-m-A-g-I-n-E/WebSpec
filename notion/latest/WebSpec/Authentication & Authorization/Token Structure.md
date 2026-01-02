@@ -30,9 +30,9 @@ WebSpec tokens are JWTs with claims designed for the subdomain-scoped permission
     "jti": "token-abc123",
     
     "scope": [
-      "GET:[slack.gimme.tools/message.*](http://slack.gimme.tools/message.*)",
-      "POST:[slack.gimme.tools/message.*](http://slack.gimme.tools/message.*)",
-      "GET:[slack.gimme.tools/file.*](http://slack.gimme.tools/file.*)"
+      "GET:slack.gimme.tools/messages/*",
+      "POST:slack.gimme.tools/messages/*",
+      "GET:slack.gimme.tools/files/*"
     ],
     
     "session_id": "sess-xyz789",
@@ -86,19 +86,19 @@ METHOD:host/path_pattern
 
 ```yaml
 # Read any message type
-"GET:[slack.gimme.tools/message.*](http://slack.gimme.tools/message.*)"
+"GET:slack.gimme.tools/messages/*"
 
 # Send only text messages  
-"POST:[slack.gimme.tools/message.text](http://slack.gimme.tools/message.text)"
+"POST:slack.gimme.tools/messages/text"
 
 # All operations on files
-"*:[gdrive.gimme.tools/file.**](http://gdrive.gimme.tools/file.**)"
+"*:drive.google.gimme.tools/files/**"
 
 # Read specific message
-"GET:[slack.gimme.tools/message/abc123](http://slack.gimme.tools/message/abc123)"
+"GET:slack.gimme.tools/messages/abc123"
 
 # Linear tasks with specific prefix
-"*:[linear.gimme.tools/task/LIN-*](http://linear.gimme.tools/task/LIN-*)"
+"*:linear.gimme.tools/issues/LIN-*"
 ```
 
 ---
@@ -171,10 +171,10 @@ Tokens for [`local.gimme.tools`](http://local.gimme.tools) include device bindin
 
 ```json
 {
-  "aud": "[local.gimme.tools](http://local.gimme.tools)",
+  "aud": "local.gimme.tools",
   "scope": [
-    "GET:[local.gimme.tools/file.*](http://local.gimme.tools/file.*)",
-    "POST:[local.gimme.tools/code.*](http://local.gimme.tools/code.*)"
+    "GET:local.gimme.tools/files/*",
+    "POST:local.gimme.tools/code/*"
   ],
   "device_id": "device-abc123",
   "device_name": "Preston's MacBook"

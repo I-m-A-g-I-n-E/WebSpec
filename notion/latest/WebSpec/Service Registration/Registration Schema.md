@@ -140,7 +140,7 @@ Content-Type: application/json
   },
   "next_steps": [
     "Add DNS TXT record for verification",
-    "Call /services/verify when ready"
+    "Call /services/{service_id}/verify when ready"
   ]
 }
 ```
@@ -148,12 +148,11 @@ Content-Type: application/json
 ### Verify Domain
 
 ```bash
-POST [https://api.gimme.tools/services/verify](https://api.gimme.tools/services/verify)
+POST https://api.gimme.tools/services/{service_id}/verify
 Authorization: Bearer {admin_token}
 
-{
-  "service_id": "acme"
-}
+# Example:
+POST https://api.gimme.tools/services/acme/verify
 ```
 
 ### Successful Verification

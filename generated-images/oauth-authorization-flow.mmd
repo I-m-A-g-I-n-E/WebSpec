@@ -1,0 +1,59 @@
+sequenceDiagram
+    autonumber
+    participant U as User
+    participant B as Browser
+    participant G as gimme.tools
+    participant SP as Service Provider<br/>(e.g. Slack)
+    participant TR as Token Registry
+
+    rect rgb(240, 248, 255)
+        Note over U,TR: Authorization Request Phase
+        U->>B: Click "Connect to Service"
+        B->>G: POST /connect/{service}
+        G->>G: Generate state parameter
+        G->>TR: Store pending auth state
+        G-->>B: 302 Redirect to OAuth URL
+        B->>SP: GET /oauth/authorize<br/>?client_id=...&redirect_uri=...&state=...
+    end
+
+    rect rgb(255, 248, 240)
+        Note over U,TR: User Authorization Phase
+        SP-->>B: Display consent screen
+        U->>B: Grant permission
+        B->>SP: Submit authorization
+        SP-->>B: 302 Redirect to callback<br/>?code=AUTH_CODE&state=...
+    end
+
+    rect rgb(240, 255, 240)
+        Note over U,TR: Token Exchange Phase
+        B->>G: GET /oauth/callback<br/>?code=AUTH_CODE&state=...
+        G->>G: Validate state parameter
+        G->>SP: POST /oauth/token<br/>{code, client_secret, redirect_uri}
+        SP-->>G: {access_token, refresh_token, expires_in}
+        G->>TR: Store tokens (encrypted)<br/>user_id + service → tokens
+        TR-->>G: Confirmation
+        G-->>B: 302 Redirect to success page
+        B-->>U: Display "Connected!"
+    end
+
+    rect rgb(248, 240, 255)
+        Note over U,TR: Authenticated Requests (Subsequent)
+        U->>B: Perform action requiring service
+        B->>G: POST /api/action
+        G->>TR: Retrieve token for user+service
+        TR-->>G: {access_token, refresh_token}
+
+        alt Token Valid
+            G->>SP: API Request<br/>Authorization: Bearer {token}
+            SP-->>G: Response data
+        else Token Expired
+            G->>SP: POST /oauth/token<br/>{refresh_token, grant_type=refresh}
+            SP-->>G: {new_access_token, ...}
+            G->>TR: Update stored tokens
+            G->>SP: API Request (retry)
+            SP-->>G: Response data
+        end
+
+        G-->>B: Action result
+        B-->>U: Display result
+    end

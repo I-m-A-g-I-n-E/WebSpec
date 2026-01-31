@@ -1,0 +1,17 @@
+{
+  "name": "webspector",
+  "version": "1.0.0",
+  "description": "WebSpec protocol validator providing specialized knowledge and proactive validation agents for URL grammar, HTTP methods, subdomain architecture, authentication/authorization, and service discovery standards.",
+  "author": {
+    "name": "WebSpec Team"
+  },
+  "keywords": [
+    "webspec",
+    "validation",
+    "url-grammar",
+    "http-methods",
+    "authentication",
+    "service-discovery",
+    "api-design"
+  ]
+}

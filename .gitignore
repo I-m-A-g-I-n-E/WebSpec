@@ -1,2 +1,40 @@
 .worktrees/
 .DS_Store
+
+# Environment files
+.env
+.env.*
+
+# AI Tool Configurations
+.agent/
+.agents/
+.cline/
+.codebuddy/
+.codex/
+.commandcode/
+.continue/
+.crush/
+.cursor/
+.factory/
+.gemini/
+.goose/
+.junie/
+.kilocode/
+.kiro/
+.kode/
+.mcpjam/
+.mux/
+.neovate/
+.opencode/
+.openhands/
+.pi/
+.pochi/
+.qoder/
+.qwen/
+.roo/
+.trae/
+.windsurf/
+.zencoder/
+
+# Notion exports (keep source docs only)
+notion/**/*.zip

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "webspec-local",
+  "version": "1.0.0",
+  "description": "Local marketplace for WebSpec plugins",
+  "owner": {
+    "name": "WebSpec Team"
+  },
+  "plugins": [
+    {
+      "name": "webspector",
+      "description": "WebSpec protocol validator with agents and skills for URL grammar, HTTP methods, authentication, and service discovery",
+      "source": "..",
+      "category": "development"
+    }
+  ]
+}

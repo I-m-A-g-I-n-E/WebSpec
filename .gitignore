@@ -37,4 +37,4 @@
 .zencoder/
 
 # Notion exports (keep source docs only)
-notion/**/*.zip
+notion/**/*.zip.worktrees/

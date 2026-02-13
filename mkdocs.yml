@@ -2,7 +2,7 @@ site_name: WebSpec
 site_description: A protocol specification for tool invocation that meshes with web architecture
 site_url: https://webspec.gimme.tools
 repo_url: https://github.com/psentro/webspec
-repo_name: psentro/webspec
+repo_name: I-m-A-g-I-n-E/webspec
 edit_uri: edit/main/docs/
 
 theme:
@@ -31,7 +31,7 @@ theme:
 
 markdown_extensions:
   - tables
-  - admonitions
+  - admonition
   - pymdownx.highlight
   - pymdownx.superfences
   - pymdownx.tabbed:

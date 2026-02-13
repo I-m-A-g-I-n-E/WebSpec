@@ -38,3 +38,9 @@
 
 # Notion exports (keep source docs only)
 notion/**/*.zip.worktrees/
+
+# Build files
+site/
+
+# Notion files
+notion/

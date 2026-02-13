@@ -1,0 +1,3085 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A protocol specification for tool invocation that meshes with web architecture">
+      
+      
+      
+        <link rel="canonical" href="https://webspec.gimme.tools/http-methods/definer-verbs/">
+      
+      
+        <link rel="prev" href="../method-tokenization/">
+      
+      
+        <link rel="next" href="../../subdomain-architecture/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+    
+    
+      
+        <title>Definer Verbs & Payload Binding - WebSpec</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.342714a4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#definer-verbs-payload-binding" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="WebSpec" class="md-header__button md-logo" aria-label="WebSpec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            WebSpec
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Definer Verbs & Payload Binding
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/psentro/webspec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    I-m-A-g-I-n-E/webspec
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="WebSpec" class="md-nav__button md-logo" aria-label="WebSpec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    WebSpec
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/psentro/webspec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    I-m-A-g-I-n-E/webspec
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../philosophy/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Design Philosophy
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Design Philosophy
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../philosophy/permissions-as-love-grammar/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Permissions as Love Grammar
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../philosophy/trust-gradients-philia-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Trust Gradients (Philia Model)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../url-grammar/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    URL Grammar
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            URL Grammar
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../url-grammar/core-syntax/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Core Syntax
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../url-grammar/object-type-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Object Type System
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../url-grammar/type-resolution-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Type Resolution & Inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../url-grammar/complete-grammar-ebnf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Complete Grammar (EBNF)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    HTTP Methods
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            HTTP Methods
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../method-semantics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Method Semantics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../permission-scoping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Permission Scoping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../head-options-discovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    HEAD & OPTIONS Discovery
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../method-tokenization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    METHOD Tokenization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Definer Verbs & Payload Binding
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Definer Verbs & Payload Binding
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Motivation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tier-1-static-definer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tier 1: Static Definer
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tier 1: Static Definer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#concept" class="md-nav__link">
+    <span class="md-ellipsis">
+      Concept
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#definer-families" class="md-nav__link">
+    <span class="md-ellipsis">
+      Definer Families
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#header-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Header Format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Properties
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-definer-is-absent" class="md-nav__link">
+    <span class="md-ellipsis">
+      When Definer is Absent
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tier-2-bookend-binding" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tier 2: Bookend Binding
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tier 2: Bookend Binding">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#concept_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Concept
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token Format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-bookends-not-full-hash" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why Bookends, Not Full Hash
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edge Cases
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tier-3-pos-rotated-verbs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tier 3: POS-Rotated Verbs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tier 3: POS-Rotated Verbs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#concept_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Concept
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pos-embedding-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      POS Embedding Model
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="POS Embedding Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommended-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recommended Models
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-verb-atlas-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Verb Atlas (Recommended)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rotation-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rotation Algorithm
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#header-format-tier-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Header Format (Tier 3)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#server-side-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Server-Side Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-properties_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Properties
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-pos-rotation-is-otp-like" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why POS Rotation Is OTP-Like
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verb-atlas-versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verb Atlas Versioning
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-validation-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Complete Validation Pipeline
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ebnf-grammar-extension" class="md-nav__link">
+    <span class="md-ellipsis">
+      EBNF Grammar Extension
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interaction-with-existing-spec" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interaction with Existing Spec
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interaction with Existing Spec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#permission-scoping" class="md-nav__link">
+    <span class="md-ellipsis">
+      Permission Scoping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#method-tokenization" class="md-nav__link">
+    <span class="md-ellipsis">
+      METHOD Tokenization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token Structure
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Notes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#client-libraries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Client Libraries
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Open Questions
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../subdomain-architecture/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Subdomain Architecture
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Subdomain Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../subdomain-architecture/isolation-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Isolation Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../subdomain-architecture/cookie-token-scoping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cookie & Token Scoping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../subdomain-architecture/local-bridge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    local.gimme.tools Bridge
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../subdomain-architecture/local-service-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local Service Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../auth/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Authentication
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auth/auth-flow-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Auth Flow Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auth/keychain-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Keychain Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auth/onboarding-subdomain-provisioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Onboarding & Provisioning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auth/token-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Token Structure
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../discovery/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Service Discovery
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Service Discovery
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../discovery/nlp-driven-resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    NLP-Driven Resolution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../discovery/embedding-schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Embedding Schema
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../discovery/three-way-join/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    The Three-Way Join
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../registration/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Service Registration
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Service Registration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../registration/registration-schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Registration Schema
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../registration/domain-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Domain Verification
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/comparison-with-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Comparison with MCP
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/moltbook-case-study/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MoltBook Case Study
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Motivation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tier-1-static-definer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tier 1: Static Definer
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tier 1: Static Definer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#concept" class="md-nav__link">
+    <span class="md-ellipsis">
+      Concept
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#definer-families" class="md-nav__link">
+    <span class="md-ellipsis">
+      Definer Families
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#header-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Header Format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Properties
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-definer-is-absent" class="md-nav__link">
+    <span class="md-ellipsis">
+      When Definer is Absent
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tier-2-bookend-binding" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tier 2: Bookend Binding
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tier 2: Bookend Binding">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#concept_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Concept
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token Format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-bookends-not-full-hash" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why Bookends, Not Full Hash
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edge-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edge Cases
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tier-3-pos-rotated-verbs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tier 3: POS-Rotated Verbs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tier 3: POS-Rotated Verbs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#concept_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      Concept
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pos-embedding-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      POS Embedding Model
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="POS Embedding Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommended-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      Recommended Models
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-verb-atlas-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Verb Atlas (Recommended)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rotation-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rotation Algorithm
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#header-format-tier-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Header Format (Tier 3)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#server-side-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Server-Side Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-properties_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security Properties
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-pos-rotation-is-otp-like" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why POS Rotation Is OTP-Like
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verb-atlas-versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verb Atlas Versioning
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#complete-validation-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Complete Validation Pipeline
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ebnf-grammar-extension" class="md-nav__link">
+    <span class="md-ellipsis">
+      EBNF Grammar Extension
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interaction-with-existing-spec" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interaction with Existing Spec
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interaction with Existing Spec">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#permission-scoping" class="md-nav__link">
+    <span class="md-ellipsis">
+      Permission Scoping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#method-tokenization" class="md-nav__link">
+    <span class="md-ellipsis">
+      METHOD Tokenization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token Structure
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Implementation Notes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#client-libraries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Client Libraries
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Open Questions
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/psentro/webspec/edit/main/docs/http-methods/definer-verbs.md" title="Edit this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="definer-verbs-payload-binding">Definer Verbs &amp; Payload Binding<a class="headerlink" href="#definer-verbs-payload-binding" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Status:</strong> Draft
+<strong>Extends:</strong> <a href="../method-tokenization/">METHOD Tokenization</a>
+<strong>Applies to:</strong> <code>PUT</code>, <code>POST</code>, <code>PATCH</code> only
+<strong>Verb Atlas:</strong> <a href="../verb-atlas.yaml">verb-atlas.yaml</a> (302 verbs, 12 canonicals, 3 families)
+<strong>Authors:</strong> Preston Richey, Claude (Anthropic)
+<strong>Date:</strong> 2026-02-05</p>
+</blockquote>
+<hr />
+<h2 id="motivation">Motivation<a class="headerlink" href="#motivation" title="Permanent link">&para;</a></h2>
+<p><a href="../method-tokenization/">METHOD Tokenization</a> eliminates verb/noun confusion by enforcing exactly one raw HTTP METHOD per request and tokenizing verb-like content in payloads. This is sufficient to prevent direct prompt injection through verb smuggling.</p>
+<p>However, <code>PUT</code>, <code>POST</code>, and <code>PATCH</code> carry meaningful request bodies — and the payload itself is the remaining attack surface. An attacker need not smuggle a verb if they can manipulate the <em>content</em> that a legitimate verb acts on. The single METHOD is authenticated, but it is not <strong>bound</strong> to the specific payload it accompanies.</p>
+<p>Definer Verbs address three residual risks:</p>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Intent ambiguity</strong></td>
+<td><code>POST</code> alone does not distinguish between "create," "send," "invoke," and "trigger"</td>
+</tr>
+<tr>
+<td><strong>Payload tampering</strong></td>
+<td>Injection at payload boundaries (prepend/append) goes undetected by METHOD tokenization</td>
+</tr>
+<tr>
+<td><strong>Verb replay</strong></td>
+<td>A captured request header can be replayed with a different payload</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>Three independently adoptable tiers, each adding a layer of protection:</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Enhancement</th>
+<th>Cost</th>
+<th>Protects Against</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tier 1</strong></td>
+<td>Static Definer</td>
+<td>One header, one lookup</td>
+<td>Intent ambiguity, verb-pair disagreement</td>
+</tr>
+<tr>
+<td><strong>Tier 2</strong></td>
+<td>Bookend Binding</td>
+<td>One HMAC (32 bytes read)</td>
+<td>Payload boundary tampering</td>
+</tr>
+<tr>
+<td><strong>Tier 3</strong></td>
+<td>POS Rotation</td>
+<td>One embedding lookup + matrix rotation</td>
+<td>Replay, verb prediction, interception</td>
+</tr>
+</tbody>
+</table>
+<p>Tiers compose additively. A Tier 3 implementation includes Tier 1 and Tier 2 by construction.</p>
+<hr />
+<h2 id="tier-1-static-definer">Tier 1: Static Definer<a class="headerlink" href="#tier-1-static-definer" title="Permanent link">&para;</a></h2>
+<h3 id="concept">Concept<a class="headerlink" href="#concept" title="Permanent link">&para;</a></h3>
+<p>State-mutating HTTP methods (<code>POST</code>, <code>PUT</code>, <code>PATCH</code>) require a secondary <strong>definer verb</strong> that narrows the method's intent. The definer is transmitted in the <code>X-Gimme-Definer</code> request header.</p>
+<h3 id="definer-families">Definer Families<a class="headerlink" href="#definer-families" title="Permanent link">&para;</a></h3>
+<p>Each HTTP method has an associated family of valid definers:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">POST</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">canonical</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CREATE</span>
+<span class="w">  </span><span class="nt">family</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CREATE</span><span class="w">    </span><span class="c1"># bring into existence</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SEND</span><span class="w">      </span><span class="c1"># transmit to recipient</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">INVOKE</span><span class="w">    </span><span class="c1"># call a function/webhook</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TRIGGER</span><span class="w">   </span><span class="c1"># initiate a process</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">UPLOAD</span><span class="w">    </span><span class="c1"># transfer a file</span>
+
+<span class="nt">PUT</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">canonical</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">REPLACE</span>
+<span class="w">  </span><span class="nt">family</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">REPLACE</span><span class="w">   </span><span class="c1"># full resource replacement</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">OVERWRITE</span><span class="w"> </span><span class="c1"># destructive replacement</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SET</span><span class="w">       </span><span class="c1"># assign a value</span>
+
+<span class="nt">PATCH</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">canonical</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MODIFY</span>
+<span class="w">  </span><span class="nt">family</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MODIFY</span><span class="w">    </span><span class="c1"># partial update</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">APPEND</span><span class="w">    </span><span class="c1"># add to existing</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AMEND</span><span class="w">     </span><span class="c1"># correct/revise</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RENAME</span><span class="w">    </span><span class="c1"># change identifier</span>
+</code></pre></div>
+<h3 id="header-format">Header Format<a class="headerlink" href="#header-format" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nf">POST</span> <span class="nn">/channels/C123/messages</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">2</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">slack.gimme.tools</span>
+<span class="na">Authorization</span><span class="o">:</span> <span class="l">Bearer &lt;token&gt;</span>
+<span class="na">X-Gimme-Definer</span><span class="o">:</span> <span class="l">SEND</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+
+<span class="p">{</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Hello, world&quot;</span><span class="p">}</span>
+</code></pre></div>
+<h3 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">DEFINER_FAMILIES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;POST&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;CREATE&#39;</span><span class="p">,</span> <span class="s1">&#39;SEND&#39;</span><span class="p">,</span> <span class="s1">&#39;INVOKE&#39;</span><span class="p">,</span> <span class="s1">&#39;TRIGGER&#39;</span><span class="p">,</span> <span class="s1">&#39;UPLOAD&#39;</span><span class="p">},</span>
+    <span class="s1">&#39;PUT&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;REPLACE&#39;</span><span class="p">,</span> <span class="s1">&#39;OVERWRITE&#39;</span><span class="p">,</span> <span class="s1">&#39;SET&#39;</span><span class="p">},</span>
+    <span class="s1">&#39;PATCH&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;MODIFY&#39;</span><span class="p">,</span> <span class="s1">&#39;APPEND&#39;</span><span class="p">,</span> <span class="s1">&#39;AMEND&#39;</span><span class="p">,</span> <span class="s1">&#39;RENAME&#39;</span><span class="p">},</span>
+<span class="p">}</span>
+
+<span class="k">def</span> <span class="nf">validate_definer</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">definer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tier 1: Verify definer belongs to the method&#39;s family.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">DEFINER_FAMILIES</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>  <span class="c1"># GET, DELETE, HEAD, OPTIONS: no definer required</span>
+    <span class="k">if</span> <span class="n">definer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># State-mutating methods MUST include a definer</span>
+    <span class="k">return</span> <span class="n">definer</span> <span class="ow">in</span> <span class="n">DEFINER_FAMILIES</span><span class="p">[</span><span class="n">method</span><span class="p">]</span>
+</code></pre></div>
+<h3 id="security-properties">Security Properties<a class="headerlink" href="#security-properties" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Intent narrowing:</strong> <code>POST</code> + <code>SEND</code> is more specific than <code>POST</code> alone. Permission scopes can optionally match on definers (e.g., <code>POST[SEND]:slack.gimme.tools/message.*</code>).</li>
+<li><strong>Verb-pair agreement:</strong> A <code>DELETE</code>-class definer with a <code>POST</code> method is a mismatch — rejected before the payload is even read.</li>
+<li><strong>Cheap to implement:</strong> One header, one set membership check. No cryptography required.</li>
+</ul>
+<h3 id="when-definer-is-absent">When Definer is Absent<a class="headerlink" href="#when-definer-is-absent" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>X-Gimme-Definer</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST</code></td>
+<td><code>SEND</code></td>
+<td>Valid</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>REPLACE</code></td>
+<td>Rejected — <code>REPLACE</code> is in the <code>PUT</code> family</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td>(missing)</td>
+<td>Rejected — definer required for state-mutating methods</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td>(missing)</td>
+<td>Valid — definer not required for safe methods</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>SEND</code></td>
+<td>Ignored — definer is meaningless for safe methods</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="tier-2-bookend-binding">Tier 2: Bookend Binding<a class="headerlink" href="#tier-2-bookend-binding" title="Permanent link">&para;</a></h2>
+<h3 id="concept_1">Concept<a class="headerlink" href="#concept_1" title="Permanent link">&para;</a></h3>
+<p>The definer token incorporates a fast checksum derived from the <strong>first and last bytes</strong> of the request payload. This binds the definer to the specific payload it accompanies, making boundary tampering detectable without hashing the full body.</p>
+<h3 id="token-format">Token Format<a class="headerlink" href="#token-format" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>X-Gimme-Definer: {DEFINER}:{BOOKEND_HASH}
+</code></pre></div>
+<p>Where:</p>
+<div class="highlight"><pre><span></span><code>BOOKEND_HASH = truncate(
+    HMAC-SHA256(
+        key  = session_key,
+        data = METHOD + &quot;:&quot; + DEFINER + &quot;:&quot; + head(payload, 16) + &quot;:&quot; + tail(payload, 16)
+    ),
+    bytes = 4
+)
+</code></pre></div>
+<p>Output: 8 hex characters.</p>
+<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nf">POST</span> <span class="nn">/channels/C123/messages</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">2</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">slack.gimme.tools</span>
+<span class="na">X-Gimme-Definer</span><span class="o">:</span> <span class="l">SEND:a7f3e91b</span>
+
+{&quot;text&quot;: &quot;Hello, world&quot;}
+</code></pre></div>
+<p>Derivation:</p>
+<div class="highlight"><pre><span></span><code><span class="n">payload</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;{&quot;text&quot;: &quot;Hello, world&quot;}&#39;</span>
+
+<span class="n">hmac_input</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;POST:SEND:&quot;</span> <span class="o">+</span> <span class="n">payload</span><span class="p">[:</span><span class="mi">16</span><span class="p">]</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="n">payload</span><span class="p">[</span><span class="o">-</span><span class="mi">16</span><span class="p">:]</span>
+<span class="c1">#          = b&quot;POST:SEND:{\&quot;text\&quot;: \&quot;Hello:&quot; + b&quot;Hello, world\&quot;}&quot;</span>
+
+<span class="n">bookend</span> <span class="o">=</span> <span class="n">HMAC_SHA256</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="n">hmac_input</span><span class="p">)[:</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
+<span class="c1"># =&gt; &quot;a7f3e91b&quot;</span>
+</code></pre></div>
+<h3 id="validation_1">Validation<a class="headerlink" href="#validation_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">validate_bookend</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">definer</span><span class="p">,</span> <span class="n">bookend_hash</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">session_key</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tier 2: Verify payload bookend binding.&quot;&quot;&quot;</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[:</span><span class="mi">16</span><span class="p">]</span>
+    <span class="n">tail</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[</span><span class="o">-</span><span class="mi">16</span><span class="p">:]</span>
+    <span class="c1"># For payloads shorter than 32 bytes, head and tail may overlap — that&#39;s fine</span>
+
+    <span class="n">hmac_input</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">definer</span><span class="si">}</span><span class="s2">:&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span> <span class="o">+</span> <span class="n">head</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="n">tail</span>
+    <span class="n">expected</span> <span class="o">=</span> <span class="n">HMAC_SHA256</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="n">hmac_input</span><span class="p">)[:</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">constant_time_compare</span><span class="p">(</span><span class="n">bookend_hash</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="why-bookends-not-full-hash">Why Bookends, Not Full Hash<a class="headerlink" href="#why-bookends-not-full-hash" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Reads</th>
+<th>Latency</th>
+<th>Catches</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full payload HMAC</td>
+<td>Entire body</td>
+<td>High for large payloads</td>
+<td>Everything</td>
+</tr>
+<tr>
+<td>Bookend HMAC</td>
+<td>32 bytes</td>
+<td>Near-zero</td>
+<td>Prepend/append injection, truncation, boundary manipulation</td>
+</tr>
+<tr>
+<td>No binding</td>
+<td>0 bytes</td>
+<td>Zero</td>
+<td>Nothing</td>
+</tr>
+</tbody>
+</table>
+<p>Prompt injection overwhelmingly operates at <strong>payload boundaries</strong> — prepending instructions before legitimate content, or appending them after. Bookend binding catches these at 32 bytes of read cost. Interior injection (modifying the middle of a payload without changing the first or last 16 bytes) is a narrower and harder attack that can be addressed by optional full-payload signing where required.</p>
+<h3 id="edge-cases">Edge Cases<a class="headerlink" href="#edge-cases" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Empty payload</td>
+<td><code>head = tail = b""</code> — HMAC still computed, still valid</td>
+</tr>
+<tr>
+<td>Payload &lt; 16 bytes</td>
+<td><code>head = tail = full payload</code> — overlap is fine</td>
+</tr>
+<tr>
+<td>Payload = 16 bytes</td>
+<td><code>head = tail = full payload</code> — equivalent to full hash</td>
+</tr>
+<tr>
+<td>Streaming/chunked body</td>
+<td>Bookend computed over the <strong>first chunk's first 16 bytes</strong> and <strong>last chunk's last 16 bytes</strong>. Requires buffering only 32 bytes total.</td>
+</tr>
+<tr>
+<td>Multipart form data</td>
+<td>Bookend computed over the raw multipart payload, including boundaries</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="tier-3-pos-rotated-verbs">Tier 3: POS-Rotated Verbs<a class="headerlink" href="#tier-3-pos-rotated-verbs" title="Permanent link">&para;</a></h2>
+<h3 id="concept_2">Concept<a class="headerlink" href="#concept_2" title="Permanent link">&para;</a></h3>
+<p>Instead of transmitting the definer as a static, predictable string, <strong>rotate</strong> it through a semantically-equivalent embedding neighborhood using the request nonce as the rotation key. Each request carries a different surface-form verb that maps back to the same canonical definer — functioning as a <strong>one-time pad for verbs</strong>.</p>
+<h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Tier 1 and Tier 2 (definer + bookend)</li>
+<li>A shared POS (Part-of-Speech) embedding model between client and server</li>
+<li>A monotonic request nonce (or timestamp + counter)</li>
+</ul>
+<h3 id="pos-embedding-model">POS Embedding Model<a class="headerlink" href="#pos-embedding-model" title="Permanent link">&para;</a></h3>
+<p>The rotation operates in a <strong>verb-constrained</strong> embedding space. Using Part-of-Speech embeddings (rather than general-purpose embeddings) ensures:</p>
+<ol>
+<li><strong>Rotation stays in verb-space</strong> — you cannot accidentally rotate <code>SEND</code> into <code>BANANA</code></li>
+<li><strong>Semantic neighborhood is tight</strong> — valid rotations of <code>SEND</code> include <code>DISPATCH</code>, <code>TRANSMIT</code>, <code>RELAY</code>, <code>FORWARD</code>, not <code>CREATE</code> or <code>DELETE</code></li>
+<li><strong>Leverages existing infrastructure</strong> — WebSpec already uses embeddings for NLP-driven resolution</li>
+</ol>
+<h4 id="recommended-models">Recommended Models<a class="headerlink" href="#recommended-models" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Dimensions</th>
+<th>POS-Aware</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>spaCy <code>en_core_web_lg</code></td>
+<td>300</td>
+<td>Yes (POS tags)</td>
+<td>Good baseline, fast</td>
+</tr>
+<tr>
+<td>Custom fine-tuned</td>
+<td>128-256</td>
+<td>Yes (verb-only)</td>
+<td>Smallest, fastest, recommended for production</td>
+</tr>
+<tr>
+<td>WebSpec verb atlas</td>
+<td>64</td>
+<td>Yes (curated)</td>
+<td>Pre-computed for all definer families; see below</td>
+</tr>
+</tbody>
+</table>
+<h4 id="the-verb-atlas-recommended">The Verb Atlas (Recommended)<a class="headerlink" href="#the-verb-atlas-recommended" title="Permanent link">&para;</a></h4>
+<p>Rather than relying on a general embedding model, WebSpec ships a <strong>curated verb atlas</strong> — a pre-computed vocabulary covering the definer families and their semantic neighborhoods. The full atlas is defined in <a href="../verb-atlas.yaml"><code>verb-atlas.yaml</code></a>.</p>
+<p><strong>Atlas summary (v1.0.0):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th>Canonicals</th>
+<th>Total Verbs</th>
+<th>Semantic Range</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td>CREATE, SEND, INVOKE, TRIGGER, UPLOAD</td>
+<td>125</td>
+<td>Creation, transmission, execution, initiation, ingestion</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td>REPLACE, OVERWRITE, SET</td>
+<td>78</td>
+<td>Substitution, destruction, assignment</td>
+</tr>
+<tr>
+<td>PATCH</td>
+<td>MODIFY, APPEND, AMEND, RENAME</td>
+<td>99</td>
+<td>Alteration, extension, correction, re-identification</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Invariants</strong> (enforced at atlas-load time):
+- No verb appears in more than one family
+- No verb appears as a rotation candidate for more than one canonical within a family
+- Every canonical is also a valid definer (canonicals are the Tier 1 vocabulary)</p>
+<p>Each verb in the atlas will have a pre-computed embedding vector. At query time, the rotation algorithm selects from the canonical's rotation candidates based on the nonce-derived rotation. Negative examples per canonical document family boundaries and serve as repulsion vectors in the embedding space.</p>
+<p>The atlas is versioned and shipped with the WebSpec client library / gateway. Both client and server reference the same atlas version.</p>
+<h3 id="rotation-algorithm">Rotation Algorithm<a class="headerlink" href="#rotation-algorithm" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">hmac</span><span class="o">,</span> <span class="nn">hashlib</span>
+
+<span class="k">def</span> <span class="nf">rotate_definer</span><span class="p">(</span><span class="n">canonical</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">nonce</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">session_key</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+                   <span class="n">atlas</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">family</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Rotate a canonical definer verb through POS embedding space.</span>
+
+<span class="sd">    Returns a semantically-equivalent verb that changes per-request.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 1. Get the canonical verb&#39;s embedding from the atlas</span>
+    <span class="n">base_vector</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">atlas</span><span class="p">[</span><span class="n">family</span><span class="p">][</span><span class="n">canonical</span><span class="p">])</span>
+
+    <span class="c1"># 2. Derive a deterministic rotation seed from nonce + session key</span>
+    <span class="n">seed</span> <span class="o">=</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span>
+        <span class="n">session_key</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">nonce</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">canonical</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+        <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+
+    <span class="c1"># 3. Generate a rotation matrix from the seed</span>
+    <span class="c1">#    (Gram-Schmidt orthogonalization of seed-derived random vectors)</span>
+    <span class="n">rotation_matrix</span> <span class="o">=</span> <span class="n">seed_to_rotation_matrix</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="n">base_vector</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># 4. Rotate the base vector</span>
+    <span class="n">rotated</span> <span class="o">=</span> <span class="n">rotation_matrix</span> <span class="o">@</span> <span class="n">base_vector</span>
+
+    <span class="c1"># 5. Find the nearest verb in the same family</span>
+    <span class="n">best_verb</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">best_sim</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+    <span class="k">for</span> <span class="n">verb</span><span class="p">,</span> <span class="n">embedding</span> <span class="ow">in</span> <span class="n">atlas</span><span class="p">[</span><span class="n">family</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">verb</span> <span class="o">==</span> <span class="n">canonical</span><span class="p">:</span>
+            <span class="k">continue</span>  <span class="c1"># Prefer a different surface form</span>
+        <span class="n">sim</span> <span class="o">=</span> <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">rotated</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">embedding</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">sim</span> <span class="o">&gt;</span> <span class="n">best_sim</span><span class="p">:</span>
+            <span class="n">best_sim</span> <span class="o">=</span> <span class="n">sim</span>
+            <span class="n">best_verb</span> <span class="o">=</span> <span class="n">verb</span>
+
+    <span class="c1"># 6. Verify the rotation stayed in-family (similarity threshold)</span>
+    <span class="k">assert</span> <span class="n">best_sim</span> <span class="o">&gt;</span> <span class="mf">0.70</span><span class="p">,</span> <span class="s2">&quot;Rotation drifted out of family&quot;</span>
+
+    <span class="k">return</span> <span class="n">best_verb</span>
+
+
+<span class="k">def</span> <span class="nf">seed_to_rotation_matrix</span><span class="p">(</span><span class="n">seed</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate a deterministic rotation matrix from a seed.</span>
+<span class="sd">    Uses seed bytes to initialize random vectors, then</span>
+<span class="sd">    Gram-Schmidt orthogonalizes to produce a valid rotation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PCG64</span><span class="p">(</span><span class="nb">int</span><span class="o">.</span><span class="n">from_bytes</span><span class="p">(</span><span class="n">seed</span><span class="p">[:</span><span class="mi">16</span><span class="p">])))</span>
+
+    <span class="c1"># Generate random matrix</span>
+    <span class="n">random_matrix</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="n">dims</span><span class="p">,</span> <span class="n">dims</span><span class="p">))</span>
+
+    <span class="c1"># QR decomposition gives orthogonal Q (a rotation/reflection)</span>
+    <span class="n">Q</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">qr</span><span class="p">(</span><span class="n">random_matrix</span><span class="p">)</span>
+
+    <span class="c1"># Ensure proper rotation (det = +1, not reflection)</span>
+    <span class="n">Q</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">R</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">Q</span>
+</code></pre></div>
+<h3 id="header-format-tier-3">Header Format (Tier 3)<a class="headerlink" href="#header-format-tier-3" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>X-Gimme-Definer: {ROTATED_VERB}:{BOOKEND_HASH}
+X-Gimme-Nonce: {NONCE}
+</code></pre></div>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code><span class="nf">POST</span> <span class="nn">/channels/C123/messages</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">2</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">slack.gimme.tools</span>
+<span class="na">X-Gimme-Definer</span><span class="o">:</span> <span class="l">DISPATCH:a7f3e91b</span>
+<span class="na">X-Gimme-Nonce</span><span class="o">:</span> <span class="l">1707148800001</span>
+
+{&quot;text&quot;: &quot;Hello, world&quot;}
+</code></pre></div>
+<p>The canonical definer is <code>SEND</code>, but the surface form is <code>DISPATCH</code> for this specific request. The next request (nonce <code>...002</code>) might produce <code>TRANSMIT</code>.</p>
+<h3 id="server-side-validation">Server-Side Validation<a class="headerlink" href="#server-side-validation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">validate_tier3</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">received_verb</span><span class="p">,</span> <span class="n">bookend_hash</span><span class="p">,</span> <span class="n">nonce</span><span class="p">,</span>
+                   <span class="n">payload</span><span class="p">,</span> <span class="n">session_key</span><span class="p">,</span> <span class="n">atlas</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Full Tier 3 validation: definer + bookend + rotation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">family</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">_family&quot;</span>
+
+    <span class="c1"># 1. Is the received verb in the atlas for this method&#39;s family?</span>
+    <span class="k">if</span> <span class="n">received_verb</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">atlas</span><span class="p">[</span><span class="n">family</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;Verb not in family atlas&quot;</span>
+
+    <span class="c1"># 2. Has this nonce been seen before? (replay protection)</span>
+    <span class="k">if</span> <span class="n">nonce_is_used</span><span class="p">(</span><span class="n">nonce</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;Nonce replay&quot;</span>
+    <span class="n">mark_nonce_used</span><span class="p">(</span><span class="n">nonce</span><span class="p">)</span>
+
+    <span class="c1"># 3. Determine which canonical definer this is a rotation of.</span>
+    <span class="c1">#    Try each canonical verb, rotate it with the given nonce,</span>
+    <span class="c1">#    and check if the result matches the received verb.</span>
+    <span class="n">matched_canonical</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">canonical</span> <span class="ow">in</span> <span class="n">DEFINER_FAMILIES</span><span class="p">[</span><span class="n">method</span><span class="p">]:</span>
+        <span class="n">expected_verb</span> <span class="o">=</span> <span class="n">rotate_definer</span><span class="p">(</span>
+            <span class="n">canonical</span><span class="p">,</span> <span class="n">nonce</span><span class="p">,</span> <span class="n">session_key</span><span class="p">,</span> <span class="n">atlas</span><span class="p">,</span> <span class="n">family</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">expected_verb</span> <span class="o">==</span> <span class="n">received_verb</span><span class="p">:</span>
+            <span class="n">matched_canonical</span> <span class="o">=</span> <span class="n">canonical</span>
+            <span class="k">break</span>
+
+    <span class="k">if</span> <span class="n">matched_canonical</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;Rotation mismatch — no canonical definer produces this verb&quot;</span>
+
+    <span class="c1"># 4. Validate bookend binding (Tier 2)</span>
+    <span class="c1">#    Note: bookend HMAC uses the ROTATED verb, not the canonical,</span>
+    <span class="c1">#    binding the specific surface form to the specific payload</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">validate_bookend</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">received_verb</span><span class="p">,</span> <span class="n">bookend_hash</span><span class="p">,</span>
+                            <span class="n">payload</span><span class="p">,</span> <span class="n">session_key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;Bookend mismatch&quot;</span>
+
+    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">matched_canonical</span>
+</code></pre></div>
+<h3 id="security-properties_1">Security Properties<a class="headerlink" href="#security-properties_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Mechanism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Non-replayable</strong></td>
+<td>Nonce is consumed on use; same nonce is rejected</td>
+</tr>
+<tr>
+<td><strong>Non-predictable</strong></td>
+<td>Next verb requires <code>HMAC(session_key, nonce)</code> — without the session key, the rotation is opaque</td>
+</tr>
+<tr>
+<td><strong>Semantically constrained</strong></td>
+<td>POS embeddings + family atlas ensure rotation stays within the correct verb class</td>
+</tr>
+<tr>
+<td><strong>Tamper-evident</strong></td>
+<td>Bookend hash includes the rotated verb — changing the verb or the payload breaks it</td>
+</tr>
+<tr>
+<td><strong>Deterministic</strong></td>
+<td>Both client and server compute the same rotation from the same inputs. No ML at validation time.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="why-pos-rotation-is-otp-like">Why POS Rotation Is OTP-Like<a class="headerlink" href="#why-pos-rotation-is-otp-like" title="Permanent link">&para;</a></h3>
+<p>A one-time pad has three properties:
+1. The key is as long as the message
+2. The key is used exactly once
+3. The key is truly random</p>
+<p>POS rotation approximates these:
+1. The "key" (rotation matrix) operates over the full embedding dimensions
+2. Each nonce produces a different rotation (used once)
+3. The rotation is pseudo-random (HMAC-derived), computationally indistinguishable from random without the session key</p>
+<p>It is not a true OTP (the verb vocabulary is finite, the rotation is pseudo-random), but it provides the <strong>practical property</strong> of OTPs: observing any number of past rotated verbs gives no advantage in predicting the next one.</p>
+<h3 id="verb-atlas-versioning">Verb Atlas Versioning<a class="headerlink" href="#verb-atlas-versioning" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Atlas metadata</span>
+<span class="nt">atlas_version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.0.0&quot;</span>
+<span class="nt">atlas_hash</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855&quot;</span>
+<span class="nt">embedding_dims</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">64</span>
+<span class="nt">families</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">POST_family</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">PUT_family</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">PATCH_family</span><span class="p p-Indicator">]</span>
+<span class="nt">total_verbs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">87</span>
+</code></pre></div>
+<p>Client and server must agree on atlas version. Version negotiation via the <code>X-Gimme-Atlas</code> header:</p>
+<div class="highlight"><pre><span></span><code><span class="err">X-Gimme-Atlas: 1.0.0</span>
+</code></pre></div>
+<p>If the server does not support the client's atlas version, it responds <code>422 Unprocessable Entity</code> with an <code>X-Gimme-Atlas-Supported</code> header listing accepted versions.</p>
+<hr />
+<h2 id="complete-validation-pipeline">Complete Validation Pipeline<a class="headerlink" href="#complete-validation-pipeline" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">validate_definer_request</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">session_key</span><span class="p">,</span> <span class="n">atlas</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Complete definer validation across all tiers.</span>
+
+<span class="sd">    Returns (valid: bool, canonical_definer: str|None, tier: int, error: str|None)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span>
+
+    <span class="c1"># Safe methods: no definer required</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;DELETE&#39;</span><span class="p">,</span> <span class="s1">&#39;HEAD&#39;</span><span class="p">,</span> <span class="s1">&#39;OPTIONS&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="c1"># Parse the definer header</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;X-Gimme-Definer&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">header</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Missing X-Gimme-Definer for state-mutating method&quot;</span>
+
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+    <span class="n">definer</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">bookend</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">nonce</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;X-Gimme-Nonce&#39;</span><span class="p">)</span>
+
+    <span class="c1"># ── Tier 1: Family membership ──</span>
+    <span class="k">if</span> <span class="n">definer</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">atlas</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">_family&quot;</span><span class="p">,</span> <span class="p">{}):</span>
+        <span class="c1"># Check if it&#39;s a known verb in ANY family (cross-family attack)</span>
+        <span class="k">for</span> <span class="n">fam</span> <span class="ow">in</span> <span class="n">atlas</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">definer</span> <span class="ow">in</span> <span class="n">fam</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Definer &#39;</span><span class="si">{</span><span class="n">definer</span><span class="si">}</span><span class="s2">&#39; is in wrong family for </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Unknown definer verb: &#39;</span><span class="si">{</span><span class="n">definer</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+
+    <span class="c1"># ── Tier 2: Bookend binding ──</span>
+    <span class="k">if</span> <span class="n">bookend</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">validate_bookend</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">definer</span><span class="p">,</span> <span class="n">bookend</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="n">session_key</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;Bookend hash mismatch&quot;</span>
+
+        <span class="c1"># ── Tier 3: POS rotation ──</span>
+        <span class="k">if</span> <span class="n">nonce</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">valid</span><span class="p">,</span> <span class="n">canonical</span> <span class="o">=</span> <span class="n">validate_tier3</span><span class="p">(</span>
+                <span class="n">method</span><span class="p">,</span> <span class="n">definer</span><span class="p">,</span> <span class="n">bookend</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">nonce</span><span class="p">),</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="n">session_key</span><span class="p">,</span> <span class="n">atlas</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">valid</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">canonical</span>  <span class="c1"># canonical holds error message</span>
+            <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">canonical</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="kc">None</span>
+
+        <span class="c1"># Tier 2 only: definer is taken at face value (must be canonical)</span>
+        <span class="k">if</span> <span class="n">definer</span> <span class="ow">in</span> <span class="n">DEFINER_FAMILIES</span><span class="p">[</span><span class="n">method</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">definer</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;Non-canonical definer without rotation nonce&quot;</span>
+
+    <span class="c1"># Tier 1 only: static definer</span>
+    <span class="k">if</span> <span class="n">definer</span> <span class="ow">in</span> <span class="n">DEFINER_FAMILIES</span><span class="p">[</span><span class="n">method</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">definer</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Non-canonical definer without bookend binding&quot;</span>
+</code></pre></div>
+<hr />
+<h2 id="ebnf-grammar-extension">EBNF Grammar Extension<a class="headerlink" href="#ebnf-grammar-extension" title="Permanent link">&para;</a></h2>
+<p>Extends the <a href="../../url-grammar/complete-grammar-ebnf/">Complete Grammar</a>:</p>
+<div class="highlight"><pre><span></span><code><span class="cm">(* Definer Verb Grammar — extends WebSpec request *)</span>
+
+<span class="k">definer_header  </span><span class="o">=</span> <span class="k">definer_verb </span><span class="p">,</span> <span class="p">[</span> <span class="s2">&quot;:&quot;</span> <span class="p">,</span> <span class="k">bookend_hash </span><span class="p">]</span> <span class="p">;</span>
+<span class="k">definer_verb    </span><span class="o">=</span> <span class="k">UPPER_ALPHA </span><span class="p">,</span> <span class="p">{</span> <span class="k">UPPER_ALPHA </span><span class="p">}</span> <span class="p">;</span>
+<span class="k">bookend_hash    </span><span class="o">=</span> <span class="err">8</span> <span class="err">*</span> <span class="k">HEXDIG </span><span class="p">;</span>
+
+<span class="k">nonce_header    </span><span class="o">=</span> <span class="k">DIGIT </span><span class="p">,</span> <span class="p">{</span> <span class="k">DIGIT </span><span class="p">}</span> <span class="p">;</span>
+
+<span class="cm">(* Definer families — verb must match method *)</span>
+<span class="k">post_definer    </span><span class="o">=</span> <span class="s2">&quot;CREATE&quot;</span> <span class="p">|</span> <span class="s2">&quot;SEND&quot;</span> <span class="p">|</span> <span class="s2">&quot;INVOKE&quot;</span> <span class="p">|</span> <span class="s2">&quot;TRIGGER&quot;</span> <span class="p">|</span> <span class="s2">&quot;UPLOAD&quot;</span> <span class="p">;</span>
+<span class="k">put_definer     </span><span class="o">=</span> <span class="s2">&quot;REPLACE&quot;</span> <span class="p">|</span> <span class="s2">&quot;OVERWRITE&quot;</span> <span class="p">|</span> <span class="s2">&quot;SET&quot;</span> <span class="p">;</span>
+<span class="k">patch_definer   </span><span class="o">=</span> <span class="s2">&quot;MODIFY&quot;</span> <span class="p">|</span> <span class="s2">&quot;APPEND&quot;</span> <span class="p">|</span> <span class="s2">&quot;AMEND&quot;</span> <span class="p">|</span> <span class="s2">&quot;RENAME&quot;</span> <span class="p">;</span>
+
+<span class="cm">(* With Tier 3, definer_verb may be any verb in the method&#39;s atlas family *)</span>
+<span class="k">rotated_definer </span><span class="o">=</span> <span class="k">atlas_verb </span><span class="p">;</span>    <span class="cm">(* validated by rotation algorithm *)</span>
+
+<span class="cm">(* Header declarations *)</span>
+<span class="err">&quot;</span><span class="k">X-Gimme-Definer</span><span class="err">&quot;</span> <span class="o">=</span> <span class="k">definer_header </span><span class="p">;</span>
+<span class="err">&quot;</span><span class="k">X-Gimme-Nonce</span><span class="err">&quot;</span>   <span class="o">=</span> <span class="k">nonce_header </span><span class="p">;</span>
+<span class="err">&quot;</span><span class="k">X-Gimme-Atlas</span><span class="err">&quot;</span>   <span class="o">=</span> <span class="k">semver </span><span class="p">;</span>
+
+<span class="cm">(* Terminals *)</span>
+<span class="k">UPPER_ALPHA     </span><span class="o">=</span> <span class="s2">&quot;A&quot;</span> <span class="p">|</span> <span class="s2">&quot;B&quot;</span> <span class="p">|</span> <span class="p">.</span><span class="err">..</span> <span class="err">|</span> <span class="err">&quot;</span><span class="k">Z</span><span class="err">&quot;</span> <span class="err">;</span>
+<span class="k">HEXDIG          </span><span class="o">=</span> <span class="s2">&quot;0&quot;</span> <span class="p">|</span> <span class="p">.</span><span class="err">..</span> <span class="err">|</span> <span class="err">&quot;9&quot;</span> <span class="err">|</span> <span class="err">&quot;</span><span class="k">a</span><span class="err">&quot;</span> <span class="err">|</span> <span class="err">...</span> <span class="err">|</span> <span class="err">&quot;</span><span class="k">f</span><span class="err">&quot;</span> <span class="err">;</span>
+<span class="k">DIGIT           </span><span class="o">=</span> <span class="s2">&quot;0&quot;</span> <span class="p">|</span> <span class="p">.</span><span class="err">..</span> <span class="err">|</span> <span class="err">&quot;9&quot;</span> <span class="err">;</span>
+<span class="k">semver          </span><span class="o">=</span> <span class="k">DIGIT </span><span class="p">,</span> <span class="p">{</span> <span class="k">DIGIT </span><span class="p">}</span> <span class="p">,</span> <span class="s2">&quot;.&quot;</span> <span class="p">,</span> <span class="k">DIGIT </span><span class="p">,</span> <span class="p">{</span> <span class="k">DIGIT </span><span class="p">}</span> <span class="p">,</span> <span class="s2">&quot;.&quot;</span> <span class="p">,</span> <span class="k">DIGIT </span><span class="p">,</span> <span class="p">{</span> <span class="k">DIGIT </span><span class="p">}</span> <span class="p">;</span>
+</code></pre></div>
+<hr />
+<h2 id="interaction-with-existing-spec">Interaction with Existing Spec<a class="headerlink" href="#interaction-with-existing-spec" title="Permanent link">&para;</a></h2>
+<h3 id="permission-scoping">Permission Scoping<a class="headerlink" href="#permission-scoping" title="Permanent link">&para;</a></h3>
+<p>Scope grammar can optionally incorporate the definer:</p>
+<div class="highlight"><pre><span></span><code># Existing scope format
+POST:slack.gimme.tools/message.*
+
+# Extended scope format (optional — Tier 1+)
+POST[SEND]:slack.gimme.tools/message.*
+POST[CREATE]:slack.gimme.tools/channels.*
+</code></pre></div>
+<p>This allows tokens to be scoped not just to a method and path, but to a <strong>specific intent</strong>. A token with scope <code>POST[SEND]:slack.gimme.tools/message.*</code> cannot be used to <code>POST[INVOKE]</code> a webhook on the same path.</p>
+<h3 id="method-tokenization">METHOD Tokenization<a class="headerlink" href="#method-tokenization" title="Permanent link">&para;</a></h3>
+<p>Definer verbs in the <code>X-Gimme-Definer</code> header are <strong>exempt</strong> from tokenization — they are in a verb position (the header), not a data position (the payload). The METHOD tokenization invariant becomes:</p>
+<blockquote>
+<p>Exactly ONE raw HTTP METHOD in the request line. Exactly ONE definer verb in the <code>X-Gimme-Definer</code> header (for PUT/POST/PATCH). Zero untokenized METHOD-like strings in the payload.</p>
+</blockquote>
+<h3 id="token-structure">Token Structure<a class="headerlink" href="#token-structure" title="Permanent link">&para;</a></h3>
+<p>JWTs may include a <code>definers</code> claim restricting which definers a token may use:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;sub&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user-123&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;aud&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slack.gimme.tools&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;scope&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;POST:slack.gimme.tools/message.*&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;definers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;POST&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;SEND&quot;</span><span class="p">]},</span>
+<span class="w">  </span><span class="nt">&quot;exp&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1702603600</span>
+<span class="p">}</span>
+</code></pre></div>
+<hr />
+<h2 id="implementation-notes">Implementation Notes<a class="headerlink" href="#implementation-notes" title="Permanent link">&para;</a></h2>
+<h3 id="client-libraries">Client Libraries<a class="headerlink" href="#client-libraries" title="Permanent link">&para;</a></h3>
+<p>Tier 1 is trivially implementable in any HTTP client — it is a single header.</p>
+<p>Tier 2 requires HMAC-SHA256, available in every language's standard library.</p>
+<p>Tier 3 requires:
+- The verb atlas (shipped as a versioned JSON/YAML file)
+- A NumPy-equivalent for matrix operations (or a pre-computed lookup table for small atlases)
+- Nonce generation (monotonic counter or timestamp + counter)</p>
+<p>For environments where matrix operations are impractical (embedded, shell scripts), a <strong>simplified Tier 3</strong> can use a pre-computed rotation table:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Pre-computed rotations for SEND at nonce % 8</span>
+<span class="nt">SEND_rotations</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">0</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DISPATCH</span>
+<span class="w">  </span><span class="nt">1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TRANSMIT</span>
+<span class="w">  </span><span class="nt">2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RELAY</span>
+<span class="w">  </span><span class="nt">3</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FORWARD</span>
+<span class="w">  </span><span class="nt">4</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CONVEY</span>
+<span class="w">  </span><span class="nt">5</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DELIVER</span>
+<span class="w">  </span><span class="nt">6</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ROUTE</span>
+<span class="w">  </span><span class="nt">7</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">EMIT</span>
+</code></pre></div>
+<p>The nonce modulo table-size selects the rotation. Less secure than full POS rotation (only 8 possible values) but still non-static and trivial to implement. The HMAC bookend (Tier 2) provides the primary tamper protection; the rotation adds unpredictability.</p>
+<h3 id="performance">Performance<a class="headerlink" href="#performance" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Added Latency</th>
+<th>Added Bandwidth</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tier 1</td>
+<td>~0 (one set lookup)</td>
+<td>~20 bytes (header)</td>
+</tr>
+<tr>
+<td>Tier 2</td>
+<td>~1 microsecond (HMAC over 32 bytes)</td>
+<td>~30 bytes (header with hash)</td>
+</tr>
+<tr>
+<td>Tier 3</td>
+<td>~50 microseconds (matrix multiply + nearest-neighbor over ~30 verbs)</td>
+<td>~50 bytes (header + nonce)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="open-questions">Open Questions<a class="headerlink" href="#open-questions" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p><strong>Should DELETE require a definer?</strong> DELETE is idempotent and typically has no payload, but definers like <code>REMOVE</code> / <code>REVOKE</code> / <code>ARCHIVE</code> could clarify intent. Currently excluded for simplicity.</p>
+</li>
+<li>
+<p><strong>Atlas update cadence?</strong> The verb atlas should be stable (verbs don't change often), but new service integrations may introduce domain-specific verbs. Versioning handles this, but frequent updates create client/server skew.</p>
+</li>
+<li>
+<p><strong>Interaction with HTTP/3?</strong> QUIC's multiplexed streams don't change the definer model (it operates at the request level), but nonce ordering across concurrent streams needs consideration.</p>
+</li>
+<li>
+<p><strong>Should the bookend HMAC cover more than 16+16 bytes?</strong> 32 bytes total catches boundary attacks. A configurable <code>X-Gimme-Bookend-Depth</code> header could allow clients to request deeper coverage at the cost of more I/O.</p>
+</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,8 +1,8 @@
 site_name: WebSpec
 site_description: A protocol specification for tool invocation that meshes with web architecture
 site_url: https://webspec.gimme.tools
-repo_url: https://github.com/psentro/webspec
-repo_name: I-m-A-g-I-n-E/webspec
+repo_url: https://github.com/I-m-A-g-I-n-E/WebSpec
+repo_name: I-m-A-g-I-n-E/WebSpec
 edit_uri: edit/main/docs/
 
 theme:
@@ -21,13 +21,28 @@ theme:
         icon: material/brightness-7
         name: Switch to dark mode
   features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tabs
     - navigation.sections
     - navigation.expand
     - navigation.indexes
     - navigation.top
+    - navigation.footer
+    - navigation.path
     - toc.follow
     - search.suggest
+    - search.highlight
+    - search.share
     - content.action.edit
+    - content.code.copy
+
+plugins:
+  - search
+  - git-revision-date-localized:
+      enable_creation_date: true
+  - minify:
+      minify_html: true
 
 markdown_extensions:
   - tables

@@ -32,10 +32,17 @@ def build_page_map(nav: list, docs_dir: Path, section_title: str = "") -> dict:
 
     for item in nav:
         if isinstance(item, str):
-            # Top-level page like "index.md"
+            # Bare path like "philosophy/index.md" (no explicit title)
             src = item
             if src == "index.md":
                 page_map[src] = ("Home", "Home")
+            elif src.endswith("/index.md") and section_title:
+                # Section index inherits section title
+                page_map[src] = (slugify(section_title), section_title)
+            elif section_title:
+                title = Path(src).stem.replace("-", " ").title()
+                wiki_name = f"{slugify(section_title)}---{slugify(title)}"
+                page_map[src] = (wiki_name, title)
             else:
                 title = Path(src).stem.replace("-", " ").title()
                 page_map[src] = (slugify(title), title)
@@ -48,7 +55,7 @@ def build_page_map(nav: list, docs_dir: Path, section_title: str = "") -> dict:
                     if src == "index.md":
                         page_map[src] = ("Home", "Home")
                     elif src.endswith("/index.md"):
-                        # Section index -> use section title
+                        # Section index -> use nav title
                         page_map[src] = (slugify(title), title)
                     elif section_title:
                         wiki_name = f"{slugify(section_title)}---{slugify(title)}"
@@ -115,28 +122,35 @@ def rewrite_links(content: str, current_src: str, page_map: dict) -> str:
     return re.sub(r"(?<!!)\[([^\]]+)\]\(([^)]+)\)", replace_link, content)
 
 
-def generate_sidebar(nav: list, page_map: dict, indent: int = 0) -> str:
+def generate_sidebar(nav: list, page_map: dict, indent: int = 0,
+                     skip_indexes: bool = False) -> str:
     """Generate _Sidebar.md from nav structure."""
     lines = []
     prefix = "  " * indent
 
     for item in nav:
         if isinstance(item, str):
+            # Skip section index pages (already shown as section header)
+            if skip_indexes and item.endswith("/index.md"):
+                continue
             if item in page_map:
-                wiki_name, title = page_map[item]
-                lines.append(f"{prefix}* [[{wiki_name}|{title}]]")
+                wiki_name, display_title = page_map[item]
+                lines.append(f"{prefix}* [[{wiki_name}|{display_title}]]")
 
         elif isinstance(item, dict):
             for title, value in item.items():
                 if isinstance(value, str):
+                    # Skip section index pages shown as dict entries
+                    if skip_indexes and value.endswith("/index.md"):
+                        continue
                     if value in page_map:
-                        wiki_name, display = page_map[value]
+                        wiki_name, _ = page_map[value]
                         lines.append(f"{prefix}* [[{wiki_name}|{title}]]")
                     else:
                         lines.append(f"{prefix}* {title}")
 
                 elif isinstance(value, list):
-                    # Section header - check if first child is an index
+                    # Section header - find the index page
                     first_child = value[0] if value else None
                     section_page = None
 
@@ -154,7 +168,12 @@ def generate_sidebar(nav: list, page_map: dict, indent: int = 0) -> str:
                     else:
                         lines.append(f"{prefix}* **{title}**")
 
-                    lines.append(generate_sidebar(value, page_map, indent + 1))
+                    # Recurse into children, skipping the index page
+                    child_sidebar = generate_sidebar(
+                        value, page_map, indent + 1, skip_indexes=True
+                    )
+                    if child_sidebar:
+                        lines.append(child_sidebar)
 
     return "\n".join(lines)
 

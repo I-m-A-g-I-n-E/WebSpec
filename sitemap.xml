@@ -1,143 +1,143 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://webspec.gimme.tools/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/auth/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/auth/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/auth/auth-flow-overview/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/auth/auth-flow-overview/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/auth/keychain-integration/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/auth/keychain-integration/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/auth/onboarding-subdomain-provisioning/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/auth/onboarding-subdomain-provisioning/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/auth/token-structure/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/auth/token-structure/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/discovery/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/discovery/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/discovery/embedding-schema/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/discovery/embedding-schema/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/discovery/nlp-driven-resolution/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/discovery/nlp-driven-resolution/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/discovery/three-way-join/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/discovery/three-way-join/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/http-methods/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/http-methods/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/http-methods/definer-verbs/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/http-methods/definer-verbs/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/http-methods/head-options-discovery/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/http-methods/head-options-discovery/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/http-methods/method-semantics/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/http-methods/method-semantics/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/http-methods/method-tokenization/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/http-methods/method-tokenization/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/http-methods/permission-scoping/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/http-methods/permission-scoping/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/philosophy/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/philosophy/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/philosophy/permissions-as-love-grammar/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/philosophy/permissions-as-love-grammar/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/philosophy/trust-gradients-philia-model/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/philosophy/trust-gradients-philia-model/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/reference/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/reference/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/reference/comparison-with-mcp/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/reference/comparison-with-mcp/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/reference/moltbook-case-study/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/reference/moltbook-case-study/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/registration/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/registration/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/registration/domain-verification/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/registration/domain-verification/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/registration/registration-schema/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/registration/registration-schema/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/subdomain-architecture/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/subdomain-architecture/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/subdomain-architecture/cookie-token-scoping/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/subdomain-architecture/cookie-token-scoping/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/subdomain-architecture/isolation-model/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/subdomain-architecture/isolation-model/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/subdomain-architecture/local-bridge/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/subdomain-architecture/local-bridge/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/subdomain-architecture/local-service-architecture/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/subdomain-architecture/local-service-architecture/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/url-grammar/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/url-grammar/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/url-grammar/complete-grammar-ebnf/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/url-grammar/complete-grammar-ebnf/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/url-grammar/core-syntax/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/url-grammar/core-syntax/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/url-grammar/object-type-system/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/url-grammar/object-type-system/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
     <url>
-         <loc>https://webspec.gimme.tools/url-grammar/type-resolution-inference/</loc>
+         <loc>https://i-m-a-g-i-n-e.github.io/WebSpec/url-grammar/type-resolution-inference/</loc>
          <lastmod>2026-02-14</lastmod>
     </url>
 </urlset>

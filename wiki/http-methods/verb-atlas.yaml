@@ -1,0 +1,470 @@
+# =============================================================================
+# WebSpec Verb Atlas v1.0.0
+# =============================================================================
+#
+# Curated vocabulary for Tier 3 POS-Rotated Definer Verbs.
+#
+# Each canonical definer verb has 15-25 rotation candidates -- semantically
+# equivalent verbs that can substitute for the canonical in a rotated request.
+# Negative examples list verbs from OTHER families that might be confused for
+# this canonical.
+#
+# INVARIANT: No verb appears in more than one family. A verb that is a rotation
+# candidate for POST/CREATE will NEVER appear under PUT or PATCH. This is
+# enforced by construction and validated at atlas-load time.
+#
+# INVARIANT: No verb appears as a rotation candidate for more than one
+# canonical within the same family. Each verb maps to exactly one canonical.
+#
+# All verbs are UPPERCASE per WebSpec convention.
+#
+# See: definer-verbs.md, Tier 3: POS-Rotated Verbs
+# =============================================================================
+
+atlas_version: "1.0.0"
+embedding_dims: 64
+total_verbs: 302
+
+families:
+
+  # ===========================================================================
+  # POST FAMILY
+  # ===========================================================================
+  # Semantics: bringing into existence, transmitting, executing, initiating,
+  # transferring inward. POST creates new resources or triggers side effects.
+  # ===========================================================================
+
+  POST:
+    canonical: [CREATE, SEND, INVOKE, TRIGGER, UPLOAD]
+    verbs:
+
+      CREATE:
+        # Semantics: bring a new resource into existence
+        rotation_candidates:
+          - GENERATE       # produce output from a process
+          - PRODUCE        # bring forth / manufacture
+          - CONSTRUCT      # build from components
+          - BUILD          # assemble into a structure
+          - FABRICATE      # manufacture / create from raw material
+          - COMPOSE        # put together from parts (email, message)
+          - SYNTHESIZE     # combine elements into a new whole
+          - ESTABLISH      # set up / bring into being
+          - ORIGINATE      # be the source of / cause to begin
+          - SPAWN          # create a child process / instance
+          - INSTANTIATE    # create an instance of a class / template
+          - FORMULATE      # create by careful thought / design
+          - DEVISE         # plan or invent by careful thought
+          - CRAFT          # make with skill and care
+          - MINT           # create (as in minting a token or coin)
+          - AUTHOR         # create as an originator
+          - ASSEMBLE       # put together from constituent parts
+          - INITIALIZE     # set up initial state / bring into first use
+          - MATERIALIZE    # cause to appear / come into being
+          - CONCEIVE       # form an idea / bring into mental existence
+          - CONSTITUTE     # establish formally / make up
+          - MANIFEST       # make evident / bring into reality
+          - FOUND          # establish the basis of / create an organization
+          - FORM           # bring into existence by shaping
+          - ENGINEER       # design and build methodically
+        negative_examples:
+          - REPLACE        # PUT family -- full substitution, not creation
+          - OVERWRITE      # PUT family -- destruction of existing, not creation
+          - MODIFY         # PATCH family -- altering existing, not creating new
+          - APPEND         # PATCH family -- adding to existing, not creating new
+
+      SEND:
+        # Semantics: transmit data to a recipient or destination
+        rotation_candidates:
+          - DISPATCH       # send off to a destination
+          - TRANSMIT       # send from one place to another
+          - RELAY          # pass along / retransmit
+          - FORWARD        # send onward to a further destination
+          - CONVEY         # transport / communicate
+          - DELIVER        # bring to the intended recipient
+          - ROUTE          # direct along a path to a destination
+          - EMIT           # send out / produce and discharge
+          - BROADCAST      # send to many recipients simultaneously
+          - PUBLISH        # make available / send to subscribers
+          - PUSH           # send actively (as opposed to pull)
+          - EXPORT         # send data out of a system
+          - DISSEMINATE    # spread widely / distribute
+          - PROPAGATE      # transmit / spread through a medium
+          - DISTRIBUTE     # send out to multiple destinations
+          - ISSUE          # send out officially / put forth
+          - SHIP           # send / dispatch (as in shipping a feature)
+          - TRANSFER       # move from one place to another
+          - SUBMIT         # send for review / processing
+          - FUNNEL         # channel through a narrow path
+          - REMIT          # send (especially payment or data) to a recipient
+          - WIRE           # send electronically / transmit directly
+          - NOTIFY         # send a notification / alert
+          - SYNDICATE      # distribute content across outlets
+          - MULTICAST      # send to a group of recipients
+        negative_examples:
+          - SET            # PUT family -- assigning, not transmitting
+          - OVERWRITE      # PUT family -- replacing, not transmitting
+          - AMEND          # PATCH family -- correcting, not transmitting
+          - RENAME         # PATCH family -- re-identifying, not transmitting
+
+      INVOKE:
+        # Semantics: call a function, execute an operation, run a process
+        rotation_candidates:
+          - EXECUTE        # carry out / perform an operation
+          - CALL           # invoke a function or service
+          - RUN            # execute a program or process
+          - PERFORM        # carry out an action
+          - ACTIVATE       # make active / turn on
+          - ENGAGE         # begin operation / bring into service
+          - ENACT          # put into practice / carry out
+          - APPLY          # put to use / execute against
+          - SUMMON         # call forth / bring into action
+          - LAUNCH         # start / set in motion
+          - COMMENCE       # begin / start a process
+          - OPERATE        # put into action / run
+          - EXERCISE       # put into practice / make use of
+          - EFFECTUATE     # bring about / cause to happen
+          - FULFILL        # carry out / execute completely
+          - DISCHARGE      # carry out a duty or function
+          - MOBILIZE       # marshal resources / put into action
+          - INSTIGATE      # initiate / bring about
+          - FIRE           # cause to execute (fire an event)
+          - INITIATE       # begin / set going
+          - ADMINISTER     # manage the execution of
+          - UNDERTAKE      # begin / commit to performing
+          - PROSECUTE      # carry out / pursue to completion
+          - CONSUMMATE     # bring to completion / finalize execution
+          - PERPETRATE     # carry out / commit an action
+        negative_examples:
+          - REPLACE        # PUT family -- substitution, not execution
+          - MODIFY         # PATCH family -- alteration, not execution
+          - APPEND         # PATCH family -- addition, not execution
+          - SET            # PUT family -- assignment, not execution
+
+      TRIGGER:
+        # Semantics: cause an event to occur, initiate a chain reaction
+        rotation_candidates:
+          - SIGNAL         # communicate / indicate that something should happen
+          - RAISE          # bring up / cause an event or exception
+          - SPARK          # set off / cause to begin
+          - ACTUATE        # cause to act / put into mechanical action
+          - CATALYZE       # cause or accelerate a reaction / process
+          - PRECIPITATE    # cause to happen suddenly or sooner
+          - IGNITE         # set off / start a process or chain reaction
+          - STIMULATE      # cause activity / encourage a response
+          - ELICIT         # draw out / cause a response
+          - INDUCE         # bring about / cause to happen
+          - CUE            # signal the start of / prompt
+          - AWAKEN         # cause to become active / alert
+          - KINDLE         # start / arouse a process
+          - PROVOKE        # cause a reaction / stimulate
+          - ROUSE          # stir up / cause to become active
+          - ENERGIZE       # give energy to / cause to act
+          - ANIMATE        # bring to life / cause to function
+          - PROPEL         # drive forward / cause to move
+          - INCITE         # urge / stir up / cause to act
+          - SPUR           # urge into action / stimulate
+          - IMPEL          # drive / force into action
+          - GALVANIZE      # shock into action / stimulate
+          - PRIME          # prepare / make ready to fire
+          - DETONATE       # set off / cause to explode into action
+          - TRIP           # activate a mechanism / set off
+        negative_examples:
+          - OVERWRITE      # PUT family -- replacement, not event initiation
+          - AMEND          # PATCH family -- correction, not event initiation
+          - REPLACE        # PUT family -- substitution, not event initiation
+          - RENAME         # PATCH family -- re-identification, not event initiation
+          - SET            # PUT family -- assignment, not event initiation
+
+      UPLOAD:
+        # Semantics: transfer data inward, load content into the system
+        rotation_candidates:
+          - IMPORT         # bring data into a system from external source
+          - INGEST         # take in and absorb data
+          - LOAD           # place data into a system / memory
+          - DEPOSIT        # put into storage / place for safekeeping
+          - ATTACH         # connect / fasten a file to a message
+          - SUPPLY         # provide / furnish with data
+          - FEED           # provide input to a system or process
+          - INJECT         # introduce into a system or pipeline
+          - INSERT         # put data into a system or structure
+          - INTRODUCE      # bring in / put into use for the first time
+          - INFUSE         # pour in / fill with
+          - INPUT          # enter data into a system
+          - FURNISH        # provide / supply with
+          - PROVISION      # supply / equip with resources
+          - STAGE          # prepare / place in a staging area
+          - STREAM         # transmit continuously / flow in
+          - INTAKE         # take in / receive into a system
+          - ABSORB         # take in / incorporate
+          - CAPTURE        # take and store / record
+          - ACQUIRE        # obtain / gain possession of data
+        negative_examples:
+          - REPLACE        # PUT family -- overwriting, not loading new data in
+          - OVERWRITE      # PUT family -- destruction of existing, not ingestion
+          - MODIFY         # PATCH family -- changing existing, not loading new
+          - SET            # PUT family -- assignment, not file transfer
+
+
+  # ===========================================================================
+  # PUT FAMILY
+  # ===========================================================================
+  # Semantics: full replacement, total assignment, destructive overwrite.
+  # PUT replaces the entire resource. There is no partial update -- the new
+  # representation IS the resource after the operation.
+  # ===========================================================================
+
+  PUT:
+    canonical: [REPLACE, OVERWRITE, SET]
+    verbs:
+
+      REPLACE:
+        # Semantics: remove existing resource and put a new one in its place
+        rotation_candidates:
+          - SUPPLANT       # take the place of / supersede
+          - SUPERSEDE      # take the place of something formerly in effect
+          - DISPLACE       # move from position and take its place
+          - SWAP           # exchange one thing for another
+          - EXCHANGE       # give one thing and receive another in its place
+          - SUBSTITUTE     # put in place of another
+          - SUCCEED        # come after and take the place of
+          - TRANSPLANT     # move and reestablish in a new location
+          - SWITCH         # change from one to another
+          - COMMUTE        # exchange / substitute
+          - TRADE          # exchange one for another
+          - TRANSPOSE      # interchange / put each in the place of the other
+          - RECONSTITUTE   # reconstruct / build again from components
+          - REWRITE        # write again / produce a new version entirely
+          - REMAKE         # make again / produce a new version of
+          - REDO           # do again / replace the previous attempt
+          - RENEW          # make new again / replace with fresh version
+          - REFRESH        # update by replacing with current state
+          - REINSTATE      # restore to former position by replacement
+          - REPLENISH      # fill again / restore to full state
+          - REPOPULATE     # populate again / fill with new data
+          - REIMAGE        # replace the system image entirely
+          - USURP          # seize and hold a position / take over
+          - REVOLVE        # cycle through / turn over to new state
+          - ROTATE         # turn over / cycle to a new position
+        negative_examples:
+          - CREATE         # POST family -- making new, not replacing existing
+          - SEND           # POST family -- transmitting, not replacing
+          - MODIFY         # PATCH family -- partial change, not full replacement
+          - APPEND         # PATCH family -- adding to, not replacing entirely
+          - AMEND          # PATCH family -- correcting part, not replacing whole
+
+      OVERWRITE:
+        # Semantics: write new data over existing data, destroying the original
+        rotation_candidates:
+          - OBLITERATE     # destroy completely and replace
+          - ECLIPSE        # surpass and effectively replace
+          - EFFACE         # erase / wipe out and write over
+          - EXPUNGE        # erase / remove completely
+          - ERADICATE      # remove completely and replace
+          - ANNIHILATE     # destroy completely (existing state)
+          - CLOBBER        # overwrite aggressively (common in technical use)
+          - SQUASH         # crush / flatten existing (as in squash a branch)
+          - FLATTEN        # reduce to single layer / overwrite structure
+          - STOMP          # overwrite forcefully (stomp on existing data)
+          - BLANKET        # cover entirely / overlay completely
+          - SMOTHER        # cover completely / suppress existing
+          - OVERLAY        # place over / cover the existing
+          - PAVE           # cover over / lay a new surface over existing
+          - PLASTER        # cover over / coat completely
+          - FLOOD          # fill completely / overwhelm existing
+          - SATURATE       # fill completely to capacity
+          - INUNDATE       # overwhelm / flood with new data
+          - PURGE          # clear out completely to make way for new
+          - WIPE           # erase / clean existing data
+          - SCRUB          # clean thoroughly / remove existing
+          - CLEAR          # remove all existing content
+          - FLUSH          # clear out / empty and refill
+          - NULLIFY        # render existing state void / invalidate
+          - VOID           # make empty / cancel existing state
+        negative_examples:
+          - CREATE         # POST family -- new creation, not destructive write
+          - SEND           # POST family -- transmission, not destruction
+          - INVOKE         # POST family -- execution, not data destruction
+          - APPEND         # PATCH family -- additive, opposite of destructive
+          - MODIFY         # PATCH family -- partial change, not total destruction
+
+      SET:
+        # Semantics: assign a value definitively, total state assignment
+        rotation_candidates:
+          - ASSIGN         # give a value / allocate definitively
+          - DESIGNATE      # officially assign / appoint
+          - DEFINE         # state the precise meaning or value of
+          - DETERMINE      # fix conclusively / settle
+          - PRESCRIBE      # lay down as a rule / specify
+          - DICTATE        # state with authority / command a value
+          - STIPULATE      # specify as a requirement / demand
+          - DECREE         # order authoritatively / command
+          - ORDAIN         # order / decree officially
+          - FIX            # make firm / set in position
+          - PIN            # fasten / fix in place
+          - ANCHOR         # fix firmly / secure
+          - LOCK           # fix in position / make immutable
+          - CEMENT         # fix firmly / make permanent
+          - PLANT          # place firmly / set in position
+          - EMBED          # fix firmly in a surrounding mass
+          - CONFIGURE      # set up / arrange settings
+          - CALIBRATE      # set precisely / adjust to a standard
+          - REGULATE       # set according to a rule / control
+          - STANDARDIZE    # set to a standard / make uniform
+          - NORMALIZE      # set to a normal state / standard form
+          - EQUATE         # set as equal / assign equivalence
+          - ALLOCATE       # assign / set aside for a purpose
+          - DEDICATE       # assign to a particular purpose
+          - IMPOSE         # set / apply by authority
+        negative_examples:
+          - CREATE         # POST family -- making new, not assigning value
+          - TRIGGER        # POST family -- initiating event, not assigning
+          - MODIFY         # PATCH family -- partial change, not total assignment
+          - AMEND          # PATCH family -- correction, not total assignment
+          - RENAME         # PATCH family -- identifier change only, not full set
+
+
+  # ===========================================================================
+  # PATCH FAMILY
+  # ===========================================================================
+  # Semantics: partial update, incremental change, correction, addition to
+  # existing. PATCH modifies part of a resource without replacing the whole.
+  # ===========================================================================
+
+  PATCH:
+    canonical: [MODIFY, APPEND, AMEND, RENAME]
+    verbs:
+
+      MODIFY:
+        # Semantics: change part of a resource, alter without full replacement
+        rotation_candidates:
+          - ADJUST         # alter slightly / fine-tune
+          - ALTER          # change in character or composition
+          - REVISE         # reconsider and change / update
+          - UPDATE         # bring up to date / modify with new info
+          - EDIT           # make changes to / revise
+          - REFINE         # improve by making small changes
+          - TWEAK          # make fine adjustments to
+          - TUNE           # adjust for optimal performance
+          - ADAPT          # modify to suit new conditions
+          - TAILOR         # modify to fit specific requirements
+          - CUSTOMIZE      # modify to individual specifications
+          - RESHAPE        # give new form to part of
+          - REWORK         # modify / make changes to improve
+          - RETOUCH        # make minor modifications to improve
+          - RECALIBRATE    # adjust again / modify calibration
+          - MODULATE       # adjust / vary in degree
+          - TEMPER         # modify / moderate
+          - ATTENUATE      # reduce / diminish partially
+          - OPTIMIZE       # modify for best performance
+          - FINETUNE       # make very precise small adjustments
+          - RECONFIGURE    # modify the configuration of
+          - MUTATE         # change in form / undergo modification
+          - VARY           # change / make different in some way
+          - PERMUTE        # change the arrangement of
+          - TRANSFORM      # change the form or nature of partially
+        negative_examples:
+          - REPLACE        # PUT family -- total replacement, not partial change
+          - OVERWRITE      # PUT family -- destructive, not incremental
+          - SET            # PUT family -- total assignment, not partial
+          - CREATE         # POST family -- new creation, not modification
+          - SEND           # POST family -- transmission, not modification
+
+      APPEND:
+        # Semantics: add to the end of, extend, augment existing content
+        rotation_candidates:
+          - EXTEND         # make longer / add to
+          - AUGMENT        # make greater by addition
+          - SUPPLEMENT     # add to / provide what is missing
+          - EXPAND         # make larger / increase scope
+          - ENLARGE        # make bigger / add to
+          - AMPLIFY        # increase / make more extensive
+          - ENRICH         # improve by adding
+          - BOLSTER        # support / strengthen by adding to
+          - ENHANCE        # increase / improve by adding
+          - FORTIFY        # strengthen by adding elements
+          - REINFORCE      # strengthen by adding support
+          - ACCRUE         # accumulate / add incrementally over time
+          - ACCUMULATE     # gather / add up over time
+          - AGGREGATE      # collect / gather into a mass
+          - CONCATENATE    # link together / add end to end
+          - TACK           # add / attach to the end
+          - ANNEX          # add / attach as a supplement
+          - ADJOIN         # attach / add next to
+          - AFFIX          # attach / add to
+          - SUFFIX         # add to the end
+          - TAG            # add a label / attach metadata
+          - ANNOTATE       # add notes or commentary to
+          - DECORATE       # add ornamentation / metadata to
+          - GARNISH        # add supplementary elements
+          - LAYER          # add on top of existing
+        negative_examples:
+          - REPLACE        # PUT family -- replaces entirely, does not add to
+          - OVERWRITE      # PUT family -- destroys existing, does not extend
+          - CREATE         # POST family -- new resource, not adding to existing
+          - UPLOAD         # POST family -- loading new content in, not extending
+          - SET            # PUT family -- total assignment, not addition
+
+      AMEND:
+        # Semantics: correct, fix, revise -- change to make right
+        rotation_candidates:
+          - CORRECT        # make right / fix an error
+          - RECTIFY        # put right / correct
+          - REPAIR         # fix / restore to working condition
+          - REMEDY         # correct / set right
+          - REDRESS        # set right / remedy
+          - RECONCILE      # bring into agreement / resolve discrepancy
+          - HARMONIZE      # bring into agreement / make consistent
+          - RESOLVE        # settle / find solution to
+          - CLARIFY        # make clear / remove ambiguity
+          - SANITIZE       # clean / remove unwanted elements
+          - VALIDATE       # confirm / make valid
+          - REHABILITATE   # restore to proper condition
+          - RENOVATE       # restore to good condition by updating
+          - OVERHAUL       # examine and repair / update thoroughly
+          - MEND           # repair / fix
+          - HEAL           # restore to health / fix
+          - CURE           # fix / resolve a problem
+          - DEBUG          # find and fix errors in
+          - TROUBLESHOOT   # identify and fix problems
+          - CLEAN          # remove errors / unwanted data
+          - POLISH         # refine / improve by small corrections
+          - STRAIGHTEN     # make correct / put in order
+        negative_examples:
+          - REPLACE        # PUT family -- full replacement, not targeted fix
+          - OVERWRITE      # PUT family -- destroy and rewrite, not correct
+          - CREATE         # POST family -- new resource, not fixing existing
+          - INVOKE         # POST family -- execution, not correction
+          - SET            # PUT family -- total assignment, not correction
+
+      RENAME:
+        # Semantics: change the identifier, label, or name of a resource
+        rotation_candidates:
+          - RELABEL        # change the label of
+          - RETITLE        # give a new title to
+          - REBRAND        # give a new brand / identity to
+          - RECHRISTEN     # give a new name to
+          - REDESIGNATE    # assign a new designation to
+          - RECLASSIFY     # assign to a different class / category
+          - RETAG          # assign a new tag / identifier
+          - REINDEX        # assign a new index / position
+          - REMAP          # assign to a different mapping
+          - REASSIGN       # assign to a different owner / category
+          - REIDENTIFY     # give a new identity to
+          - ALIAS          # create an alternative name for
+          - REBADGE        # change the badge / identifier of
+          - RECATEGORIZE   # change the category of
+          - REFILE         # file under a new name / location
+          - REKEY          # change the key / identifier of
+          - RECODE         # change the code / encoding of
+          - REREGISTER     # register again under a new name
+          - REDIRECT       # point to a new destination / name
+          - REPOINT        # point to a new reference
+          - REBIND         # bind to a new name / reference
+          - RELINK         # link to a new target
+          - REWIRE         # connect to a new destination
+        negative_examples:
+          - REPLACE        # PUT family -- full replacement, not just renaming
+          - CREATE         # POST family -- making new, not renaming existing
+          - SEND           # POST family -- transmitting, not renaming
+          - OVERWRITE      # PUT family -- destroying, not renaming
+          - TRIGGER        # POST family -- initiating, not renaming

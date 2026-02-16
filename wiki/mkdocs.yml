@@ -1,0 +1,88 @@
+site_name: WebSpec
+site_description: A protocol specification for tool invocation that meshes with web architecture
+site_url: https://webspec.gimme.tools
+repo_url: https://github.com/psentro/webspec
+repo_name: psentro/webspec
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - toc.follow
+    - search.suggest
+    - content.action.edit
+
+markdown_extensions:
+  - tables
+  - admonitions
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - attr_list
+  - def_list
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Design Philosophy:
+    - philosophy/index.md
+    - Permissions as Love Grammar: philosophy/permissions-as-love-grammar.md
+    - Trust Gradients (Philia Model): philosophy/trust-gradients-philia-model.md
+  - URL Grammar:
+    - url-grammar/index.md
+    - Core Syntax: url-grammar/core-syntax.md
+    - Object Type System: url-grammar/object-type-system.md
+    - Type Resolution & Inference: url-grammar/type-resolution-inference.md
+    - Complete Grammar (EBNF): url-grammar/complete-grammar-ebnf.md
+  - HTTP Methods:
+    - http-methods/index.md
+    - Method Semantics: http-methods/method-semantics.md
+    - Permission Scoping: http-methods/permission-scoping.md
+    - HEAD & OPTIONS Discovery: http-methods/head-options-discovery.md
+    - METHOD Tokenization: http-methods/method-tokenization.md
+    - Definer Verbs & Payload Binding: http-methods/definer-verbs.md
+  - Subdomain Architecture:
+    - subdomain-architecture/index.md
+    - Isolation Model: subdomain-architecture/isolation-model.md
+    - Cookie & Token Scoping: subdomain-architecture/cookie-token-scoping.md
+    - "local.gimme.tools Bridge": subdomain-architecture/local-bridge.md
+    - Local Service Architecture: subdomain-architecture/local-service-architecture.md
+  - Authentication:
+    - auth/index.md
+    - Auth Flow Overview: auth/auth-flow-overview.md
+    - Keychain Integration: auth/keychain-integration.md
+    - Onboarding & Provisioning: auth/onboarding-subdomain-provisioning.md
+    - Token Structure: auth/token-structure.md
+  - Service Discovery:
+    - discovery/index.md
+    - NLP-Driven Resolution: discovery/nlp-driven-resolution.md
+    - Embedding Schema: discovery/embedding-schema.md
+    - The Three-Way Join: discovery/three-way-join.md
+  - Service Registration:
+    - registration/index.md
+    - Registration Schema: registration/registration-schema.md
+    - Domain Verification: registration/domain-verification.md
+  - Reference:
+    - reference/index.md
+    - Comparison with MCP: reference/comparison-with-mcp.md
+    - "MoltBook Case Study": reference/moltbook-case-study.md

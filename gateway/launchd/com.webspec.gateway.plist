@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.webspec.gateway</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/preston/miniconda3/bin/python</string>
+        <string>-m</string>
+        <string>webspec</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/preston/MCP/webspec-gateway</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/preston/.webspec/gateway.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/preston/.webspec/gateway.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/preston/miniconda3/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>PYTHONPATH</key>
+        <string>/Users/preston/MCP/webspec-gateway</string>
+    </dict>
+</dict>
+</plist>

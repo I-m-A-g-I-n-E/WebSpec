@@ -199,3 +199,56 @@ def validate_clearance_token(
         return "clearance_invalid"
 
     return None
+
+
+@dataclass
+class ProvenanceResult:
+    valid: bool
+    origin: str  # "human", "agent", "unknown"
+    links: list[str] = field(default_factory=list)
+    error: str | None = None
+
+
+def build_provenance_link(session_key: bytes, source: str, target: str, action: str) -> str:
+    """Build a provenance link signature: HMAC(key, source->target:action) -> 4 hex chars."""
+    message = f"{source}->{target}:{action}".encode()
+    mac = hmac.new(session_key, message, hashlib.sha256).digest()
+    return mac[:4].hex()
+
+
+def validate_provenance_chain(
+    session_key: bytes, chain_header: str | None, action: str
+) -> ProvenanceResult:
+    """Validate X-UFO-Provenance header. Walks the chain and verifies each link."""
+    if not chain_header:
+        return ProvenanceResult(valid=False, origin="unknown", error="provenance_missing")
+
+    # Parse: "human:h3a9->agent:a7f2->gateway"
+    links = chain_header.split("->")
+    if not links:
+        return ProvenanceResult(valid=False, origin="unknown", error="provenance_empty")
+
+    parsed = []
+    for link in links:
+        parts = link.split(":", 1)
+        if len(parts) != 2:
+            return ProvenanceResult(valid=False, origin="unknown", error="provenance_malformed")
+        parsed.append((parts[0], parts[1]))  # (role, signature)
+
+    # Verify each link's signature
+    _implicit_next: dict[str, str] = {"human": "agent", "agent": "gateway"}
+    for i, (role, sig) in enumerate(parsed):
+        if i + 1 < len(parsed):
+            target_role = parsed[i + 1][0]
+        else:
+            target_role = _implicit_next.get(role, "gateway")  # infer next hop by role
+        expected = build_provenance_link(session_key, role, target_role, action)
+        if not hmac.compare_digest(sig.lower(), expected.lower()):
+            return ProvenanceResult(
+                valid=False, origin=parsed[0][0],
+                links=[p[0] for p in parsed], error="provenance_invalid"
+            )
+
+    return ProvenanceResult(
+        valid=True, origin=parsed[0][0], links=[p[0] for p in parsed]
+    )

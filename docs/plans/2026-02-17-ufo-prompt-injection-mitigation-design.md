@@ -10,7 +10,7 @@
 
 The guard middleware (HMAC + nonce) authenticates *callers*, but doesn't protect against the **coerced agent** attack: an LLM tricked by prompt injection into using its own valid credentials to read secrets and exfiltrate them. The guard passes because the LLM *is* the legitimate caller.
 
-## Naming: UFO (Unidentified File Object)
+## Naming: UFO (Unbounded File Object)
 
 - Data ingested from external sources (documents, emails, tool responses) is **UFO-tagged**
 - Tool calls carrying UFO arguments hit a **UFO quarantine** — held, not executed

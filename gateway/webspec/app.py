@@ -11,10 +11,11 @@ from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
-from starlette.responses import Response
+from starlette.responses import JSONResponse, Response
 from starlette.routing import Host, Route
 
-from .config import ServiceRegistry
+from .config import ServiceRegistry, get_session_key
+from .guard import GuardError, generate_nonce, validate_guard, validate_provenance_chain
 from .handlers import (
     handle_index,
     handle_service_get,
@@ -63,6 +64,41 @@ async def _service_dispatch(request: Request) -> Response:
     """Dispatch to the correct handler based on HTTP method for a service subdomain."""
     service = request.path_params.get("service", "")
     method = request.method.upper()
+    path = request.path_params.get("path", "").strip("/")
+
+    # Check if this service requires guard authentication
+    if registry is not None:
+        entry = registry.get(service)
+        if entry is not None and entry.guard:
+            # Handle /__nonce bootstrap endpoint
+            if path == "__nonce" and method == "GET":
+                return await _handle_nonce(request, service)
+
+            # Handle /__challenge endpoint for dangerous-tier human confirmation
+            if path == "__challenge" and method == "GET":
+                return await _handle_challenge(request, service)
+
+            # Enforce guard on all other requests
+            body = await request.body()
+            host = request.headers.get("host", "")
+            guard_result = validate_guard(
+                session_key=get_session_key(),
+                method=method,
+                host=host,
+                path=f"/{path}" if path else "/",
+                body=body,
+                guard_header=request.headers.get("X-WebSpec-Guard"),
+                nonce_header=request.headers.get("X-WebSpec-Nonce"),
+            )
+            if isinstance(guard_result, GuardError):
+                return JSONResponse(
+                    {"error": guard_result.error_type, "detail": guard_result.detail},
+                    status_code=guard_result.status_code,
+                )
+
+            # Store UFO headers on request state for downstream use
+            request.state.ufo_clearance = request.headers.get("X-UFO-Clearance")
+            request.state.ufo_provenance = request.headers.get("X-UFO-Provenance")
 
     if method == "HEAD":
         return await handle_service_head(request, service, pool, registry)
@@ -74,6 +110,60 @@ async def _service_dispatch(request: Request) -> Response:
         return await handle_service_mutate(request, service, pool, registry)
     else:
         return Response(status_code=405)
+
+
+async def _handle_nonce(request: Request, service: str) -> Response:
+    """Handle GET /__nonce — bootstrap a nonce with HMAC-only auth."""
+    host = request.headers.get("host", "")
+    guard_result = validate_guard(
+        session_key=get_session_key(),
+        method="GET",
+        host=host,
+        path="/__nonce",
+        body=b"",
+        guard_header=request.headers.get("X-WebSpec-Guard"),
+        nonce_header=None,
+        is_nonce_request=True,
+    )
+    if isinstance(guard_result, GuardError):
+        return JSONResponse(
+            {"error": guard_result.error_type, "detail": guard_result.detail},
+            status_code=guard_result.status_code,
+        )
+    audience = service
+    nonce_data = generate_nonce(audience)
+    return JSONResponse(nonce_data)
+
+
+async def _handle_challenge(request: Request, service: str) -> Response:
+    """Handle GET /__challenge — issue a human confirmation challenge for dangerous-tier tools."""
+    host = request.headers.get("host", "")
+    guard_result = validate_guard(
+        session_key=get_session_key(),
+        method="GET",
+        host=host,
+        path="/__challenge",
+        body=b"",
+        guard_header=request.headers.get("X-WebSpec-Guard"),
+        nonce_header=None,
+        is_nonce_request=True,  # challenge bootstrap works like nonce bootstrap
+    )
+    if isinstance(guard_result, GuardError):
+        return JSONResponse(
+            {"error": guard_result.error_type, "detail": guard_result.detail},
+            status_code=guard_result.status_code,
+        )
+
+    import secrets as _secrets
+    challenge = _secrets.token_hex(16)
+    tool = request.query_params.get("tool", "")
+    return JSONResponse({
+        "challenge": challenge,
+        "service": service,
+        "tool": tool,
+        "message": f"Confirm: execute '{tool}' on {service}?",
+        "expires_in": 30,
+    })
 
 
 async def _index_dispatch(request: Request) -> Response:

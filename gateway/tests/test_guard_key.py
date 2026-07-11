@@ -43,3 +43,11 @@ def test_no_session_key_file_created(monkeypatch, tmp_path):
     monkeypatch.setenv("WEBSPEC_GUARD_KEY", "02" * 32)
     get_session_key()
     assert not (tmp_path / ".webspec" / "session.key").exists()
+
+
+def test_whitespace_only_key_fails_closed(monkeypatch):
+    # A blank/whitespace-only key must not silently derive to sha256(b"") — a
+    # publicly-known key. It should be treated the same as missing.
+    monkeypatch.setenv("WEBSPEC_GUARD_KEY", "   ")
+    with pytest.raises(GuardKeyError):
+        get_session_key()

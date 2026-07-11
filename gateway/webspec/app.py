@@ -28,6 +28,12 @@ from .pool import ConnectionPool
 logger = logging.getLogger("webspec")
 
 
+def cors_origins() -> list[str]:
+    """Explicit CORS allowlist from WEBSPEC_CORS_ORIGINS (comma-separated). Empty by default."""
+    raw = os.environ.get("WEBSPEC_CORS_ORIGINS", "")
+    return [o.strip() for o in raw.split(",") if o.strip()]
+
+
 def _is_public_host(host: str) -> bool:
     """True if the Host header targets the configured public domain (not localhost)."""
     public_domain = os.environ.get("WEBSPEC_DOMAIN")
@@ -256,9 +262,10 @@ def create_app() -> Starlette:
         middleware=[
             Middleware(
                 CORSMiddleware,
-                allow_origins=["*"],
-                allow_methods=["*"],
-                allow_headers=["*"],
+                allow_origins=cors_origins(),
+                allow_methods=["GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH"],
+                allow_headers=["X-WebSpec-Guard", "X-WebSpec-Nonce", "X-Gimme-Definer",
+                               "X-UFO-Clearance", "X-UFO-Provenance", "Content-Type"],
             ),
         ],
         lifespan=lifespan,

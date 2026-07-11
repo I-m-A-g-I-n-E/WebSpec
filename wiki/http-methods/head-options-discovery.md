@@ -154,8 +154,8 @@ OPTIONS https://api.gimme.tools/resolve?path=/message&body=hello
 ```
 
 ```
-X-Gimme-Resolved: /message.text.slack
-X-Gimme-Alternatives: /message.text.email, /message.text.sms
+X-Gimme-Resolved: slack.gimme.tools/send_message
+X-Gimme-Alternatives: email.gimme.tools/send_email, sms.gimme.tools/send_sms
 X-Gimme-Confidence: 0.85
 ```
 

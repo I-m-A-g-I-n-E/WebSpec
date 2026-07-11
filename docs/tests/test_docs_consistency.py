@@ -1,7 +1,14 @@
 """Guard against the spec drifting from the implementation again."""
+import re
 from pathlib import Path
 
 DOCS = Path(__file__).resolve().parents[1]
+
+# Matches the banned `object.provider` path form in both its two-segment
+# (`/message.slack`) and three-segment (`/message.text.slack`) shapes.
+THREE_SEGMENT_BANNED_RE = re.compile(
+    r'/\w+\.\w+\.(slack|gdrive|email|sms|teams|gsheets|notion|discord|linear|gcal)\b'
+)
 
 
 def test_status_matrix_present():
@@ -52,3 +59,9 @@ def test_no_banned_provider_suffix_repo_wide():
                 f"{md.relative_to(DOCS)} still uses banned form {term!r} "
                 "(object.provider path is banned by url-grammar/core-syntax.md)"
             )
+        three_segment_match = THREE_SEGMENT_BANNED_RE.search(text)
+        assert three_segment_match is None, (
+            f"{md.relative_to(DOCS)} still uses banned three-segment form "
+            f"{three_segment_match.group(0)!r} "
+            "(object.type.provider path is banned by url-grammar/core-syntax.md)"
+        )

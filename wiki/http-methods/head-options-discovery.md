@@ -1,5 +1,12 @@
 # HEAD & OPTIONS Discovery
 
+> **Status: Mixed.** `HEAD` → ping and `OPTIONS` → schema dispatch are **Implemented (B)** at the
+> gateway (see `handlers.py`); the rich capability/param discovery payloads and the
+> `/collection/id` REST hierarchy shown in examples below (e.g. `/task/LIN-42`, `/message`) are
+> **Proposed (C)** — see [status matrix](../index.md#status) and [ROADMAP-C.md](../ROADMAP-C.md).
+> The path form actually served today is the MCP tool name (e.g. `send_message`), not an
+> `object.provider` path segment (banned — see [Core Syntax](../url-grammar/core-syntax.md)).
+
 Two HTTP methods enable powerful discovery patterns without custom APIs.
 
 ## HEAD - Lightweight Probing
@@ -147,8 +154,8 @@ OPTIONS https://api.gimme.tools/resolve?path=/message&body=hello
 ```
 
 ```
-X-Gimme-Resolved: /message.text.slack
-X-Gimme-Alternatives: /message.text.email, /message.text.sms
+X-Gimme-Resolved: slack.gimme.tools/send_message
+X-Gimme-Alternatives: email.gimme.tools/send_email, sms.gimme.tools/send_sms
 X-Gimme-Confidence: 0.85
 ```
 
@@ -162,7 +169,7 @@ Browsers already send `OPTIONS` for CORS pre-flight. WebSpec piggybacks:
 
 ```
 # Browser sends automatically:
-OPTIONS /message.slack
+OPTIONS /send_message
 Access-Control-Request-Method: POST
 Access-Control-Request-Headers: Authorization
 
@@ -170,7 +177,7 @@ Access-Control-Request-Headers: Authorization
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET, POST, DELETE
 Access-Control-Allow-Headers: Authorization
-X-Gimme-Scopes-Required: POST:/message.slack
+X-Gimme-Scopes-Required: POST:slack.gimme.tools/send_message
 ```
 
 One request, two purposes.

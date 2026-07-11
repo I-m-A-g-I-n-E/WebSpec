@@ -1,5 +1,5 @@
-"""Tests for webspec_registry.__main__: host binding and malformed-index
-resilience in service discovery."""
+"""Tests for webspec_registry.__main__: host binding, catalog caching, and
+malformed-index resilience in service discovery."""
 import json
 
 import webspec_registry.__main__ as registry_main
@@ -57,3 +57,51 @@ def test_discover_services_skips_entries_missing_name(monkeypatch):
     monkeypatch.setattr(registry_main.urllib.request, "urlopen", fake_urlopen)
     services = _discover_services("http://localhost:7002")
     assert services == ["mail-proton", "op-auth"]
+
+
+# --- FIX 3: cache the default catalog so endpoints don't re-harvest every request ---
+
+def test_cached_default_catalog_reuses_result_within_ttl(monkeypatch):
+    calls = {"discover": 0, "fetch": 0}
+
+    def fake_discover(gateway_url):
+        calls["discover"] += 1
+        return ["svc"]
+
+    def fake_http_fetch_tools(gateway_url):
+        def _fetch(service):
+            calls["fetch"] += 1
+            return [{"name": "do_thing", "description": "", "inputSchema": {}}]
+        return _fetch
+
+    monkeypatch.setattr(registry_main, "_discover_services", fake_discover)
+    monkeypatch.setattr(registry_main, "http_fetch_tools", fake_http_fetch_tools)
+    # Reset module-level cache state so this test is independent of ordering.
+    registry_main._cache_value = None
+    registry_main._cache_time = None
+
+    first = registry_main._cached_default_catalog()
+    second = registry_main._cached_default_catalog()
+
+    assert calls["discover"] == 1
+    assert first == second
+    assert len(first) == 1
+
+
+def test_cached_default_catalog_refreshes_after_ttl(monkeypatch):
+    calls = {"discover": 0}
+
+    def fake_discover(gateway_url):
+        calls["discover"] += 1
+        return []
+
+    monkeypatch.setattr(registry_main, "_discover_services", fake_discover)
+    monkeypatch.setattr(registry_main, "http_fetch_tools", lambda gateway_url: (lambda service: []))
+    monkeypatch.setattr(registry_main, "CATALOG_TTL", 0)  # expire immediately
+    registry_main._cache_value = None
+    registry_main._cache_time = None
+
+    registry_main._cached_default_catalog()
+    registry_main._cached_default_catalog()
+
+    assert calls["discover"] == 2

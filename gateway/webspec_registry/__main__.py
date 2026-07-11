@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 import urllib.error
 import urllib.request
 
@@ -12,6 +13,14 @@ from .app import create_registry_app
 from .catalog import harvest, http_fetch_tools
 
 logger = logging.getLogger("webspec.registry")
+
+# TTL (seconds) for the cached default catalog — see _cached_default_catalog.
+CATALOG_TTL = 60
+
+# Module-level cache state for _cached_default_catalog. Deliberately simple
+# (stdlib only, single-process): a (value, timestamp) pair guarded by TTL.
+_cache_value = None
+_cache_time = None
 
 
 def _discover_services(gateway_url: str) -> list[str]:
@@ -38,6 +47,25 @@ def _default_catalog():
     return harvest(services, http_fetch_tools(gateway_url))
 
 
+def _cached_default_catalog():
+    """TTL-cached wrapper around _default_catalog.
+
+    /resolve, /catalog, and /graph each call the catalog function on every
+    request, and the underlying harvest does blocking discovery + one HTTP
+    round-trip per service. Cache the result for CATALOG_TTL seconds so a
+    burst of requests reuses one harvest instead of re-harvesting per
+    request. A down gateway still degrades to [] (see _discover_services);
+    that empty result may itself be cached for the TTL, which is fine.
+    """
+    global _cache_value, _cache_time
+    now = time.monotonic()
+    if _cache_value is not None and _cache_time is not None and (now - _cache_time) < CATALOG_TTL:
+        return _cache_value
+    _cache_value = _default_catalog()
+    _cache_time = now
+    return _cache_value
+
+
 def _resolve_registry_host() -> str:
     """Resolve the bind host for the registry service.
 
@@ -52,7 +80,7 @@ def _resolve_registry_host() -> str:
 
 def main() -> None:
     port = int(os.environ.get("WEBSPEC_INTERNAL_PORT", "7003"))
-    app = create_registry_app(catalog_fn=_default_catalog)
+    app = create_registry_app(catalog_fn=_cached_default_catalog)
     # localhost-only for tier B (see create_registry_app note).
     uvicorn.run(app, host=_resolve_registry_host(), port=port)
 

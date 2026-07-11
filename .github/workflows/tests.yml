@@ -1,0 +1,40 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, supabase-relay, track-a, registry]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      # Installs both packages (webspec + webspec_registry) and their runtime deps.
+      - run: pip install ./gateway
+      # PyYAML lets the optional verb-atlas enrichment tests run instead of skip;
+      # it is NOT a runtime dependency (the gateway degrades gracefully without it).
+      - run: pip install pyyaml
+
+      - name: Run gateway + registry test suite
+        working-directory: gateway
+        run: python -m pytest -q
+
+      - name: Run docs consistency guard (if present)
+        run: |
+          if [ -f docs/tests/test_docs_consistency.py ]; then
+            python -m pytest -q docs/tests/test_docs_consistency.py
+          else
+            echo "docs consistency test not on this branch — skipping"
+          fi

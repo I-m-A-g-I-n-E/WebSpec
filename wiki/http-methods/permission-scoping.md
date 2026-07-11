@@ -1,5 +1,13 @@
 # Permission Scoping
 
+> **Status: Mixed.** The `METHOD:host/path` scope-matching mechanism itself is **Implemented (B)**
+> — see `gateway/webspec/permissions.py` (`fnmatch`-based `METHOD:host/path` patterns). The
+> examples below use the implementation's path form, where the path *is* the MCP tool name (e.g.
+> `send_message`, `list_messages`) rather than an `object.provider` path segment (banned — see
+> [Core Syntax](../url-grammar/core-syntax.md)). Examples with an `id`-style path segment (e.g.
+> `/task/LIN-*`) illustrate the `/collection/id` REST hierarchy, which is **Proposed (C)** — see
+> [status matrix](../index.md#status) and [ROADMAP-C.md](../ROADMAP-C.md).
+
 Because HTTP methods carry semantic meaning, permissions become simple pattern matching on `METHOD:path`.
 
 ## The Core Insight
@@ -49,7 +57,7 @@ PATH_PATTERN := glob pattern with * and **
 | Scope | Meaning |
 |---|---|
 | `GET:/message.*` | Read any message type |
-| `POST:/message.slack` | Send Slack messages only |
+| `POST:slack.gimme.tools/send_message` | Send Slack messages only |
 | `*:/file.*` | All operations on files |
 | `GET:slack.gimme.tools/*` | Read anything from Slack |
 | `DELETE:/task/LIN-*` | Delete Linear tasks only |
@@ -99,18 +107,18 @@ Six lines. Domain-agnostic. Works for any service.
 
 ```yaml
 Token scopes:
-  - "GET:/message.*"
-  - "POST:/message.slack"
+  - "GET:*.gimme.tools/list_messages"
+  - "POST:slack.gimme.tools/send_message"
 ```
 
 | Request | Check | Result |
 |---|---|---|
-| `GET /message.slack/123` | GET matches, path matches | Allowed |
-| `GET /message.email/456` | GET matches, path matches | Allowed |
-| `POST /message.slack` | POST matches, path matches | Allowed |
-| `POST /message.email` | POST matches, path doesn't match | Denied |
-| `DELETE /message.slack/123` | DELETE not in scopes | Denied |
-| `GET /file.gdrive/abc` | path doesn't match /message.\* | Denied |
+| `GET slack.gimme.tools/list_messages` | GET matches, host+path match `*.gimme.tools/list_messages` | Allowed |
+| `GET email.gimme.tools/list_messages` | GET matches, host+path match `*.gimme.tools/list_messages` | Allowed |
+| `POST slack.gimme.tools/send_message` | POST matches, host+path match `slack.gimme.tools/send_message` | Allowed |
+| `POST email.gimme.tools/send_message` | POST matches, but host doesn't match `slack.gimme.tools` | Denied |
+| `DELETE slack.gimme.tools/send_message` | DELETE not in scopes | Denied |
+| `GET gdrive.gimme.tools/upload_file` | path doesn't match `list_messages` | Denied |
 
 ---
 
@@ -177,8 +185,8 @@ scopes:
 
 # Good: requesting exactly what's needed
 scopes:
-  - "GET:/message.slack"
-  - "POST:/message.slack"
+  - "GET:slack.gimme.tools/list_messages"
+  - "POST:slack.gimme.tools/send_message"
 ```
 
 Services can reject overly broad scope requests.

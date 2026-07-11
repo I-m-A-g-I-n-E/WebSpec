@@ -1,5 +1,14 @@
 # Type Resolution & Inference
 
+> **Status: Proposed (C).** No resolver exists in the implemented gateway today — routing is
+> literal (Host header → service, path → MCP tool name). This page describes the aspirational
+> resolution chain for the full REST-hierarchy grammar (see [status
+> matrix](../index.md#status) and [ROADMAP-C.md](../ROADMAP-C.md)). Examples below use
+> `subdomain.gimme.tools/tool_name` — the implementation's path form — instead of an
+> `object.provider` path segment, which is banned (see [Core
+> Syntax](core-syntax.md)). `api.gimme.tools` denotes the (also Proposed C) LLM-routed gateway
+> used when the provider is not yet known.
+
 When parts of the URL are omitted, WebSpec applies a resolution chain to infer the missing components.
 
 ## Resolution Priority
@@ -17,11 +26,11 @@ When parts of the URL are omitted, WebSpec applies a resolution chain to infer t
 
 | Request | Resolution | Notes |
 |---------|------------|-------|
-| `POST /message.text.slack` | Fully explicit | No inference needed |
-| `POST /message.slack` | Type inferred | Default to .text |
-| `POST /message` | Provider prompted | "Via Slack, Email, or SMS?" |
-| `POST /.slack` | Object inferred | Slack's default = message |
-| `POST /` with file body | Both inferred | Analyze payload MIME type |
+| `POST slack.gimme.tools/send_message` (body has explicit `format: "text"`) | Fully explicit | No inference needed |
+| `POST slack.gimme.tools/send_message` (body has no `format` field) | Type inferred | Default to plain text |
+| `POST api.gimme.tools/send_message` | Provider prompted | "Via Slack, Email, or SMS?" |
+| `POST slack.gimme.tools/` (no tool segment) | Object inferred | Slack's default tool = `send_message` |
+| `POST api.gimme.tools/` with file body | Both inferred | Analyze payload MIME type |
 
 ---
 
@@ -90,20 +99,20 @@ When resolution cannot determine a unique target, the user is prompted:
 
 ```
 +-------------------------------------------------------+
-|  Request: POST /message                               |
+|  Request: POST api.gimme.tools/send_message            |
 |  Body: "Hello team!"                                  |
 +-------------------------------------------------------+
 |                                                       |
 |  Send via:                                            |
 |                                                       |
 |  * Slack (default)              [Send]                |
-|    /message.slack                                     |
+|    POST slack.gimme.tools/send_message                |
 |                                                       |
 |    Email                        [Send]                |
-|    /message.email                                     |
+|    POST email.gimme.tools/send_message                |
 |                                                       |
 |    SMS                          [Send]                |
-|    /message.sms                                       |
+|    POST sms.gimme.tools/send_message                  |
 |                                                       |
 +-------------------------------------------------------+
 ```
@@ -118,11 +127,11 @@ Clients can preview resolution without executing:
 
 ```bash
 # What would this resolve to?
-OPTIONS /message?body=hello
+OPTIONS api.gimme.tools/send_message?body=hello
 
 # Response:
-X-Gimme-Resolved: /message.text.slack
-X-Gimme-Alternatives: /message.text.email, /message.text.sms
+X-Gimme-Resolved: slack.gimme.tools/send_message
+X-Gimme-Alternatives: email.gimme.tools/send_message, sms.gimme.tools/send_message
 X-Gimme-Confidence: 0.85
 ```
 

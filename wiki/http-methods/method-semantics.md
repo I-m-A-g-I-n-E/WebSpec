@@ -1,5 +1,14 @@
 # Method Semantics
 
+> **Status: Mixed.** GET/POST/PUT/PATCH routing to MCP tools and the definer-verb tamper check are
+> **Implemented (B)**. The concrete path examples below use the implementation's path form — the
+> path *is* the MCP tool name (e.g. `send_message`, `create_task`) served under the provider's
+> subdomain, not an `object.provider` path segment (banned — see
+> [Core Syntax](../url-grammar/core-syntax.md)). Examples with a bare object-type path (e.g.
+> `/message`) or an `id`-style segment (e.g. `/task/LIN-42`) illustrate the `/collection/id` REST
+> hierarchy, which is **Proposed (C)** — see [status matrix](../index.md#status) and
+> [ROADMAP-C.md](../ROADMAP-C.md).
+
 HTTP methods are semantically rich but culturally underutilized. WebSpec restores their full meaning.
 
 ## The Problem
@@ -53,11 +62,11 @@ Non-idempotent creation or invocation.
 
 | Natural Language | WebSpec |
 |---|---|
-| "send this to Slack" | `POST /message.slack` |
-| "upload to Drive" | `POST /file.gdrive` |
-| "create a new task" | `POST /task.linear` |
-| "schedule a meeting" | `POST /event.gcal` |
-| "run this script" | `POST /code.local/execute` |
+| "send this to Slack" | `POST slack.gimme.tools/send_message` |
+| "upload to Drive" | `POST gdrive.gimme.tools/upload_file` |
+| "create a new task" | `POST linear.gimme.tools/create_task` |
+| "schedule a meeting" | `POST gcal.gimme.tools/create_event` |
+| "run this script" | `POST local.gimme.tools/execute_code` |
 
 **Absorbed verbs:** create, send, post, upload, add, invoke, trigger, execute, run, submit
 

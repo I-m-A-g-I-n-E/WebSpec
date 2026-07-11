@@ -1,6 +1,15 @@
 # Complete Grammar (EBNF)
 
-The complete formal grammar for WebSpec URLs in Extended Backus-Naur Form.
+The complete formal grammar for WebSpec URLs in Extended Backus-Naur Form. This is the single
+normative grammar page for the URL Grammar section — [Core Syntax](core-syntax.md) is a short
+overview that links here, and [Object Type System](object-type-system.md) holds the
+provider-by-provider collection examples.
+
+> **Status: Proposed (C).** This REST-hierarchy grammar (`/collection/id/collection/id...`, format
+> suffixes, `DELETE`) is the multi-tenant vision, not the current gateway. The implementation
+> shipping today (**Implemented (B)**) routes by subdomain + a literal path that *is* the MCP tool
+> name — see the [status matrix](../index.md#status) and [ROADMAP-C.md](../ROADMAP-C.md) for what's
+> built versus proposed.
 
 ## URL Grammar
 

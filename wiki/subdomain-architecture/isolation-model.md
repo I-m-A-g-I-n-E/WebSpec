@@ -90,9 +90,15 @@ https://slack.gimme.tools/message
 https://slack.gimme.tools/file
 
 # Bad: tools as subdomains (breaks wildcard)
-https://message.slack.gimme.tools
-https://file.slack.gimme.tools
+https://send_message.slack.gimme.tools
+https://upload_file.slack.gimme.tools
 ```
+
+> Note: the bare object-type path shown above (`/message`, `/file`) is the `/collection` form of
+> the REST hierarchy, which is **Proposed (C)**. The gateway that ships today routes by a literal
+> path that *is* the MCP tool name (e.g. `slack.gimme.tools/send_message`) — not an
+> `object.provider` path segment (banned — see [Core Syntax](../url-grammar/core-syntax.md)). See
+> the [status matrix](../index.md#status).
 
 ---
 

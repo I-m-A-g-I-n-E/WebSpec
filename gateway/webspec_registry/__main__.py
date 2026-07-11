@@ -17,6 +17,11 @@ logger = logging.getLogger("webspec.registry")
 # TTL (seconds) for the cached default catalog — see _cached_default_catalog.
 CATALOG_TTL = 60
 
+# TODO(C): _cached_default_catalog has no lock (concurrent cache-miss requests
+# can each re-harvest — thundering herd), and _default_catalog does blocking
+# urllib inside async endpoints (blocks the event loop). Move harvest
+# off-loop / add a single-flight lock. See docs/ROADMAP-C.md.
+
 # Module-level cache state for _cached_default_catalog. Deliberately simple
 # (stdlib only, single-process): a (value, timestamp) pair guarded by TTL.
 _cache_value = None

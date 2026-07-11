@@ -25,24 +25,44 @@ NOUN_CANON = {
     "vault": "vault",
 }
 
+def _exists_safe(p: Path) -> bool:
+    """Path.exists() that can never raise.
+
+    pathlib's Path.exists() only swallows ENOENT/ENOTDIR/EBADF/ELOOP
+    internally -- it does NOT swallow PermissionError (EACCES) or other
+    OSErrors (e.g. an NFS hiccup). A permission-denied ancestor directory
+    (hardened systemd sandbox, restrictive mount, etc.) can therefore make
+    .exists() raise. Since this is used purely to decide whether to
+    *attempt* loading the (optional) atlas, treat any such failure as
+    "doesn't exist" rather than letting it propagate.
+    """
+    try:
+        return p.exists()
+    except OSError:
+        return False
+
+
 def _find_atlas_path() -> Path | None:
     """Resolve the Verb Atlas YAML path, or None if it can't be found.
 
     Priority: WEBSPEC_VERB_ATLAS env var if set (used exclusively -- if it
     points nowhere, that's a definitive "not found", no fallback); otherwise
     the repo-root-relative default, then a cwd-relative default.
+
+    Never raises: all existence checks go through _exists_safe(), which
+    absorbs PermissionError/OSError from a bad or inaccessible path.
     """
     env_path = os.environ.get("WEBSPEC_VERB_ATLAS")
     if env_path:
         p = Path(env_path)
-        return p if p.exists() else None
+        return p if _exists_safe(p) else None
 
     for candidate in (
         # gateway/webspec_registry/normalize.py -> repo root is parents[2]
         Path(__file__).resolve().parents[2] / "docs" / "http-methods" / "verb-atlas.yaml",
         Path.cwd() / "docs" / "http-methods" / "verb-atlas.yaml",
     ):
-        if candidate.exists():
+        if _exists_safe(candidate):
             return candidate
     return None
 
@@ -54,19 +74,24 @@ def _load_atlas_verb_map() -> dict[str, str]:
     vocabulary organized as families -> canonical verbs -> rotation
     candidates. This enrichment is strictly optional: normalize() must work
     with only the stdlib and the hand-seeded VERB_CANON. Any reason the
-    atlas can't be loaded (PyYAML missing, file missing, malformed YAML)
-    results in an empty dict -- never a crash.
+    atlas can't be loaded (PyYAML missing, file missing, malformed YAML,
+    permission-denied path, path resolution blowing up, or anything else
+    unforeseen) results in an empty dict -- never a crash, and in
+    particular never an exception propagating out of module import.
+
+    The whole body is wrapped in one broad try/except: this is optional
+    best-effort enrichment, so ANY failure whatsoever must degrade to the
+    seed-only map, never take down the caller (catalog.py / __main__.py
+    both import this module at module scope, so a raise here is an
+    import-time crash of the whole registry).
     """
     try:
         import yaml
-    except ImportError:
-        return {}
 
-    path = _find_atlas_path()
-    if path is None:
-        return {}
+        path = _find_atlas_path()
+        if path is None:
+            return {}
 
-    try:
         with path.open("r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
         result: dict[str, str] = {}

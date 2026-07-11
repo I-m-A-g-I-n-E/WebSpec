@@ -1,4 +1,3 @@
-import pytest
 from webspec_registry.keychain import read_accounts
 
 
@@ -16,7 +15,11 @@ class FakeOp:
             "urls": [{"href": "https://platform.openai.com"}],
             "updated_at": "2026-01-01T00:00:00Z",
             # a value MUST NOT appear in output even if present here
-            "fields": [{"label": "api_key", "value": "sk-SECRET-123"}],
+            "fields": [
+                {"label": "api_key", "value": "sk-SECRET-123"},
+                # value-only field: no label, no id, must not leak the value
+                {"value": "sk-NAKED-SECRET-999"},
+            ],
         }]
 
     def read(self, *a, **k):
@@ -41,5 +44,11 @@ def test_never_surfaces_secret_values():
     op = FakeOp()
     accounts = read_accounts(op)
     blob = repr(accounts)
+    # Both labeled and naked (value-only) secrets must never appear
     assert "sk-SECRET-123" not in blob
+    assert "sk-NAKED-SECRET-999" not in blob
     assert op.read_called is False
+    # Verify the value-only field does not introduce a bogus entry carrying the value
+    # The only field that should be present is the labeled one
+    a = accounts[0]
+    assert a.fields_present == ("api_key",)

@@ -68,7 +68,7 @@ def test_cached_default_catalog_reuses_result_within_ttl(monkeypatch):
         calls["discover"] += 1
         return ["svc"]
 
-    def fake_http_fetch_tools(gateway_url):
+    def fake_http_fetch_tools(gateway_url, guard_key=None):
         def _fetch(service):
             calls["fetch"] += 1
             return [{"name": "do_thing", "description": "", "inputSchema": {}}]
@@ -96,7 +96,7 @@ def test_cached_default_catalog_refreshes_after_ttl(monkeypatch):
         return []
 
     monkeypatch.setattr(registry_main, "_discover_services", fake_discover)
-    monkeypatch.setattr(registry_main, "http_fetch_tools", lambda gateway_url: (lambda service: []))
+    monkeypatch.setattr(registry_main, "http_fetch_tools", lambda gateway_url, guard_key=None: (lambda service: []))
     monkeypatch.setattr(registry_main, "CATALOG_TTL", 0)  # expire immediately
     registry_main._cache_value = None
     registry_main._cache_time = None

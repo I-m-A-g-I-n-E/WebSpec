@@ -46,10 +46,26 @@ def _discover_services(gateway_url: str) -> list[str]:
         return []
 
 
+def _get_guard_key() -> bytes | None:
+    """Obtain the gateway's guard session key, if configured.
+
+    get_session_key() reads WEBSPEC_GUARD_KEY and fails closed (raises) if
+    absent. Catch broadly and default to None so the registry still runs
+    unauthenticated (as before) when no key is configured or webspec isn't
+    importable — guard-aware harvest is strictly additive.
+    """
+    try:
+        from webspec.config import get_session_key
+        return get_session_key()
+    except Exception:
+        return None
+
+
 def _default_catalog():
     gateway_url = os.environ.get("WEBSPEC_GATEWAY_URL", "http://localhost:7002")
     services = _discover_services(gateway_url)
-    return harvest(services, http_fetch_tools(gateway_url))
+    guard_key = _get_guard_key()
+    return harvest(services, http_fetch_tools(gateway_url, guard_key=guard_key))
 
 
 def _cached_default_catalog():

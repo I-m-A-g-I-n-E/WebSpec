@@ -163,7 +163,9 @@ class ServiceRegistry:
     """Live registry with config reload support."""
 
     def __init__(self, config_path: Path | None = None):
-        self._config_path = config_path or (Path.home() / ".claude.json")
+        if config_path is None:
+            config_path = Path(os.environ.get("WEBSPEC_CONFIG", str(Path.home() / ".claude.json")))
+        self._config_path = config_path
         self._services: dict[str, ServiceEntry] = {}
         self._mtime: float = 0.0
         self.reload()

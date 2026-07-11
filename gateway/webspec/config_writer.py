@@ -8,20 +8,26 @@ import re
 from pathlib import Path
 
 
-_CLAUDE_CONFIG = Path.home() / ".claude.json"
-_ENV_FILE = Path.home() / ".env"
+def default_config_path() -> Path:
+    """Return the ~/.claude.json path, overridable via WEBSPEC_CONFIG."""
+    return Path(os.environ.get("WEBSPEC_CONFIG", str(Path.home() / ".claude.json")))
+
+
+def default_env_path() -> Path:
+    """Return the ~/.env path, overridable via WEBSPEC_ENV_FILE."""
+    return Path(os.environ.get("WEBSPEC_ENV_FILE", str(Path.home() / ".env")))
 
 
 def _read_claude_config(path: Path | None = None) -> dict:
     """Read and parse ~/.claude.json."""
-    p = path or _CLAUDE_CONFIG
+    p = path or default_config_path()
     with open(p) as f:
         return json.load(f)
 
 
 def _write_claude_config(data: dict, path: Path | None = None) -> None:
     """Atomic write to ~/.claude.json with backup."""
-    p = path or _CLAUDE_CONFIG
+    p = path or default_config_path()
     tmp = p.with_suffix(".json.tmp")
     bak = p.with_suffix(".json.bak")
 
@@ -71,7 +77,7 @@ def add_env_var(key: str, value: str = "", path: Path | None = None) -> None:
 
     If key exists, does not overwrite (idempotent).
     """
-    p = path or _ENV_FILE
+    p = path or default_env_path()
     lines = p.read_text().splitlines() if p.exists() else []
 
     # Check if key already present
@@ -89,7 +95,7 @@ def remove_env_var(key: str, path: Path | None = None) -> None:
 
     Idempotent: removing a missing key is a no-op.
     """
-    p = path or _ENV_FILE
+    p = path or default_env_path()
     if not p.exists():
         return
 

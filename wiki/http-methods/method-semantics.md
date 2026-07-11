@@ -170,9 +170,9 @@ scopes:
 
 # WebSpec way: method + path
 scopes:
-  - "GET:/message.*"
-  - "POST:/message.*"
-  - "DELETE:/message.*"
+  - "GET:/list_messages"
+  - "POST:/send_message"
+  - "DELETE:/delete_message"
 ```
 
 See [Permission Scoping](permission-scoping.md) for details.

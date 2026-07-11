@@ -7,7 +7,7 @@ The `local.gimme.tools` subdomain bridges to `localhost:7001` on the user's mach
 > **Deployment note.** Don't confuse this proposed local-daemon port with the live reference
 > gateway's deployment: there, Caddy listens on `:7001` (fronting the Cloudflare tunnel) and
 > reverse-proxies to the actual gateway process on `:7002`. See [Domains &
-> Ports](../index.md#domains--ports).
+> Ports](../index.md#domains-ports).
 
 ## The Problem
 

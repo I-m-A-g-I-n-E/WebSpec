@@ -26,10 +26,10 @@ When parts of the URL are omitted, WebSpec applies a resolution chain to infer t
 
 | Request | Resolution | Notes |
 |---------|------------|-------|
-| `POST slack.gimme.tools/send_message` (body has explicit `format: "text"`) | Fully explicit | No inference needed |
-| `POST slack.gimme.tools/send_message` (body has no `format` field) | Type inferred | Default to plain text |
-| `POST api.gimme.tools/send_message` | Provider prompted | "Via Slack, Email, or SMS?" |
+| `POST slack.gimme.tools/send_message` | Fully explicit | Host (provider) and tool (object + action) both given — no inference needed |
 | `POST slack.gimme.tools/` (no tool segment) | Object inferred | Slack's default tool = `send_message` |
+| `GET api.gimme.tools/get_file.pdf` | Provider inferred from type | `.pdf` suffix suggests document providers (see Type -> Provider below) |
+| `POST api.gimme.tools/send_message` | Provider prompted | "Via Slack, Email, or SMS?" |
 | `POST api.gimme.tools/` with file body | Both inferred | Analyze payload MIME type |
 
 ---

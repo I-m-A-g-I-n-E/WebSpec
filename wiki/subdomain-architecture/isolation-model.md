@@ -90,8 +90,8 @@ https://slack.gimme.tools/message
 https://slack.gimme.tools/file
 
 # Bad: tools as subdomains (breaks wildcard)
-https://send_message.slack.gimme.tools
-https://upload_file.slack.gimme.tools
+send_message.slack.gimme.tools
+upload_file.slack.gimme.tools
 ```
 
 > Note: the bare object-type path shown above (`/message`, `/file`) is the `/collection` form of

@@ -31,11 +31,11 @@ WebSpec permissions:
 ```yaml
 # Universal: METHOD:path pattern
 scopes:
-  - "GET:/message.*"
-  - "POST:/message.*"
-  - "DELETE:/message.*"
-  - "GET:/file.*"
-  - "POST:/file.*"
+  - "GET:/list_messages"
+  - "POST:/send_message"
+  - "DELETE:/delete_message"
+  - "GET:/list_files"
+  - "POST:/upload_file"
 ```
 
 The permission IS the method + path. No custom vocabulary. Universal across all services.
@@ -72,9 +72,9 @@ PATH_PATTERN := glob pattern with * and **
   "sub": "user-123",
   "aud": "slack.gimme.tools",
   "scope": [
-    "GET:slack.gimme.tools/message.*",
-    "GET:slack.gimme.tools/file.*",
-    "POST:slack.gimme.tools/message.*"
+    "GET:slack.gimme.tools/list_messages",
+    "GET:slack.gimme.tools/list_files",
+    "POST:slack.gimme.tools/send_message"
   ],
   "exp": 1702600000
 }
@@ -161,10 +161,10 @@ When connecting a service, users see exactly what's being granted:
 |  Slack wants to:                                  |
 +---------------------------------------------------+
 |                                                   |
-|  GET  /message.*    Read your messages             |
-|  POST /message.*    Send messages                  |
-|  GET  /file.*       Access shared files            |
-|  DELETE /message.*  (not requested)                |
+|  GET    /list_messages     Read your messages       |
+|  POST   /send_message      Send messages            |
+|  GET    /list_files        Access shared files      |
+|  DELETE /delete_message    (not requested)          |
 |                                                   |
 |              [Authorize]  [Deny]                   |
 +---------------------------------------------------+

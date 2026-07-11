@@ -10,7 +10,9 @@ from .app import create_app
 
 
 def main() -> None:
-    port = int(os.environ.get("WEBSPEC_PORT", "7001"))
+    # WEBSPEC_INTERNAL_PORT is the gateway's listen port (behind Caddy)
+    # Falls back to WEBSPEC_PORT for backward compatibility when running without Caddy
+    port = int(os.environ.get("WEBSPEC_INTERNAL_PORT", os.environ.get("WEBSPEC_PORT", "7001")))
     log_level = os.environ.get("WEBSPEC_LOG_LEVEL", "info").lower()
 
     logging.basicConfig(

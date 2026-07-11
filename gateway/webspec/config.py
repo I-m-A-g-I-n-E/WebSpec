@@ -22,8 +22,12 @@ class ServiceEntry:
     env: dict[str, str] = field(default_factory=dict)
     # http fields
     url: str | None = None
+    # http auth headers (env vars resolved at parse time)
+    headers: dict[str, str] = field(default_factory=dict)
     # guard: require HMAC + nonce authentication
     guard: bool = False
+    # Phase 2: namespace scheme (e.g. "user", "project")
+    namespace: str | None = None
 
 
 def normalize_name(raw: str) -> str:
@@ -49,6 +53,14 @@ def normalize_name(raw: str) -> str:
     return name
 
 
+def _resolve_env(value: str) -> str:
+    """Resolve ${VAR} patterns in a string from environment variables.
+
+    Unresolvable variables are left as-is (no crash).
+    """
+    return re.sub(r'\$\{([^}]+)\}', lambda m: os.environ.get(m.group(1), m.group(0)), value)
+
+
 def parse_claude_config(path: Path | None = None) -> dict[str, ServiceEntry]:
     """Parse mcpServers from ~/.claude.json, return {normalized_name: ServiceEntry}."""
     if path is None:
@@ -70,12 +82,16 @@ def parse_claude_config(path: Path | None = None) -> dict[str, ServiceEntry]:
         guard = bool(cfg.get("guard", False))
 
         if transport_type == "http":
+            raw_headers = cfg.get("headers", {})
+            resolved_headers = {k: _resolve_env(v) for k, v in raw_headers.items()}
             entry = ServiceEntry(
                 name=name,
                 original_name=raw_name,
                 transport_type="http",
                 url=cfg["url"],
+                headers=resolved_headers,
                 guard=guard,
+                namespace=cfg.get("namespace"),
             )
         else:
             entry = ServiceEntry(

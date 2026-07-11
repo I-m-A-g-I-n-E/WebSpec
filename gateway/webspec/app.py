@@ -210,11 +210,19 @@ def create_app() -> Starlette:
         logger.info("WebSpec gateway shut down.")
 
     # Build host routes — always include localhost, optionally a public domain
+    # WEBSPEC_PORT is the public-facing port (Caddy, default 7001)
+    # WEBSPEC_INTERNAL_PORT is the gateway listen port (default 7002)
+    # Both ports are matched in Host() routes so requests work regardless of entry point
+    public_port = os.environ.get("WEBSPEC_PORT", "7001")
+    internal_port = os.environ.get("WEBSPEC_INTERNAL_PORT", "7002")
+
     routes = [
         Host("{service}.localhost", app=service_routes, name="service"),
-        Host("{service}.localhost:7001", app=service_routes, name="service_with_port"),
+        Host(f"{{service}}.localhost:{public_port}", app=service_routes, name="service_public_port"),
+        Host(f"{{service}}.localhost:{internal_port}", app=service_routes, name="service_internal_port"),
         Host("localhost", app=index_routes, name="index"),
-        Host("localhost:7001", app=index_routes, name="index_with_port"),
+        Host(f"localhost:{public_port}", app=index_routes, name="index_public_port"),
+        Host(f"localhost:{internal_port}", app=index_routes, name="index_internal_port"),
     ]
 
     # WEBSPEC_DOMAIN adds public-facing host patterns (e.g. "i-a-m.live")

@@ -7,6 +7,8 @@ Type=simple
 ExecStart=/usr/bin/python3 -m webspec
 WorkingDirectory=%h/MCP/webspec-gateway
 Environment=PYTHONPATH=%h/MCP/webspec-gateway
+Environment=WEBSPEC_PORT=7001
+Environment=WEBSPEC_INTERNAL_PORT=7002
 Restart=always
 RestartSec=3
 

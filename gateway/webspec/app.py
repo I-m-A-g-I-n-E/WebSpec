@@ -27,6 +27,16 @@ from .pool import ConnectionPool
 
 logger = logging.getLogger("webspec")
 
+
+def _is_public_host(host: str) -> bool:
+    """True if the Host header targets the configured public domain (not localhost)."""
+    public_domain = os.environ.get("WEBSPEC_DOMAIN")
+    if not public_domain:
+        return False
+    hostname = host.split(":")[0]
+    return hostname == public_domain or hostname.endswith("." + public_domain)
+
+
 # Module-level singletons (initialized in create_app)
 registry: ServiceRegistry | None = None
 pool: ConnectionPool | None = None
@@ -69,6 +79,13 @@ async def _service_dispatch(request: Request) -> Response:
     # Check if this service requires guard authentication
     if registry is not None:
         entry = registry.get(service)
+        host_header = request.headers.get("host", "")
+        if entry is not None and not entry.guard and _is_public_host(host_header):
+            return JSONResponse(
+                {"error": "unguarded_public",
+                 "detail": "Unguarded services are not exposed on the public domain."},
+                status_code=403,
+            )
         if entry is not None and entry.guard:
             # Handle /__nonce bootstrap endpoint
             if path == "__nonce" and method == "GET":

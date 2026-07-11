@@ -9,6 +9,10 @@ WorkingDirectory=%h/MCP/webspec-gateway
 Environment=PYTHONPATH=%h/MCP/webspec-gateway
 Environment=WEBSPEC_PORT=7001
 Environment=WEBSPEC_INTERNAL_PORT=7002
+# Guard key must be sourced from your password manager into this file, e.g.:
+#   echo "WEBSPEC_GUARD_KEY=$(op read 'op://WebSpec/gateway-guard/key')" > ~/.webspec/gateway.env
+# Without WEBSPEC_GUARD_KEY the gateway fails closed (guarded services return errors).
+EnvironmentFile=-%h/.webspec/gateway.env
 Restart=always
 RestartSec=3
 

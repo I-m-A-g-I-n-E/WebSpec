@@ -57,7 +57,11 @@ def _get_guard_key() -> bytes | None:
     try:
         from webspec.config import get_session_key
         return get_session_key()
-    except Exception:
+    except Exception as e:
+        # Not an error — unguarded deployments legitimately have no key. Log at
+        # debug so a genuine misconfig is still diagnosable without spamming the
+        # 60s refresh. The exception text never contains key bytes.
+        logger.debug("guard key unavailable, harvesting unauthenticated: %s", e)
         return None
 
 

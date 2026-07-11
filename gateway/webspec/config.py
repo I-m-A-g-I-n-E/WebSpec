@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
 import secrets
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
@@ -110,22 +112,53 @@ def parse_claude_config(path: Path | None = None) -> dict[str, ServiceEntry]:
 
 
 WEBSPEC_DIR = Path.home() / ".webspec"
-SESSION_KEY_PATH = WEBSPEC_DIR / "session.key"
+
+_dev_ephemeral_key: bytes | None = None
+
+
+class GuardKeyError(RuntimeError):
+    """Raised when no guard key is available and none may be safely generated."""
+
+
+def _derive_guard_key(raw: str) -> bytes:
+    """64-hex → raw 32 bytes; anything else → sha256(utf8) so any passphrase works."""
+    raw = raw.strip()
+    if len(raw) == 64:
+        try:
+            return bytes.fromhex(raw)
+        except ValueError:
+            pass
+    return hashlib.sha256(raw.encode()).digest()
 
 
 def get_session_key() -> bytes:
-    """Load or generate the 32-byte session key for bookend HMACs."""
-    WEBSPEC_DIR.mkdir(parents=True, exist_ok=True)
+    """Return the 32-byte guard key, sourced from the password manager via env.
 
-    if SESSION_KEY_PATH.exists():
-        key = SESSION_KEY_PATH.read_bytes()
-        if len(key) == 32:
-            return key
+    Populate WEBSPEC_GUARD_KEY from your vault at launch, e.g.:
+        export WEBSPEC_GUARD_KEY=$(op read "op://WebSpec/gateway-guard/key")
+    Fails closed if absent (no silent random key). Dev-only escape hatch:
+    WEBSPEC_GUARD_KEY_DEV_EPHEMERAL=1 mints an insecure in-memory key.
+    """
+    raw = os.environ.get("WEBSPEC_GUARD_KEY")
+    if raw:
+        return _derive_guard_key(raw)
 
-    key = secrets.token_bytes(32)
-    SESSION_KEY_PATH.write_bytes(key)
-    os.chmod(SESSION_KEY_PATH, 0o600)
-    return key
+    if os.environ.get("WEBSPEC_GUARD_KEY_DEV_EPHEMERAL") == "1":
+        global _dev_ephemeral_key
+        if _dev_ephemeral_key is None:
+            _dev_ephemeral_key = secrets.token_bytes(32)
+            print(
+                "WARNING: WEBSPEC_GUARD_KEY_DEV_EPHEMERAL=1 — using an insecure "
+                "in-memory guard key (dev only).",
+                file=sys.stderr,
+            )
+        return _dev_ephemeral_key
+
+    raise GuardKeyError(
+        "WEBSPEC_GUARD_KEY is not set. Source it from your password manager, e.g. "
+        "`export WEBSPEC_GUARD_KEY=$(op read 'op://WebSpec/gateway-guard/key')`. "
+        "For local dev only, set WEBSPEC_GUARD_KEY_DEV_EPHEMERAL=1."
+    )
 
 
 class ServiceRegistry:

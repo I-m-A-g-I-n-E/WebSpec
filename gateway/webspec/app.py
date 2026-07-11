@@ -27,6 +27,22 @@ from .pool import ConnectionPool
 
 logger = logging.getLogger("webspec")
 
+
+def cors_origins() -> list[str]:
+    """Explicit CORS allowlist from WEBSPEC_CORS_ORIGINS (comma-separated). Empty by default."""
+    raw = os.environ.get("WEBSPEC_CORS_ORIGINS", "")
+    return [o.strip() for o in raw.split(",") if o.strip()]
+
+
+def _is_public_host(host: str) -> bool:
+    """True if the Host header targets the configured public domain (not localhost)."""
+    public_domain = os.environ.get("WEBSPEC_DOMAIN")
+    if not public_domain:
+        return False
+    hostname = host.split(":")[0]
+    return hostname == public_domain or hostname.endswith("." + public_domain)
+
+
 # Module-level singletons (initialized in create_app)
 registry: ServiceRegistry | None = None
 pool: ConnectionPool | None = None
@@ -69,6 +85,13 @@ async def _service_dispatch(request: Request) -> Response:
     # Check if this service requires guard authentication
     if registry is not None:
         entry = registry.get(service)
+        host_header = request.headers.get("host", "")
+        if entry is not None and not entry.guard and _is_public_host(host_header):
+            return JSONResponse(
+                {"error": "unguarded_public",
+                 "detail": "Unguarded services are not exposed on the public domain."},
+                status_code=403,
+            )
         if entry is not None and entry.guard:
             # Handle /__nonce bootstrap endpoint
             if path == "__nonce" and method == "GET":
@@ -239,9 +262,10 @@ def create_app() -> Starlette:
         middleware=[
             Middleware(
                 CORSMiddleware,
-                allow_origins=["*"],
-                allow_methods=["*"],
-                allow_headers=["*"],
+                allow_origins=cors_origins(),
+                allow_methods=["GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH"],
+                allow_headers=["X-WebSpec-Guard", "X-WebSpec-Nonce", "X-Gimme-Definer",
+                               "X-UFO-Clearance", "X-UFO-Provenance", "Content-Type"],
             ),
         ],
         lifespan=lifespan,

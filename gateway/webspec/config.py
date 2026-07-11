@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import logging
 import os
 import re
 import secrets
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
+
+logger = logging.getLogger("webspec.config")
 
 
 @dataclass(frozen=True)
@@ -109,30 +114,61 @@ def parse_claude_config(path: Path | None = None) -> dict[str, ServiceEntry]:
     return registry
 
 
-WEBSPEC_DIR = Path.home() / ".webspec"
-SESSION_KEY_PATH = WEBSPEC_DIR / "session.key"
+_dev_ephemeral_key: bytes | None = None
+
+
+class GuardKeyError(RuntimeError):
+    """Raised when no guard key is available and none may be safely generated."""
+
+
+def _derive_guard_key(raw: str) -> bytes:
+    """64-hex → raw 32 bytes; anything else → sha256(utf8) so any passphrase works."""
+    raw = raw.strip()
+    if len(raw) == 64:
+        try:
+            return bytes.fromhex(raw)
+        except ValueError:
+            pass
+    return hashlib.sha256(raw.encode()).digest()
 
 
 def get_session_key() -> bytes:
-    """Load or generate the 32-byte session key for bookend HMACs."""
-    WEBSPEC_DIR.mkdir(parents=True, exist_ok=True)
+    """Return the 32-byte guard key, sourced from the password manager via env.
 
-    if SESSION_KEY_PATH.exists():
-        key = SESSION_KEY_PATH.read_bytes()
-        if len(key) == 32:
-            return key
+    Populate WEBSPEC_GUARD_KEY from your vault at launch, e.g.:
+        export WEBSPEC_GUARD_KEY=$(op read "op://WebSpec/gateway-guard/key")
+    Fails closed if absent (no silent random key). Dev-only escape hatch:
+    WEBSPEC_GUARD_KEY_DEV_EPHEMERAL=1 mints an insecure in-memory key.
+    """
+    raw = os.environ.get("WEBSPEC_GUARD_KEY")
+    if raw and raw.strip():
+        return _derive_guard_key(raw)
 
-    key = secrets.token_bytes(32)
-    SESSION_KEY_PATH.write_bytes(key)
-    os.chmod(SESSION_KEY_PATH, 0o600)
-    return key
+    if os.environ.get("WEBSPEC_GUARD_KEY_DEV_EPHEMERAL") == "1":
+        global _dev_ephemeral_key
+        if _dev_ephemeral_key is None:
+            _dev_ephemeral_key = secrets.token_bytes(32)
+            print(
+                "WARNING: WEBSPEC_GUARD_KEY_DEV_EPHEMERAL=1 — using an insecure "
+                "in-memory guard key (dev only).",
+                file=sys.stderr,
+            )
+        return _dev_ephemeral_key
+
+    raise GuardKeyError(
+        "WEBSPEC_GUARD_KEY is not set. Source it from your password manager, e.g. "
+        "`export WEBSPEC_GUARD_KEY=$(op read 'op://WebSpec/gateway-guard/key')`. "
+        "For local dev only, set WEBSPEC_GUARD_KEY_DEV_EPHEMERAL=1."
+    )
 
 
 class ServiceRegistry:
     """Live registry with config reload support."""
 
     def __init__(self, config_path: Path | None = None):
-        self._config_path = config_path or (Path.home() / ".claude.json")
+        if config_path is None:
+            config_path = Path(os.environ.get("WEBSPEC_CONFIG", str(Path.home() / ".claude.json")))
+        self._config_path = config_path
         self._services: dict[str, ServiceEntry] = {}
         self._mtime: float = 0.0
         self.reload()
@@ -143,7 +179,18 @@ class ServiceRegistry:
             self._mtime = stat.st_mtime
         except OSError:
             return
-        self._services = parse_claude_config(self._config_path)
+        try:
+            self._services = parse_claude_config(self._config_path)
+        except (OSError, ValueError) as exc:
+            # OSError covers IsADirectoryError (e.g. an empty Docker bind-mount
+            # directory where a file was expected); ValueError covers
+            # json.JSONDecodeError (malformed config). Degrade to an empty
+            # registry instead of crashing create_app() at startup.
+            logger.warning(
+                "Failed to parse config at %s (%s: %s) — using empty service registry.",
+                self._config_path, type(exc).__name__, exc,
+            )
+            self._services = {}
 
     def check_reload(self) -> bool:
         """Check if config file changed, reload if so. Returns True if reloaded."""

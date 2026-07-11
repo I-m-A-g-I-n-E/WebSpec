@@ -51,14 +51,25 @@ Tool name resolution: path segments use slash-to-underscore fallback (`/send/ema
 
 ## Running the Gateway Locally
 
+The gateway now **requires `WEBSPEC_GUARD_KEY`** in the environment and fails closed
+(`GuardKeyError`) without it — the old `~/.webspec/session.key` file is obsolete and can
+be deleted. Source the key from your password manager:
+
 ```bash
 cd ~/MCP/webspec-gateway
-WEBSPEC_DOMAIN=i-a-m.live WEBSPEC_PORT=7001 python -m webspec
+WEBSPEC_GUARD_KEY=$(op read 'op://WebSpec/gateway-guard/key') \
+  WEBSPEC_DOMAIN=i-a-m.live WEBSPEC_PORT=7001 python -m webspec
 ```
 
-Or via systemd: `systemctl --user start webspec-gateway`
+For throwaway local dev where you don't need a real guard key, use the ephemeral
+escape hatch instead: `WEBSPEC_GUARD_KEY_DEV_EPHEMERAL=1 python -m webspec` (mints an
+insecure in-memory key — do not use this on the public deployment).
 
-Environment variables: `WEBSPEC_PORT` (default 7001), `WEBSPEC_HOST` (default 0.0.0.0), `WEBSPEC_DOMAIN` (public domain for Host routing), `WEBSPEC_LOG_LEVEL` (default info).
+Or via systemd: `systemctl --user start webspec-gateway`. The unit sources
+`~/.webspec/gateway.env` (via `EnvironmentFile=-`) for `WEBSPEC_GUARD_KEY` — see
+`gateway/systemd/webspec-gateway.service` for how to populate it from your vault.
+
+Environment variables: `WEBSPEC_PORT` (default 7001), `WEBSPEC_HOST` (default 0.0.0.0), `WEBSPEC_DOMAIN` (public domain for Host routing), `WEBSPEC_LOG_LEVEL` (default info), `WEBSPEC_GUARD_KEY` (required — HMAC guard key, 64-hex or any passphrase), `WEBSPEC_GUARD_KEY_DEV_EPHEMERAL` (dev-only escape hatch, mints an insecure in-memory key).
 
 ## MCP Services
 

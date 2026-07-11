@@ -24,8 +24,8 @@ def config_file(tmp_path, monkeypatch):
     p.write_text(json.dumps(data, indent=2))
 
     # Patch config_writer to use temp file
-    monkeypatch.setattr("webspec.config_writer._CLAUDE_CONFIG", p)
-    monkeypatch.setattr("webspec.config_writer._ENV_FILE", tmp_path / ".env")
+    monkeypatch.setattr("webspec.config_writer.default_config_path", lambda: p)
+    monkeypatch.setattr("webspec.config_writer.default_env_path", lambda: tmp_path / ".env")
     (tmp_path / ".env").write_text("")
 
     # Patch caddy write to use temp dir
@@ -133,7 +133,7 @@ def test_add_with_headers(mock_health, mock_wait, mock_reload, config_file):
 @patch("webspec.ctl._health_check", return_value=True)
 def test_add_with_secrets(mock_health, mock_wait, mock_reload, config_file, tmp_path, monkeypatch):
     env_file = tmp_path / ".env"
-    monkeypatch.setattr("webspec.config_writer._ENV_FILE", env_file)
+    monkeypatch.setattr("webspec.config_writer.default_env_path", lambda: env_file)
     rc = main(["add", "secret-svc", "--type", "http", "--url", "http://x",
                "--secret", "MY_API_KEY", "--secret", "MY_SECRET"])
     assert rc == 0
@@ -170,7 +170,7 @@ def test_ls_shows_services(mock_health, config_file, capsys):
 def test_ls_empty(mock_health, tmp_path, monkeypatch, capsys):
     p = tmp_path / "claude.json"
     p.write_text(json.dumps({"mcpServers": {}}))
-    monkeypatch.setattr("webspec.config_writer._CLAUDE_CONFIG", p)
+    monkeypatch.setattr("webspec.config_writer.default_config_path", lambda: p)
     rc = main(["ls"])
     assert rc == 0
     out = capsys.readouterr().out
@@ -194,7 +194,7 @@ def test_rm_service(mock_reload, config_file, capsys):
 def test_rm_with_clean_env(mock_reload, config_file, tmp_path, monkeypatch, capsys):
     env_file = tmp_path / ".env"
     env_file.write_text("KEEP=1\nREMOVE_ME=secret\n")
-    monkeypatch.setattr("webspec.config_writer._ENV_FILE", env_file)
+    monkeypatch.setattr("webspec.config_writer.default_env_path", lambda: env_file)
     rc = main(["rm", "existing-svc", "--clean-env", "REMOVE_ME"])
     assert rc == 0
     content = env_file.read_text()

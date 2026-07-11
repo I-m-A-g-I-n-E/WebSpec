@@ -3,18 +3,27 @@
 import hashlib
 import hmac
 import json
+import os
 import time
 import urllib.request
 import urllib.error
 
-SESSION_KEY_PATH = "/home/preston/.webspec/session.key"
 BASE = "http://op-auth.localhost:7001"
 HOST = "op-auth.localhost:7001"
 
 
 def load_key():
-    with open(SESSION_KEY_PATH, "rb") as f:
-        return f.read()
+    """Load the session key from the environment variable or derive it."""
+    raw = os.environ.get("WEBSPEC_GUARD_KEY")
+    if not raw:
+        raise RuntimeError(
+            "WEBSPEC_GUARD_KEY is not set. Source it from your password manager, e.g. "
+            "`export WEBSPEC_GUARD_KEY=$(op read 'op://WebSpec/gateway-guard/key')`. "
+            "For local dev only, set WEBSPEC_GUARD_KEY_DEV_EPHEMERAL=1."
+        )
+    # Import the derivation function from config
+    from webspec.config import _derive_guard_key
+    return _derive_guard_key(raw)
 
 
 def guard_hmac(key, method, host, path, nonce, body=b""):

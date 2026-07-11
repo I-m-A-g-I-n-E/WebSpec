@@ -1,61 +1,17 @@
 # Object Type System
 
-The object type system organizes resources into standard collections with format suffixes for content negotiation.
+> **Status: Proposed (C).** This page is the examples appendix for the REST-hierarchy grammar in
+> [Complete Grammar (EBNF)](complete-grammar-ebnf.md) — collections, IDs, and format suffixes are
+> not implemented today. The current gateway routes by subdomain + literal MCP tool name; see the
+> [status matrix](../index.md#status) and [ROADMAP-C.md](../ROADMAP-C.md). Format-suffix rules
+> live in [Complete Grammar (EBNF) → Format Suffix](complete-grammar-ebnf.md#format-suffix-content-negotiation);
+> this page only holds the provider-by-provider collection tables.
 
-## Core Insight: Subdomain IS the Provider
+## Examples: Standard Collections by Provider
 
-With the clean URL design, we don't need `.provider` in the path -- the subdomain already tells us:
-
-```
-slack.gimme.tools/channels/C123/messages/M456
-      ^
-   provider is slack (no need to say it again!)
-```
-
-Format suffixes handle **how** content is returned, not **where** it comes from:
-
-```bash
-gdrive.gimme.tools/files/abc123        # native format
-gdrive.gimme.tools/files/abc123.json   # metadata as JSON
-gdrive.gimme.tools/files/abc123.md     # content as Markdown
-gdrive.gimme.tools/files/abc123.pdf    # content as PDF
-```
-
----
-
-## Format Suffixes (Content Negotiation)
-
-Format suffixes specify **how** to return content, following familiar file extension conventions:
-
-| Suffix | Purpose | Example |
-|--------|---------|---------|
-| .json | Metadata/structured data | `/files/abc.json` |
-| .pdf | PDF format | `/documents/xyz.pdf` |
-| .md | Markdown | `/pages/123.md` |
-| .html | HTML render | `/pages/123.html` |
-| .txt | Plain text | `/documents/xyz.txt` |
-| .csv | Comma-separated values | `/spreadsheets/abc.csv` |
-| .xml | XML data | `/data/records.xml` |
-| (none) | Native/default format | `/files/abc` |
-
-### Format Suffix Examples
-
-```bash
-# Get Notion page in different formats
-GET notion.gimme.tools/pages/xyz789         # native Notion format
-GET notion.gimme.tools/pages/xyz789.md      # as Markdown
-GET notion.gimme.tools/pages/xyz789.html    # as HTML
-GET notion.gimme.tools/pages/xyz789.json    # metadata only
-
-# Get Google Drive file in different formats
-GET gdrive.gimme.tools/files/abc123         # native format
-GET gdrive.gimme.tools/files/abc123.pdf     # export as PDF
-GET gdrive.gimme.tools/files/abc123.txt     # extract plain text
-```
-
----
-
-## Standard Collections by Provider
+Each provider defines its own collection hierarchy under the proposed REST-hierarchy grammar.
+Resources are organized into standard collections (channels, files, pages, issues) with format
+suffixes (`.json`, `.md`, `.pdf`) for content negotiation.
 
 ### Communication (slack, discord, teams)
 
@@ -132,37 +88,13 @@ repos:
     - contents
 ```
 
-This enables intuitive URL construction:
+This enables intuitive URL construction under the proposed grammar:
 
 ```bash
-# Navigate the hierarchy naturally
+# Navigate the hierarchy naturally (Proposed C)
 GET slack.gimme.tools/channels                            # list channels
 GET slack.gimme.tools/channels/C123                       # channel info
 GET slack.gimme.tools/channels/C123/messages              # messages in channel
 GET slack.gimme.tools/channels/C123/messages/M456         # specific message
 GET slack.gimme.tools/channels/C123/messages/M456/threads # thread replies
 ```
-
----
-
-## Conversion via Format Suffix
-
-Format suffixes enable natural conversion operations:
-
-```bash
-# Convert Notion page to Markdown
-GET notion.gimme.tools/pages/xyz789.md
-
-# Export spreadsheet as CSV
-GET gdrive.gimme.tools/files/spreadsheet123.csv
-
-# Get PDF export of a doc
-GET gdrive.gimme.tools/files/doc456.pdf
-
-# Get rendered HTML
-GET notion.gimme.tools/pages/xyz789.html
-```
-
-The format suffix tells the server **how** to return the content, leveraging each provider's native export capabilities.
-
-Each provider defines its own collection hierarchy. Resources are organized into standard collections (channels, files, pages, issues) with format suffixes (.json, .md, .pdf) for content negotiation.

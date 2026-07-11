@@ -1,20 +1,38 @@
 from __future__ import annotations
 
+import json
+import logging
 import os
+import urllib.error
+import urllib.request
 
 import uvicorn
 
 from .app import create_registry_app
 from .catalog import harvest, http_fetch_tools
 
+logger = logging.getLogger("webspec.registry")
+
+
+def _discover_services(gateway_url: str) -> list[str]:
+    """Discover service names from the gateway index.
+
+    On any connection error, JSON parse error, or value error, logs a warning
+    and returns an empty list so the registry degrades gracefully.
+    """
+    try:
+        url = gateway_url.rstrip("/") + "/"
+        with urllib.request.urlopen(url, timeout=5) as resp:
+            data = json.loads(resp.read())
+            return [s["name"] for s in data.get("services", [])]
+    except (OSError, urllib.error.URLError, json.JSONDecodeError, ValueError) as e:
+        logger.warning("registry: gateway discovery failed, degrading to empty catalog (%s)", e)
+        return []
+
 
 def _default_catalog():
     gateway_url = os.environ.get("WEBSPEC_GATEWAY_URL", "http://localhost:7002")
-    # Discover service names from the gateway index, then harvest each.
-    import json
-    import urllib.request
-    with urllib.request.urlopen(gateway_url.rstrip("/") + "/", timeout=5) as resp:
-        services = [s["name"] for s in json.loads(resp.read()).get("services", [])]
+    services = _discover_services(gateway_url)
     return harvest(services, http_fetch_tools(gateway_url))
 
 

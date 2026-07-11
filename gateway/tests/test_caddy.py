@@ -17,7 +17,7 @@ from webspec.caddy import (
 
 
 def test_generate_site_block_basic():
-    block = generate_site_block("supabase", "i-a-m.live")
+    block = generate_site_block("supabase", "i-a-m.live", guard=True)
     assert "http://supabase.localhost:7001" in block
     assert "http://supabase.i-a-m.live:7001" in block
     assert "reverse_proxy localhost:7002" in block
@@ -26,7 +26,7 @@ def test_generate_site_block_basic():
 
 
 def test_generate_site_block_custom_ports():
-    block = generate_site_block("svc", "example.com", gateway_port=9000, caddy_port=8080)
+    block = generate_site_block("svc", "example.com", gateway_port=9000, caddy_port=8080, guard=True)
     assert "http://svc.localhost:8080" in block
     assert "http://svc.example.com:8080" in block
     assert "reverse_proxy localhost:9000" in block
@@ -163,3 +163,17 @@ def test_sync_domain_and_port_customization(tmp_path):
     content = (tmp_path / "svc.caddy").read_text()
     assert "http://svc.custom.dev:8080" in content
     assert "reverse_proxy localhost:9999" in content
+
+
+def test_unguarded_block_has_no_public_host():
+    from webspec.caddy import generate_site_block
+    block = generate_site_block(name="mail-proton", domain="i-a-m.live", guard=False)
+    assert "mail-proton.localhost" in block
+    assert "mail-proton.i-a-m.live" not in block
+
+
+def test_guarded_block_has_public_host():
+    from webspec.caddy import generate_site_block
+    block = generate_site_block(name="op-auth", domain="i-a-m.live", guard=True)
+    assert "op-auth.localhost" in block
+    assert "op-auth.i-a-m.live" in block

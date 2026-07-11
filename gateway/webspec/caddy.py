@@ -59,7 +59,11 @@ def generate_site_block(
 
     Returns the Caddy config text for one service subdomain.
     """
-    hosts = f"http://{name}.localhost:{caddy_port}, http://{name}.{domain}:{caddy_port}"
+    if guard:
+        hosts = f"http://{name}.localhost:{caddy_port}, http://{name}.{domain}:{caddy_port}"
+    else:
+        # Unguarded services are localhost-only (see public-guard invariant).
+        hosts = f"http://{name}.localhost:{caddy_port}"
 
     lines = [
         f"{hosts} {{",

@@ -40,6 +40,9 @@ def http_fetch_tools(gateway_url: str):
     def _fetch(service: str) -> list[dict]:
         # The gateway serves OPTIONS /{service}/ as {"service","tools":[...]}
         url = gateway_url.rstrip("/") + "/"
+        # TODO(C): guard-aware harvesting — guarded services return 401 to unauthenticated
+        # OPTIONS and are skipped by harvest()'s except (see catalog.harvest); harvesting them
+        # requires sending the guard HMAC + nonce bootstrap. See docs/ROADMAP-C.md.
         req = urllib.request.Request(url, method="OPTIONS", headers={"Host": f"{service}.localhost"})
         with urllib.request.urlopen(req, timeout=5) as resp:
             payload = json.loads(resp.read())

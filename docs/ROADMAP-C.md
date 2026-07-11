@@ -27,6 +27,7 @@ and the design doc itself —
 - account→service linking by URL/title (keychain.py) — spec §5.2
 - noun-containment poset ordering (graph.py) — spec §5.2
 - public exposure of the registry service via ported guard middleware (app.py) — spec §3.4
+- Guard-aware catalog harvesting — guarded services (e.g. op-auth) are invisible to the unauthenticated harvester in tier B; harvesting them requires sending guard credentials (spec §4/§5)
 
 ## Notes
 

@@ -36,12 +36,22 @@ def build_graph(catalog, accounts=()) -> Graph:
     return Graph(nodes=list(nodes.values()), edges=edges)
 
 
+def _esc(s: str) -> str:
+    """Escape backslashes and quotes for DOT format."""
+    return s.replace("\\", "\\\\").replace('"', '\\"')
+
+
 def to_dot(graph: Graph) -> str:
     lines = ["digraph webspec {"]
     for nd in graph.nodes:
-        lines.append(f'  "{nd["id"]}" [label="{nd["label"]}"];')
+        esc_id = _esc(nd["id"])
+        esc_label = _esc(nd["label"])
+        lines.append(f'  "{esc_id}" [label="{esc_label}"];')
     for e in graph.edges:
-        lines.append(f'  "{e["src"]}" -> "{e["dst"]}" [label="{e["rel"]}"];')
+        esc_src = _esc(e["src"])
+        esc_dst = _esc(e["dst"])
+        esc_rel = _esc(e["rel"])
+        lines.append(f'  "{esc_src}" -> "{esc_dst}" [label="{esc_rel}"];')
     lines.append("}")
     return "\n".join(lines)
 

@@ -19,6 +19,15 @@ and the design doc itself —
 | OAuth/JWT identity, multi-tenant config & isolation, format suffixes, REST collection hierarchy, `DELETE` method — the aspirational `docs/url-grammar/*` and `docs/auth/*` surface, not needed for B | [§8 summary index](superpowers/specs/2026-07-11-webspec-roadmap-design.md#8-c-located-not-built-summary-index) |
 | De-duplicate `docs/` vs `wiki/` — they are near-identical hand-maintained mirrors; make `wiki/` generated from `docs/` (or drop it) so there is a single source of truth. **Not done in this task** — `wiki/` is left untouched here and tracked as this follow-up. | [§6, item 5 ("§6.5")](superpowers/specs/2026-07-11-webspec-roadmap-design.md#6-docs-reconciliation-track-a-deliverable) |
 
+## Registry (from the registry plan)
+
+- EmbeddingMatcher / multi-vector semantic search (matcher.py) — spec §5.1
+- recency & preference boosts, per-user history (resolver.py) — spec §5.1
+- balance/quota/liveness enrichment per provider (keychain.py) — spec §5.2
+- account→service linking by URL/title (keychain.py) — spec §5.2
+- noun-containment poset ordering (graph.py) — spec §5.2
+- public exposure of the registry service via ported guard middleware (app.py) — spec §3.4
+
 ## Notes
 
 - Every C-tier extension point above should also carry a `# TODO(C): …` marker in the nearest

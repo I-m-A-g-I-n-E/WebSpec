@@ -111,8 +111,6 @@ def parse_claude_config(path: Path | None = None) -> dict[str, ServiceEntry]:
     return registry
 
 
-WEBSPEC_DIR = Path.home() / ".webspec"
-
 _dev_ephemeral_key: bytes | None = None
 
 

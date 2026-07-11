@@ -26,7 +26,11 @@ services:
     expose:
       - "7002"
 
-  # Uncomment once the webspec_registry package is built (separate plan).
+  # The webspec_registry package IS built — this block is commented out on PURPOSE:
+  # the registry is localhost-only by design (exposes the full tool inventory) and has
+  # no Caddy route yet, so enabling it here starts a service nothing can reach. For tier
+  # B, run it on the host: `python -m webspec_registry` (see README "The registry service").
+  # Safe in-stack exposure (guard middleware / Caddy front) is a TODO(C) in docs/ROADMAP-C.md.
   # registry:
   #   build:
   #     context: ..

@@ -88,7 +88,29 @@ differently in a Dockerized deployment:
 
 ## The `registry` service
 
-The `registry` service's command (`python -m webspec_registry`) refers to a package
-that is delivered in a separate plan and is not part of this repository yet. Its block
-in `docker-compose.yml` is commented out so `docker compose up` boots today with just
-`caddy` and `gateway`. Uncomment it once `webspec_registry` lands.
+The `webspec_registry` package (semantic tool resolver + keychain poset graph) is now
+part of this repository. Its block in `docker-compose.yml` is kept **commented out on
+purpose** — not because it's unbuilt, but because of its security posture:
+
+- The registry binds **localhost only** by design (`WEBSPEC_REGISTRY_HOST`, default
+  `127.0.0.1`). It exposes your full tool inventory and, once wired, 1Password account
+  metadata, so it must not be network-exposed without an auth layer in front of it.
+- Unlike `gateway`, there is **no Caddy route** to the registry yet — safely exposing it
+  (a ported guard middleware / Caddy front) is tracked as a `TODO(C)` in
+  `docs/ROADMAP-C.md`. Enabling the commented compose block as-is would start a service
+  nothing in the stack can reach.
+
+**For tier B, run the registry on the host**, alongside the gateway, and reach it over
+loopback:
+
+```bash
+WEBSPEC_GATEWAY_URL=http://localhost:7002 python -m webspec_registry   # or: webspec-registry
+# then, from the same host only:
+curl http://127.0.0.1:7003/catalog
+curl "http://127.0.0.1:7003/resolve?q=send+a+message"
+curl "http://127.0.0.1:7003/graph?format=dot"
+```
+
+If the gateway is guarded, give the registry the guard key too
+(`WEBSPEC_GUARD_KEY=$(op read 'op://…/gateway-guard/key')`) so it can harvest guarded
+services; without it, it inventories only unguarded services and logs a debug note.

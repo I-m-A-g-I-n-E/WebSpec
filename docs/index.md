@@ -90,3 +90,23 @@ ships.
 | Service Registration | Draft |
 | Definer Verbs & Payload Binding | Draft (new) |
 | Philosophical Foundations | Conceptual (non-normative) |
+
+## Domains & Ports
+
+The spec prose on this site uses `gimme.tools` throughout — that's the intended **product**
+domain for the public, multi-tenant WebSpec service the spec describes (**Proposed (C)**). It is
+aspirational; nothing is currently deployed there.
+
+The reference implementation that actually ships today (**Implemented (B)**) runs on a different
+domain, `i-a-m.live`, in front of a two-hop local topology:
+
+```
+*.i-a-m.live  -->  Cloudflare tunnel  -->  Caddy (:7001)  -->  gateway (:7002)
+```
+
+Caddy terminates the tunnel and listens on port 7001; it reverse-proxies to the Starlette gateway
+process, which listens on port 7002. Where other pages in this spec say ".gimme.tools" or refer to
+"the gateway on localhost:7001," read that as the spec/vision domain and port — the live
+deployment fact is `i-a-m.live` via Caddy on `:7001` in front of the gateway on `:7002`. Keeping
+`gimme.tools` in the spec prose is intentional (it names the product this spec is designing
+toward); this section is a clarifying note, not a rename.

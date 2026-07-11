@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
 import secrets
@@ -11,6 +12,8 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
+
+logger = logging.getLogger("webspec.config")
 
 
 @dataclass(frozen=True)
@@ -138,7 +141,7 @@ def get_session_key() -> bytes:
     WEBSPEC_GUARD_KEY_DEV_EPHEMERAL=1 mints an insecure in-memory key.
     """
     raw = os.environ.get("WEBSPEC_GUARD_KEY")
-    if raw:
+    if raw and raw.strip():
         return _derive_guard_key(raw)
 
     if os.environ.get("WEBSPEC_GUARD_KEY_DEV_EPHEMERAL") == "1":
@@ -176,7 +179,18 @@ class ServiceRegistry:
             self._mtime = stat.st_mtime
         except OSError:
             return
-        self._services = parse_claude_config(self._config_path)
+        try:
+            self._services = parse_claude_config(self._config_path)
+        except (OSError, ValueError) as exc:
+            # OSError covers IsADirectoryError (e.g. an empty Docker bind-mount
+            # directory where a file was expected); ValueError covers
+            # json.JSONDecodeError (malformed config). Degrade to an empty
+            # registry instead of crashing create_app() at startup.
+            logger.warning(
+                "Failed to parse config at %s (%s: %s) — using empty service registry.",
+                self._config_path, type(exc).__name__, exc,
+            )
+            self._services = {}
 
     def check_reload(self) -> bool:
         """Check if config file changed, reload if so. Returns True if reloaded."""

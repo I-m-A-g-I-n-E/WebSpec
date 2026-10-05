@@ -40,7 +40,10 @@ class ConnectionPool:
     def _create_client(self, entry: ServiceEntry) -> Client:
         """Create a FastMCP Client for the given service entry."""
         if entry.transport_type == "http":
-            transport = StreamableHttpTransport(url=entry.url)
+            transport = StreamableHttpTransport(
+                url=entry.url,
+                headers=entry.headers or None,
+            )
         else:
             transport = StdioTransport(
                 command=entry.command,

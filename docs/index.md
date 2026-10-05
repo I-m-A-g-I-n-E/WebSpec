@@ -62,7 +62,25 @@ No SDK required. No client library. No protocol translation.
 
 ## Status
 
-| Section | Status |
+WebSpec started as a much larger aspirational design than the gateway currently builds. This
+table tells you, per area, whether a section describes the live system or the roadmap. See
+[ROADMAP-C.md](ROADMAP-C.md) for the index of everything marked **Proposed (C)**.
+
+| Section | State |
+|---|---|
+| Subdomain routing (path = MCP tool name) | **Implemented (B)** |
+| HMAC guard + nonce, password-manager–sourced key | **Implemented (B)** |
+| Definer verbs | **Implemented (B)** |
+| op-auth UFO tiers | **Implemented (B)** |
+| Semantic resolution / embedding registry | Proposed (see registry package) |
+| REST collection hierarchy, format suffixes, DELETE | **Proposed (C)** |
+| OAuth/JWT, multi-tenant, keychain FaceID flow | **Proposed (C)** |
+
+Below this table, "Draft" markers on individual spec sections describe the *aspirational* design
+that section documents, not implementation status — consult the table above for what actually
+ships.
+
+| Section | Draft Status |
 |---|---|
 | URL Grammar | Draft |
 | HTTP Methods | Draft |

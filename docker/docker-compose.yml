@@ -1,0 +1,39 @@
+services:
+  caddy:
+    image: caddy:2
+    ports:
+      - "7001:7001"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/conf.d:/etc/caddy/conf.d:ro
+    depends_on: [gateway]
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    environment:
+      WEBSPEC_INTERNAL_PORT: "7002"
+      WEBSPEC_HOST: "0.0.0.0"          # inside the compose network, fronted by caddy
+      WEBSPEC_CONFIG: "/config/claude.json"
+      WEBSPEC_GUARD_KEY: "${WEBSPEC_GUARD_KEY:-}"
+      OP_GUARD_KEY_REF: "${OP_GUARD_KEY_REF:-}"
+      # Set to activate the public-guard 403 layer (only guarded services are
+      # reachable on this domain); leave empty for localhost-only operation.
+      WEBSPEC_DOMAIN: "${WEBSPEC_DOMAIN:-}"
+    volumes:
+      - ${WEBSPEC_CONFIG_HOST:-./claude.json}:/config/claude.json:ro
+    expose:
+      - "7002"
+
+  # Uncomment once the webspec_registry package is built (separate plan).
+  # registry:
+  #   build:
+  #     context: ..
+  #     dockerfile: docker/Dockerfile
+  #   command: ["python", "-m", "webspec_registry"]
+  #   environment:
+  #     WEBSPEC_INTERNAL_PORT: "7003"
+  #     WEBSPEC_GATEWAY_URL: "http://gateway:7002"
+  #   expose:
+  #     - "7003"

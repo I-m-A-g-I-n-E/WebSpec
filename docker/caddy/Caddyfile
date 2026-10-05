@@ -1,0 +1,16 @@
+# Static Caddyfile for the docker compose stack.
+#
+# This is distinct from the per-service site blocks the bare-metal `ctl`
+# tooling generates under /etc/caddy/conf.d (see gateway/webspec/caddy.py) —
+# those proxy to `localhost:7002`, which is correct only when Caddy and the
+# gateway share a network namespace (bare-metal / systemd deploy). Inside the
+# compose network, "localhost" means the caddy container itself, so this file
+# proxies to the `gateway` service by its compose DNS name instead.
+{
+    auto_https off
+    admin off
+}
+
+:7001 {
+    reverse_proxy gateway:7002
+}

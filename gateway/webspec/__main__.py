@@ -9,8 +9,15 @@ import uvicorn
 from .app import create_app
 
 
+def resolve_bind_host() -> str:
+    """Default to loopback; require an explicit override to bind all interfaces."""
+    return os.environ.get("WEBSPEC_HOST", "127.0.0.1")
+
+
 def main() -> None:
-    port = int(os.environ.get("WEBSPEC_PORT", "7001"))
+    # WEBSPEC_INTERNAL_PORT is the gateway's listen port (behind Caddy)
+    # Falls back to WEBSPEC_PORT for backward compatibility when running without Caddy
+    port = int(os.environ.get("WEBSPEC_INTERNAL_PORT", os.environ.get("WEBSPEC_PORT", "7001")))
     log_level = os.environ.get("WEBSPEC_LOG_LEVEL", "info").lower()
 
     logging.basicConfig(
@@ -23,7 +30,7 @@ def main() -> None:
 
     uvicorn.run(
         app,
-        host=os.environ.get("WEBSPEC_HOST", "0.0.0.0"),
+        host=resolve_bind_host(),
         port=port,
         log_level=log_level,
     )

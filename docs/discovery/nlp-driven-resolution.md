@@ -2,6 +2,12 @@
 
 Natural language requests are resolved to WebSpec routes through semantic understanding, not keyword matching.
 
+> **Status: Proposed (C).** This resolution pipeline is not implemented — the gateway currently
+> routes deterministically by subdomain and literal path. In the current implementation the path
+> segment *is* the MCP tool name (e.g. `send_message`, `send_email`); there is no NLP extraction,
+> embedding search, or ranking step. The `/collection/id` REST-hierarchy form shown below is itself
+> Proposed (C) — see [Complete Grammar (EBNF)](../url-grammar/complete-grammar-ebnf.md).
+
 ## The Flow
 
 ```
@@ -39,9 +45,9 @@ Natural language requests are resolved to WebSpec routes through semantic unders
                               |
                               v
                   +-----------------------+
-                  | 1. POST /message.slack|
-                  | 2. POST /message.email|
-                  | 3. POST /message.sms  |
+                  | 1. POST /send_message |
+                  | 2. POST /send_email   |
+                  | 3. POST /send_sms     |
                   +-----------+-----------+
                               |
                      5. User Confirmation

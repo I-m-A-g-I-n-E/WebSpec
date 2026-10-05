@@ -13,6 +13,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
+from .hostgrammar import is_label
+from .methods import parse_level
+
 logger = logging.getLogger("webspec.config")
 
 
@@ -29,10 +32,24 @@ class ServiceEntry:
     url: str | None = None
     # http auth headers (env vars resolved at parse time)
     headers: dict[str, str] = field(default_factory=dict)
-    # guard: require HMAC + nonce authentication
+    # guard: require HMAC + nonce authentication (always true when level >= 1)
     guard: bool = False
     # Phase 2: namespace scheme (e.g. "user", "project")
     namespace: str | None = None
+    # Security level 0-4 (docs/http-methods/method-profiles.md). Raw config value in;
+    # normalized to an int by __post_init__ (absent → 1 if guard else 0; invalid → 4).
+    level: int | None = None
+    # Operator per-tool contract overrides: {tool_name: {read_only, destructive, idempotent,
+    # open_world, tier}}. Authoritative over the server's annotations (may loosen).
+    tools: dict[str, dict] = field(default_factory=dict)
+    # Allowed qualifier labels left of this destination (hostgrammar.py), in canonical order.
+    labels: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        # One source of truth: guard <=> level >= 1. Take the stricter of the two.
+        level = parse_level(self.level, guard=self.guard, service=self.name)
+        object.__setattr__(self, "level", level)
+        object.__setattr__(self, "guard", level >= 1)
 
 
 def normalize_name(raw: str) -> str:
@@ -85,6 +102,15 @@ def parse_claude_config(path: Path | None = None) -> dict[str, ServiceEntry]:
         transport_type = cfg.get("type", "stdio")
 
         guard = bool(cfg.get("guard", False))
+        level = cfg.get("level")  # normalized once, in ServiceEntry.__post_init__
+        # Kept verbatim: a malformed value fails closed in methods.effective_contract().
+        tools = cfg.get("tools") or {}
+        raw_labels = cfg.get("labels") or []
+        if isinstance(raw_labels, list) and all(isinstance(x, str) and is_label(x) for x in raw_labels):
+            labels = tuple(raw_labels)
+        else:
+            logger.error("Service %s: 'labels' must be a list of lowercase DNS labels — allowing no qualifiers", name)
+            labels = ()
 
         if transport_type == "http":
             raw_headers = cfg.get("headers", {})
@@ -97,6 +123,9 @@ def parse_claude_config(path: Path | None = None) -> dict[str, ServiceEntry]:
                 headers=resolved_headers,
                 guard=guard,
                 namespace=cfg.get("namespace"),
+                level=level,
+                tools=tools,
+                labels=labels,
             )
         else:
             entry = ServiceEntry(
@@ -107,6 +136,9 @@ def parse_claude_config(path: Path | None = None) -> dict[str, ServiceEntry]:
                 args=cfg.get("args", []),
                 env=cfg.get("env", {}),
                 guard=guard,
+                level=level,
+                tools=tools,
+                labels=labels,
             )
 
         registry[name] = entry
@@ -184,13 +216,15 @@ class ServiceRegistry:
         except (OSError, ValueError) as exc:
             # OSError covers IsADirectoryError (e.g. an empty Docker bind-mount
             # directory where a file was expected); ValueError covers
-            # json.JSONDecodeError (malformed config). Degrade to an empty
-            # registry instead of crashing create_app() at startup.
+            # json.JSONDecodeError (malformed config). At startup, degrade to an
+            # empty registry instead of crashing create_app(). On a later reload,
+            # keep the last good registry: ~/.claude.json is rewritten often, and a
+            # half-written file must not tear every service down.
             logger.warning(
-                "Failed to parse config at %s (%s: %s) — using empty service registry.",
+                "Failed to parse config at %s (%s: %s) — %s.",
                 self._config_path, type(exc).__name__, exc,
+                "keeping the last good service registry" if self._services else "using empty service registry",
             )
-            self._services = {}
 
     def check_reload(self) -> bool:
         """Check if config file changed, reload if so. Returns True if reloaded."""

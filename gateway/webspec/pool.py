@@ -102,13 +102,6 @@ class ConnectionPool:
             pooled.tools_fetched_at = now
             return pooled.tools
 
-    async def find_tool(self, name: str, tool_name: str) -> Tool | None:
-        """Find a specific tool by name within a service."""
-        tools = await self.list_tools(name)
-        for tool in tools:
-            if tool.name == tool_name:
-                return tool
-        return None
 
     async def call_tool(
         self, name: str, tool_name: str, arguments: dict | None = None, timeout: float = DEFAULT_TIMEOUT

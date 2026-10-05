@@ -1,4 +1,4 @@
-"""Entry point: python -m webspec → uvicorn on [::]:7001."""
+"""Entry point: python -m webspec → uvicorn on 127.0.0.1 (WEBSPEC_INTERNAL_PORT, default 7001)."""
 
 import logging
 import os
@@ -7,6 +7,7 @@ import sys
 import uvicorn
 
 from .app import create_app
+from .hardening import harden_process
 
 
 def resolve_bind_host() -> str:
@@ -26,6 +27,7 @@ def main() -> None:
         stream=sys.stderr,
     )
 
+    harden_process()
     app = create_app()
 
     uvicorn.run(
@@ -33,6 +35,9 @@ def main() -> None:
         host=resolve_bind_host(),
         port=port,
         log_level=log_level,
+        # GET carries tool arguments in the URL; the audit log records them only as
+        # hashes, so don't write them verbatim to an access log by default.
+        access_log=os.environ.get("WEBSPEC_ACCESS_LOG") == "1",
     )
 
 

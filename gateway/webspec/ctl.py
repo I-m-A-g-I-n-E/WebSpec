@@ -6,6 +6,7 @@ Usage:
     webspec-ctl health [name]
     webspec-ctl rm <name> [--clean-env]
     webspec-ctl caddy-sync
+    webspec-ctl approve [challenge.json] --key KEY
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
+from .approve_cli import add_parser as add_approve_parser, cmd_approve
 from .caddy import (
     generate_direct_site_block,
     generate_site_block,
@@ -27,6 +29,7 @@ from .caddy import (
     write_site_block,
 )
 from .config import ServiceRegistry, normalize_name
+from .methods import LEVEL_NAMES, parse_level
 from .config_writer import (
     add_env_var,
     add_service,
@@ -89,6 +92,11 @@ def cmd_add(args: argparse.Namespace) -> int:
     if name in existing and not args.force:
         print(f"Error: service '{name}' already exists (use --force to update)", file=sys.stderr)
         return 1
+
+    # Guard: explicit flag wins; --force keeps the existing setting; new services default to guarded.
+    previous = existing.get(name, {}) if isinstance(existing, dict) else {}
+    if args.guard is None:
+        args.guard = bool(previous.get("guard", False)) if previous else True
 
     # --port shorthand: expand to --type http --url http://localhost:PORT --no-guard
     if args.port:
@@ -169,6 +177,14 @@ def cmd_add(args: argparse.Namespace) -> int:
     if args.namespace:
         entry["namespace"] = args.namespace
 
+    # Security settings are never silently dropped by --force: keep the existing
+    # level / tool overrides / qualifier labels unless explicitly replaced.
+    for key in ("level", "tools", "labels"):
+        if key in previous:
+            entry[key] = previous[key]
+    if args.level is not None:
+        entry["level"] = args.level
+
     # Write config
     add_service(name, entry)
     print(f"Added service '{name}' to ~/.claude.json")
@@ -222,17 +238,18 @@ def cmd_ls(args: argparse.Namespace) -> int:
         return 0
 
     # Header
-    print(f"{'NAME':<20} {'TYPE':<8} {'GUARD':<8} {'HEALTH':<10} {'URL'}")
-    print("-" * 75)
+    print(f"{'NAME':<20} {'TYPE':<8} {'LEVEL':<12} {'HEALTH':<10} {'URL'}")
+    print("-" * 79)
 
     for name, cfg in sorted(services.items()):
         normalized = normalize_name(name)
         svc_type = cfg.get("type", "stdio")
-        guard = "yes" if cfg.get("guard") else "no"
+        level = parse_level(cfg.get("level"), guard=bool(cfg.get("guard")), service=normalized)
+        level_text = f"{level} {LEVEL_NAMES[level]}"
         healthy = _health_check(normalized, port=CADDY_PORT, timeout=2.0)
         health = "ok" if healthy else "down"
         url = f"{normalized}.{DOMAIN}"
-        print(f"{normalized:<20} {svc_type:<8} {guard:<8} {health:<10} {url}")
+        print(f"{normalized:<20} {svc_type:<8} {level_text:<12} {health:<10} {url}")
 
     return 0
 
@@ -343,8 +360,8 @@ def build_parser() -> argparse.ArgumentParser:
                        help="Command arguments (repeatable)")
     add_p.add_argument("--env", action="append", metavar="KEY=VALUE", dest="svc_env",
                        help="Environment variable (repeatable)")
-    add_p.add_argument("--guard", action="store_true", default=True,
-                       help="Require HMAC auth (default)")
+    add_p.add_argument("--guard", action="store_true", default=None,
+                       help="Require HMAC auth (default for new services; --force keeps the existing setting)")
     add_p.add_argument("--no-guard", dest="guard", action="store_false",
                        help="Disable HMAC auth")
     add_p.add_argument("--secret", action="append", metavar="ENV_VAR",
@@ -354,6 +371,9 @@ def build_parser() -> argparse.ArgumentParser:
     add_p.add_argument("--https", action="store_true",
                        help="Display public URL with https:// (TLS via Cloudflare)")
     add_p.add_argument("--namespace", help="Namespace scheme (phase 2)")
+    add_p.add_argument("--level", type=int, choices=range(0, 5),
+                       help="Security level 0-4 (docs/http-methods/method-profiles.md); "
+                            "with --force, an existing level is kept unless this is given")
     add_p.add_argument("--force", action="store_true",
                        help="Overwrite existing service")
 
@@ -373,6 +393,9 @@ def build_parser() -> argparse.ArgumentParser:
     # caddy-sync
     sub.add_parser("caddy-sync", help="Regenerate all Caddy configs from registry")
 
+    # approve (level-4 human approval)
+    add_approve_parser(sub)
+
     return parser
 
 
@@ -386,6 +409,7 @@ def main(argv: list[str] | None = None) -> int:
         "health": cmd_health,
         "rm": cmd_rm,
         "caddy-sync": cmd_caddy_sync,
+        "approve": cmd_approve,
     }
 
     return commands[args.subcmd](args)

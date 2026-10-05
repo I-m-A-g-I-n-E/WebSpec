@@ -8,6 +8,8 @@ from typing import Any
 from mcp.types import CallToolResult, ImageContent, TextContent
 from starlette.responses import JSONResponse, Response
 
+from .guard import loads_strict
+
 
 def serialize_tool_result(result: CallToolResult, definer_tier: int = 0, canonical: str = "") -> Response:
     """Convert a CallToolResult to an HTTP response.
@@ -51,10 +53,10 @@ def _serialize_block(block) -> Any:
     """Serialize a single content block."""
     if isinstance(block, TextContent):
         text = block.text
-        # Try parsing as JSON
+        # Try parsing as strict JSON (no NaN/Infinity, which JSON responses can't carry)
         try:
-            return json.loads(text)
-        except (json.JSONDecodeError, TypeError):
+            return loads_strict(text)
+        except (TypeError, ValueError):  # JSONDecodeError is a ValueError
             return text
     elif isinstance(block, ImageContent):
         return {
@@ -64,4 +66,5 @@ def _serialize_block(block) -> Any:
         }
     else:
         # EmbeddedResource or other types — return as dict
-        return block.model_dump() if hasattr(block, "model_dump") else str(block)
+        return block.model_dump(mode="json") if hasattr(block, "model_dump") else str(block)
+

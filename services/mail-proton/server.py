@@ -26,7 +26,7 @@ mcp = FastMCP(
 )
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": True})
 def send_email(
     to: str,
     subject: str,
@@ -72,13 +72,13 @@ def send_email(
     return f"Sent to {to} from {from_address}"
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": False})
 def list_senders() -> list[str]:
     """List the allowed sender addresses."""
     return sorted(ALLOWED_SENDERS)
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": False})
 def check_bridge() -> str:
     """Check if Protonmail Bridge SMTP is reachable."""
     import socket

@@ -1,0 +1,17 @@
+[Unit]
+Description=WebSpec Local Gateway — REST interface to MCP servers
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m webspec
+WorkingDirectory=%h/MCP/webspec-gateway
+Environment=PYTHONPATH=%h/MCP/webspec-gateway
+Restart=always
+RestartSec=3
+
+StandardOutput=append:%h/.webspec/gateway.log
+StandardError=append:%h/.webspec/gateway.log
+
+[Install]
+WantedBy=default.target

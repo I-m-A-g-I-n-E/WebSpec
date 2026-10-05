@@ -1,0 +1,8 @@
+{
+  "name": "protonmail",
+  "version": "1.0.0",
+  "description": "Send email through Protonmail Bridge via the WebSpec gateway at mail-proton.i-a-m.live",
+  "author": {
+    "name": "Preston Richey"
+  }
+}

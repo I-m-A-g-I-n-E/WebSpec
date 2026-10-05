@@ -39,6 +39,10 @@
 # Notion exports (keep source docs only)
 notion/**/*.zip.worktrees/
 
+# Python
+__pycache__/
+*.pyc
+
 # Build files
 site/
 

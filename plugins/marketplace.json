@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "webspec-local",
+  "name": "webspec-plugins",
   "version": "1.0.0",
-  "description": "Local marketplace for WebSpec plugins",
+  "description": "Marketplace for core WebSpec plugins",
   "owner": {
     "name": "WebSpec Team"
   },
@@ -10,20 +10,14 @@
     {
       "name": "webspector",
       "description": "WebSpec protocol validator with agents and skills for URL grammar, HTTP methods, authentication, and service discovery",
-      "source": "./plugins/webspector",
+      "source": "./webspector",
       "category": "development"
     },
     {
       "name": "webspec-red-team",
       "description": "Red team penetration testing suite for WebSpec-compliant implementations. 10 specialized agents simulating vulnerability classes from the MoltBook case study.",
-      "source": "./plugins/webspec-red-team",
+      "source": "./webspec-red-team",
       "category": "security"
-    },
-    {
-      "name": "protonmail",
-      "description": "Send email through Protonmail Bridge via the WebSpec gateway at mail-proton.i-a-m.live",
-      "source": "./plugins/protonmail",
-      "category": "services"
     }
   ]
 }

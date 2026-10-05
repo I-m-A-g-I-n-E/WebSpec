@@ -1,0 +1,10 @@
+{
+  "name": "webspec-red-team",
+  "version": "1.0.0",
+  "description": "Red team penetration testing suite for WebSpec-compliant implementations. 10 specialized agents that simulate the vulnerability classes identified in the MoltBook case study to validate defensive controls.",
+  "author": {
+    "name": "Preston Richey"
+  },
+  "license": "MIT",
+  "keywords": ["security", "red-team", "webspec", "penetration-testing", "vulnerability-assessment"]
+}

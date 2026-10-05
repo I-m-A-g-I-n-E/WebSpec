@@ -1,0 +1,12 @@
+{
+  "plugins": [
+    {
+      "name": "webspector",
+      "path": "./webspector/.claude-plugin/plugin.json"
+    },
+    {
+      "name": "webspec-red-team",
+      "path": "./webspec-red-team/.claude-plugin/plugin.json"
+    }
+  ]
+}

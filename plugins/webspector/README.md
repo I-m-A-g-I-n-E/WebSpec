@@ -17,7 +17,7 @@ Webspector provides specialized knowledge and proactive validation agents for th
 Add this plugin to your Claude Code configuration:
 
 ```bash
-claude plugins add ./webspector
+claude plugins add ./plugins/webspector
 ```
 
 ## Commands

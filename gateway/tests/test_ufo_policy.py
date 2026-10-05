@@ -57,3 +57,19 @@ def test_audit_log_append(tmp_path):
                           tier="open", provenance="", outcome="allowed", clearance_valid=True)
     lines = log_path.read_text().strip().split("\n")
     assert len(lines) == 3
+
+
+def test_run_allowlist_bypasses_are_closed():
+    # A wildcard used to admit any `vault` action.
+    assert is_run_allowed("vault", ["delete", "Personal"]) is False
+    assert is_run_allowed("vault", ["edit", "Personal", "--name", "x"]) is False
+    # A flag *value* must not be mistaken for the action.
+    assert is_run_allowed("item", ["--vault", "list", "delete", "MyItem"]) is False
+    assert is_run_allowed("item", ["--vault=Personal", "get", "MyItem"]) is False
+    # File-writing / config-swapping flags are denied even on allowed actions.
+    assert is_run_allowed("document", ["get", "MyDoc", "--out-file", "/etc/cron.d/x"]) is False
+    assert is_run_allowed("document", ["get", "MyDoc", "--out-file=/tmp/x"]) is False
+    assert is_run_allowed("item", ["get", "MyItem", "--config", "/tmp/evil"]) is False
+    # An action is required.
+    assert is_run_allowed("item", []) is False
+    assert is_run_allowed("item", None) is False

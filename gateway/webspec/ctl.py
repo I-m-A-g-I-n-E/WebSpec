@@ -6,6 +6,7 @@ Usage:
     webspec-ctl health [name]
     webspec-ctl rm <name> [--clean-env]
     webspec-ctl caddy-sync
+    webspec-ctl approve [challenge.json] --key KEY
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
+from .approve_cli import add_parser as add_approve_parser, cmd_approve
 from .caddy import (
     generate_direct_site_block,
     generate_site_block,
@@ -373,6 +375,9 @@ def build_parser() -> argparse.ArgumentParser:
     # caddy-sync
     sub.add_parser("caddy-sync", help="Regenerate all Caddy configs from registry")
 
+    # approve (level-4 human approval)
+    add_approve_parser(sub)
+
     return parser
 
 
@@ -386,6 +391,7 @@ def main(argv: list[str] | None = None) -> int:
         "health": cmd_health,
         "rm": cmd_rm,
         "caddy-sync": cmd_caddy_sync,
+        "approve": cmd_approve,
     }
 
     return commands[args.subcmd](args)

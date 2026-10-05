@@ -12,6 +12,7 @@ DEFINER_FAMILIES: dict[str, set[str]] = {
     "POST": {"CREATE", "SEND", "INVOKE", "TRIGGER", "UPLOAD"},
     "PUT": {"REPLACE", "OVERWRITE", "SET"},
     "PATCH": {"MODIFY", "APPEND", "AMEND", "RENAME"},
+    "DELETE": {"REMOVE", "REVOKE", "ARCHIVE", "CANCEL", "PURGE"},
 }
 
 # Reverse lookup: verb → method family
@@ -21,7 +22,7 @@ for method, verbs in DEFINER_FAMILIES.items():
         VERB_TO_FAMILY[verb] = method
 
 # Methods that require a definer
-DEFINER_REQUIRED_METHODS = {"POST", "PUT", "PATCH"}
+DEFINER_REQUIRED_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 
 
 @dataclass
@@ -83,7 +84,7 @@ def validate_definer(
     """
     method = method.upper()
 
-    # Only POST/PUT/PATCH require definers
+    # Only unsafe methods (POST/PUT/PATCH/DELETE) require definers
     if method not in DEFINER_REQUIRED_METHODS:
         return DefinerResult(tier=0, canonical="")
 

@@ -15,14 +15,16 @@ from starlette.responses import JSONResponse, Response
 from starlette.routing import Host, Route
 
 from .config import ServiceRegistry, get_session_key
-from .guard import GuardError, generate_nonce, validate_guard, validate_provenance_chain
+from .guard import GuardError, generate_nonce, validate_guard
 from .handlers import (
+    contract_pins,
     handle_index,
-    handle_service_get,
     handle_service_head,
-    handle_service_mutate,
+    handle_service_invoke,
+    handle_service_list,
     handle_service_options,
 )
+from .hostgrammar import qualifiers_allowed, split_labels
 from .pool import ConnectionPool
 
 logger = logging.getLogger("webspec")
@@ -65,6 +67,7 @@ async def _config_reload_loop() -> None:
                     for removed in old_names - new_names:
                         logger.info("Config reload: removing service %s", removed)
                         await pool.remove_service(removed)
+                        contract_pins.forget_service(removed)
                     # Modified/added services will be lazily re-created
                     for added in new_names - old_names:
                         logger.info("Config reload: new service available: %s", added)
@@ -78,14 +81,26 @@ async def _config_reload_loop() -> None:
 
 async def _service_dispatch(request: Request) -> Response:
     """Dispatch to the correct handler based on HTTP method for a service subdomain."""
-    service = request.path_params.get("service", "")
     method = request.method.upper()
     path = request.path_params.get("path", "").strip("/")
+
+    # Host grammar: {qualifier}*.{destination}.{domain}. Only the destination routes.
+    parsed = split_labels(request.path_params.get("service", ""))
+    if parsed is None:
+        return JSONResponse({"error": "invalid_host", "detail": "Host labels must be lowercase DNS labels."},
+                            status_code=404)
+    service, qualifiers = parsed
 
     # Check if this service requires guard authentication
     if registry is not None:
         entry = registry.get(service)
         host_header = request.headers.get("host", "")
+        if qualifiers and (entry is None or not qualifiers_allowed(qualifiers, entry.labels)):
+            return JSONResponse(
+                {"error": "unknown_qualifier",
+                 "detail": "These qualifier labels are not allowed for this destination."},
+                status_code=404,
+            )
         if entry is not None and not entry.guard and _is_public_host(host_header):
             return JSONResponse(
                 {"error": "unguarded_public",
@@ -112,6 +127,8 @@ async def _service_dispatch(request: Request) -> Response:
                 body=body,
                 guard_header=request.headers.get("X-WebSpec-Guard"),
                 nonce_header=request.headers.get("X-WebSpec-Nonce"),
+                query=request.url.query,
+                audience=service,
             )
             if isinstance(guard_result, GuardError):
                 return JSONResponse(
@@ -119,20 +136,16 @@ async def _service_dispatch(request: Request) -> Response:
                     status_code=guard_result.status_code,
                 )
 
-            # Store UFO headers on request state for downstream use
-            request.state.ufo_clearance = request.headers.get("X-UFO-Clearance")
-            request.state.ufo_provenance = request.headers.get("X-UFO-Provenance")
-
     if method == "HEAD":
         return await handle_service_head(request, service, pool, registry)
     elif method == "OPTIONS":
         return await handle_service_options(request, service, pool, registry)
-    elif method == "GET":
-        return await handle_service_get(request, service, pool, registry)
-    elif method in ("POST", "PUT", "PATCH"):
-        return await handle_service_mutate(request, service, pool, registry)
+    elif method == "GET" and not path:
+        return await handle_service_list(request, service, pool, registry)
+    elif method in ("GET", "POST", "PUT", "PATCH", "DELETE"):
+        return await handle_service_invoke(request, service, pool, registry)
     else:
-        return Response(status_code=405)
+        return Response(status_code=405, headers={"Allow": "HEAD, OPTIONS, GET, POST, PUT, PATCH, DELETE"})
 
 
 async def _handle_nonce(request: Request, service: str) -> Response:
@@ -159,34 +172,18 @@ async def _handle_nonce(request: Request, service: str) -> Response:
 
 
 async def _handle_challenge(request: Request, service: str) -> Response:
-    """Handle GET /__challenge — issue a human confirmation challenge for dangerous-tier tools."""
-    host = request.headers.get("host", "")
-    guard_result = validate_guard(
-        session_key=get_session_key(),
-        method="GET",
-        host=host,
-        path="/__challenge",
-        body=b"",
-        guard_header=request.headers.get("X-WebSpec-Guard"),
-        nonce_header=None,
-        is_nonce_request=True,  # challenge bootstrap works like nonce bootstrap
-    )
-    if isinstance(guard_result, GuardError):
-        return JSONResponse(
-            {"error": guard_result.error_type, "detail": guard_result.detail},
-            status_code=guard_result.status_code,
-        )
+    """Retired: the old /__challenge minted a challenge that nothing ever verified.
 
-    import secrets as _secrets
-    challenge = _secrets.token_hex(16)
-    tool = request.query_params.get("tool", "")
-    return JSONResponse({
-        "challenge": challenge,
-        "service": service,
-        "tool": tool,
-        "message": f"Confirm: execute '{tool}' on {service}?",
-        "expires_in": 30,
-    })
+    Human confirmation is now the level-4 approval flow: the gateway answers the actual
+    request with 428 + a signed-summary challenge (see approval.py).
+    """
+    return JSONResponse(
+        {"error": "gone",
+         "detail": "/__challenge is retired. Level-4 services answer the real request with "
+                   "428 Precondition Required and an approval challenge; see "
+                   "docs/http-methods/method-profiles.md (Human approval)."},
+        status_code=410,
+    )
 
 
 async def _index_dispatch(request: Request) -> Response:
@@ -198,8 +195,8 @@ async def _index_dispatch(request: Request) -> Response:
 
 service_routes = Starlette(
     routes=[
-        Route("/", _service_dispatch, methods=["HEAD", "OPTIONS", "GET", "POST", "PUT", "PATCH"]),
-        Route("/{path:path}", _service_dispatch, methods=["HEAD", "OPTIONS", "GET", "POST", "PUT", "PATCH"]),
+        Route("/", _service_dispatch, methods=["HEAD", "OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"]),
+        Route("/{path:path}", _service_dispatch, methods=["HEAD", "OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"]),
     ],
 )
 
@@ -263,9 +260,10 @@ def create_app() -> Starlette:
             Middleware(
                 CORSMiddleware,
                 allow_origins=cors_origins(),
-                allow_methods=["GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH"],
+                allow_methods=["GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"],
                 allow_headers=["X-WebSpec-Guard", "X-WebSpec-Nonce", "X-Gimme-Definer",
-                               "X-UFO-Clearance", "X-UFO-Provenance", "Content-Type"],
+                               "X-UFO-Clearance", "X-UFO-Provenance", "X-WebSpec-Approval",
+                               "Idempotency-Key", "Content-Type"],
             ),
         ],
         lifespan=lifespan,

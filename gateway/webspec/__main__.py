@@ -1,4 +1,4 @@
-"""Entry point: python -m webspec → uvicorn on [::]:7001."""
+"""Entry point: python -m webspec → uvicorn on 127.0.0.1 (WEBSPEC_INTERNAL_PORT, default 7001)."""
 
 import logging
 import os
@@ -7,6 +7,7 @@ import sys
 import uvicorn
 
 from .app import create_app
+from .hardening import harden_process
 
 
 def resolve_bind_host() -> str:
@@ -26,6 +27,7 @@ def main() -> None:
         stream=sys.stderr,
     )
 
+    harden_process()
     app = create_app()
 
     uvicorn.run(

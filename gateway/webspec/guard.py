@@ -8,6 +8,7 @@ import json
 import secrets
 import time
 from dataclasses import dataclass, field
+from urllib.parse import parse_qsl, quote, urlencode
 
 NONCE_TTL = 60  # seconds
 NONCE_CLEANUP_INTERVAL = 30  # seconds
@@ -63,6 +64,17 @@ class NonceStore:
             del self._nonces[k]
 
 
+def canonical_query(raw_query: str) -> str:
+    """Canonical query string for signing: decoded pairs sorted by (key, value), re-encoded RFC 3986.
+
+    Blank values are kept. Clients MUST sign this exact form (spec: method-profiles.md).
+    """
+    if not raw_query:
+        return ""
+    pairs = sorted(parse_qsl(raw_query, keep_blank_values=True))
+    return urlencode(pairs, quote_via=quote, safe="-._~")
+
+
 def compute_guard_hmac(
     session_key: bytes,
     method: str,
@@ -70,10 +82,19 @@ def compute_guard_hmac(
     path: str,
     nonce: str,
     body: bytes,
+    query: str = "",
 ) -> str:
-    """Compute guard HMAC: truncated HMAC-SHA256(key, METHOD:host:path:nonce:sha256(body)) → 8 hex chars."""
+    """Compute guard HMAC → 8 hex chars.
+
+    HMAC-SHA256(key, METHOD:host:path:nonce:sha256(body)[:?canonical_query]), truncated.
+    The query suffix is present only when the request has a query string, so requests
+    without one sign exactly as before. ``query`` must already be canonical.
+    """
     body_hash = hashlib.sha256(body).hexdigest()
-    message = f"{method}:{host}:{path}:{nonce}:{body_hash}".encode()
+    message = f"{method}:{host}:{path}:{nonce}:{body_hash}"
+    if query:
+        message += f":?{query}"
+    message = message.encode()
     mac = hmac.new(session_key, message, hashlib.sha256).digest()
     return mac[:4].hex()  # 8 hex chars
 
@@ -104,6 +125,8 @@ def validate_guard(
     guard_header: str | None,
     nonce_header: str | None,
     is_nonce_request: bool = False,
+    query: str = "",
+    audience: str | None = None,
 ) -> GuardResult | GuardError:
     """Validate guard headers on a request.
 
@@ -116,7 +139,7 @@ def validate_guard(
     # For nonce requests, nonce field in HMAC is empty string
     nonce_value = "" if is_nonce_request else (nonce_header or "")
 
-    expected = compute_guard_hmac(session_key, method, host, path, nonce_value, body)
+    expected = compute_guard_hmac(session_key, method, host, path, nonce_value, body, canonical_query(query))
     if not hmac.compare_digest(guard_header.lower(), expected.lower()):
         return GuardError("guard_invalid", "HMAC verification failed", 403)
 
@@ -128,8 +151,10 @@ def validate_guard(
     if not nonce_header:
         return GuardError("nonce_missing", "X-WebSpec-Nonce header required", 401)
 
-    # Extract audience from host (service subdomain)
-    audience = host.split(".")[0]
+    # Audience = the destination service label. Callers pass it explicitly because with
+    # qualifier labels (eu.slack.<domain>) the leftmost label is not the destination.
+    if audience is None:
+        audience = host.split(".")[0]
     error = nonce_store.consume(nonce_header, audience)
     if error:
         detail_map = {

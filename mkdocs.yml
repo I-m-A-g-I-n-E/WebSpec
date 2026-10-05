@@ -61,6 +61,7 @@ nav:
     - HEAD & OPTIONS Discovery: http-methods/head-options-discovery.md
     - METHOD Tokenization: http-methods/method-tokenization.md
     - Definer Verbs & Payload Binding: http-methods/definer-verbs.md
+    - Method Profiles: http-methods/method-profiles.md
   - Subdomain Architecture:
     - subdomain-architecture/index.md
     - Isolation Model: subdomain-architecture/isolation-model.md

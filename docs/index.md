@@ -72,8 +72,10 @@ table tells you, per area, whether a section describes the live system or the ro
 | HMAC guard + nonce, password-manager–sourced key | **Implemented (B)** |
 | Definer verbs | **Implemented (B)** |
 | op-auth UFO tiers | **Implemented (B)** |
+| [Method profiles](http-methods/method-profiles.md): method binding, levels 0–4, DELETE, idempotency, level-4 human approval, audit chain | **Implemented (B)** |
+| UFO clearance enforced at the gateway (level ≥ 3) | **Implemented (B)** |
 | Semantic resolution / embedding registry | Proposed (see registry package) |
-| REST collection hierarchy, format suffixes, DELETE | **Proposed (C)** |
+| REST collection hierarchy, format suffixes | **Proposed (C)** |
 | OAuth/JWT, multi-tenant, keychain FaceID flow | **Proposed (C)** |
 
 Below this table, "Draft" markers on individual spec sections describe the *aspirational* design

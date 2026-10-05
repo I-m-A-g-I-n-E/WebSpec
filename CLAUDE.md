@@ -40,10 +40,12 @@ The gateway reads `~/.claude.json` `mcpServers` to discover services, normalizes
 
 - **app.py** — Starlette Host() wildcard routing, config polling (30s), CORS, guard enforcement
 - **config.py** — Parses `~/.claude.json`, `normalize_name()` for subdomain labels, `ServiceRegistry` with mtime-based reload. `guard` field on ServiceEntry.
-- **guard.py** — Session-key HMAC authentication + audience-bound single-use nonces. Services opt in with `"guard": true` in config. `/__nonce` endpoint for nonce bootstrap. Also: UFO clearance token computation (`compute_clearance_token`), provenance chain validation (`validate_provenance_chain`), `/__challenge` endpoint for dangerous-tier human confirmation.
-- **handlers.py** — HTTP method → MCP tool dispatch. HEAD=ping, OPTIONS=schema, GET=read, POST/PUT/PATCH=mutation with definer validation
+- **guard.py** — Session-key HMAC authentication + audience-bound single-use nonces. Services opt in with `"guard": true` in config. `/__nonce` endpoint for nonce bootstrap. Also: UFO clearance token computation (`compute_clearance_token`), provenance chain validation (`validate_provenance_chain`), `/__challenge` is retired (410) — human confirmation is the level-4 approval flow.
+- **handlers.py** — HTTP method → MCP tool dispatch under **method profiles** (docs/http-methods/method-profiles.md). HEAD/OPTIONS discover and never invoke; GET/POST/PUT/PATCH/DELETE invoke only through a method the tool's contract admits (else 405 + Allow), then enforce the level's requirements (definer/bookend, Idempotency-Key, UFO clearance, level-4 human approval)
+- **methods.py** — Tool contracts (operator override > MCP ToolAnnotations > strict MCP defaults), contract pinning (join; servers can tighten, never loosen), method binding, per-method requirements by level 0–4
+- **idempotency.py / approval.py / audit.py / hostgrammar.py / hardening.py** — Idempotency-Key store; level-4 Ed25519 approval verified with `ssh-keygen -Y verify` (`webspec-ctl approve` signs); hash-chained audit log (`WEBSPEC_AUDIT_LOG`); `{qualifier}*.{destination}.{domain}` host grammar; non-dumpable process on Linux
 - **pool.py** — Lazy FastMCP client pool with per-service locks, 5-min tool cache TTL, 30s timeout
-- **definer.py** — Tier 1 (verb header) and Tier 2 (HMAC bookend) validation for mutations. Verb families: POST→CREATE/SEND/INVOKE/TRIGGER/UPLOAD, PUT→REPLACE/OVERWRITE/SET, PATCH→MODIFY/APPEND/AMEND/RENAME
+- **definer.py** — Tier 1 (verb header) and Tier 2 (HMAC bookend) validation for mutations. Verb families: POST→CREATE/SEND/INVOKE/TRIGGER/UPLOAD, PUT→REPLACE/OVERWRITE/SET, PATCH→MODIFY/APPEND/AMEND/RENAME, DELETE→REMOVE/REVOKE/ARCHIVE/CANCEL/PURGE
 - **permissions.py** — fnmatch-based `METHOD:host/path` scope patterns. Currently `LOCAL_ALLOW_ALL`.
 - **serializers.py** — MCP `CallToolResult` → JSON HTTP response
 
@@ -69,13 +71,13 @@ Or via systemd: `systemctl --user start webspec-gateway`. The unit sources
 `~/.webspec/gateway.env` (via `EnvironmentFile=-`) for `WEBSPEC_GUARD_KEY` — see
 `gateway/systemd/webspec-gateway.service` for how to populate it from your vault.
 
-Environment variables: `WEBSPEC_PORT` (default 7001), `WEBSPEC_HOST` (default 0.0.0.0), `WEBSPEC_DOMAIN` (public domain for Host routing), `WEBSPEC_LOG_LEVEL` (default info), `WEBSPEC_GUARD_KEY` (required — HMAC guard key, 64-hex or any passphrase), `WEBSPEC_GUARD_KEY_DEV_EPHEMERAL` (dev-only escape hatch, mints an insecure in-memory key).
+Environment variables: `WEBSPEC_AUDIT_LOG` (audit chain path; empty disables), `WEBSPEC_APPROVERS_FILE` (ssh allowed-signers for level 4), `WEBSPEC_PORT` (default 7001), `WEBSPEC_HOST` (default 127.0.0.1), `WEBSPEC_DOMAIN` (public domain for Host routing), `WEBSPEC_LOG_LEVEL` (default info), `WEBSPEC_GUARD_KEY` (required — HMAC guard key, 64-hex or any passphrase), `WEBSPEC_GUARD_KEY_DEV_EPHEMERAL` (dev-only escape hatch, mints an insecure in-memory key).
 
 ## MCP Services
 
 **mail-proton**: FastMCP server exposing `send_email`, `list_senders`, `check_bridge` tools. Reads `PROTON_BRIDGE_PASSWORD` from env (passed via `~/.claude.json` mcpServers env block). Only two sender addresses allowed: `autodeveloper@pm.me`, `AIUnderstands@pm.me`. Requires Protonmail Bridge running (`/usr/lib/protonmail/bridge/bridge --grpc`).
 
-**op-auth**: FastMCP server wrapping `op` CLI. Guard-protected (`"guard": true`). Tools: `read(reference)`, `list_vaults()`, `list_items(vault)`, `get_item(vault, item)`, `run(subcommand, args)`. UFO policy (`services/op-auth/ufo.py`): tools classified as open/sensitive/dangerous. `run()` uses strict allowlist (vault, item list/get, document get). All calls logged to `~/.webspec/op-auth-audit.jsonl`. Sensitive tools require `X-UFO-Clearance` header; dangerous tools require human confirmation via `/__challenge`. Reads `OP_SERVICE_ACCOUNT_TOKEN` from env.
+**op-auth**: FastMCP server wrapping `op` CLI. Guard-protected (`"guard": true`). Tools: `read(reference)`, `list_vaults()`, `list_items(vault)`, `get_item(vault, item)`, `run(subcommand, args)`. UFO policy (`services/op-auth/ufo.py`): tools classified as open/sensitive/dangerous. `run()` uses a strict allowlist (vault list/get, item list/get, document get; action must be the first argument; file-writing/config flags denied). All calls logged to `~/.webspec/op-auth-audit.jsonl`. Tools declare annotations + `webspec/tier` meta; at gateway level ≥ 3 sensitive tools require `X-UFO-Clearance`, and at level 4 dangerous tools require a human Ed25519 approval (428 challenge → `webspec-ctl approve`). Reads `OP_SERVICE_ACCOUNT_TOKEN` from env.
 
 ## Building Docs
 

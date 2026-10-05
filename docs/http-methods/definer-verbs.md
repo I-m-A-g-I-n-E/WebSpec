@@ -610,7 +610,7 @@ The nonce modulo table-size selects the rotation. Less secure than full POS rota
 
 ## Open Questions
 
-1. **Should DELETE require a definer?** DELETE is idempotent and typically has no payload, but definers like `REMOVE` / `REVOKE` / `ARCHIVE` could clarify intent. Currently excluded for simplicity.
+1. **Should DELETE require a definer?** DELETE is idempotent and typically has no payload, but definers like `REMOVE` / `REVOKE` / `ARCHIVE` could clarify intent. Currently excluded for simplicity. **Resolved:** yes — see [Method Profiles](method-profiles.md); the `DELETE` family is `REMOVE REVOKE ARCHIVE CANCEL PURGE`.
 
 2. **Atlas update cadence?** The verb atlas should be stable (verbs don't change often), but new service integrations may introduce domain-specific verbs. Versioning handles this, but frequent updates create client/server skew.
 

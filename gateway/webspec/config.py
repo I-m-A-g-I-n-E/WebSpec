@@ -22,6 +22,8 @@ class ServiceEntry:
     env: dict[str, str] = field(default_factory=dict)
     # http fields
     url: str | None = None
+    # guard: require HMAC + nonce authentication
+    guard: bool = False
 
 
 def normalize_name(raw: str) -> str:
@@ -65,12 +67,15 @@ def parse_claude_config(path: Path | None = None) -> dict[str, ServiceEntry]:
 
         transport_type = cfg.get("type", "stdio")
 
+        guard = bool(cfg.get("guard", False))
+
         if transport_type == "http":
             entry = ServiceEntry(
                 name=name,
                 original_name=raw_name,
                 transport_type="http",
                 url=cfg["url"],
+                guard=guard,
             )
         else:
             entry = ServiceEntry(
@@ -80,6 +85,7 @@ def parse_claude_config(path: Path | None = None) -> dict[str, ServiceEntry]:
                 command=cfg.get("command"),
                 args=cfg.get("args", []),
                 env=cfg.get("env", {}),
+                guard=guard,
             )
 
         registry[name] = entry

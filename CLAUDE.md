@@ -10,6 +10,7 @@ WebSpec monorepo (`mono` branch) — protocol specification + infrastructure for
 
 - **gateway/** — Starlette REST-to-MCP bridge serving `*.i-a-m.live` via Cloudflare tunnel (port 7001)
 - **services/mail-proton/** — FastMCP server wrapping Protonmail Bridge SMTP (port 1025)
+- **services/op-auth/** — FastMCP server wrapping 1Password CLI (`op`) for per-secret access (guard-protected)
 - **plugins/protonmail/** — Claude Code plugin: email skill
 - **plugins/webspec-red-team/** — Claude Code plugin: 10 red-team pentesting agents
 - **webspector/** — Claude Code plugin: WebSpec protocol validator (5 agents, 5 skills, 2 commands)
@@ -25,6 +26,7 @@ The gateway runs as a systemd service. These symlinks exist on the host and **mu
 |---|---|
 | `~/MCP/webspec-gateway` | `gateway/` |
 | `~/MCP/mail-proton` | `services/mail-proton/` |
+| `~/MCP/op-auth` | `services/op-auth/` |
 | `~/.claude/plugins/protonmail` | `plugins/protonmail/` |
 | `~/.claude/plugins/webspec-red-team` | `plugins/webspec-red-team/` |
 
@@ -36,8 +38,9 @@ Traffic flow: `*.i-a-m.live` → Cloudflare tunnel → `localhost:7001` → gate
 
 The gateway reads `~/.claude.json` `mcpServers` to discover services, normalizes names to subdomain labels, and routes by `Host` header. Key modules:
 
-- **app.py** — Starlette Host() wildcard routing, config polling (30s), CORS
-- **config.py** — Parses `~/.claude.json`, `normalize_name()` for subdomain labels, `ServiceRegistry` with mtime-based reload
+- **app.py** — Starlette Host() wildcard routing, config polling (30s), CORS, guard enforcement
+- **config.py** — Parses `~/.claude.json`, `normalize_name()` for subdomain labels, `ServiceRegistry` with mtime-based reload. `guard` field on ServiceEntry.
+- **guard.py** — Session-key HMAC authentication + audience-bound single-use nonces. Services opt in with `"guard": true` in config. `/__nonce` endpoint for nonce bootstrap. Also: UFO clearance token computation (`compute_clearance_token`), provenance chain validation (`validate_provenance_chain`), `/__challenge` endpoint for dangerous-tier human confirmation.
 - **handlers.py** — HTTP method → MCP tool dispatch. HEAD=ping, OPTIONS=schema, GET=read, POST/PUT/PATCH=mutation with definer validation
 - **pool.py** — Lazy FastMCP client pool with per-service locks, 5-min tool cache TTL, 30s timeout
 - **definer.py** — Tier 1 (verb header) and Tier 2 (HMAC bookend) validation for mutations. Verb families: POST→CREATE/SEND/INVOKE/TRIGGER/UPLOAD, PUT→REPLACE/OVERWRITE/SET, PATCH→MODIFY/APPEND/AMEND/RENAME
@@ -60,6 +63,8 @@ Environment variables: `WEBSPEC_PORT` (default 7001), `WEBSPEC_HOST` (default 0.
 ## MCP Services
 
 **mail-proton**: FastMCP server exposing `send_email`, `list_senders`, `check_bridge` tools. Reads `PROTON_BRIDGE_PASSWORD` from env (passed via `~/.claude.json` mcpServers env block). Only two sender addresses allowed: `autodeveloper@pm.me`, `AIUnderstands@pm.me`. Requires Protonmail Bridge running (`/usr/lib/protonmail/bridge/bridge --grpc`).
+
+**op-auth**: FastMCP server wrapping `op` CLI. Guard-protected (`"guard": true`). Tools: `read(reference)`, `list_vaults()`, `list_items(vault)`, `get_item(vault, item)`, `run(subcommand, args)`. UFO policy (`services/op-auth/ufo.py`): tools classified as open/sensitive/dangerous. `run()` uses strict allowlist (vault, item list/get, document get). All calls logged to `~/.webspec/op-auth-audit.jsonl`. Sensitive tools require `X-UFO-Clearance` header; dangerous tools require human confirmation via `/__challenge`. Reads `OP_SERVICE_ACCOUNT_TOKEN` from env.
 
 ## Building Docs
 

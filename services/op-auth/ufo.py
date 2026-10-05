@@ -15,14 +15,17 @@ TIERS: dict[str, str] = {
     "run": "dangerous",
 }
 
-# run() allowlist: (subcommand, allowed_first_args)
-# If first_args is None, any args are allowed for that subcommand.
-# If first_args is a set, only those first positional args are allowed.
-RUN_ALLOWLIST: dict[str, set[str] | None] = {
-    "vault": None,  # vault list, vault get, etc.
-    "item": {"list", "get"},  # item list, item get only
-    "document": {"get"},  # document get only
+# run() allowlist: subcommand -> allowed action (the FIRST argument, before any flag).
+# Every entry is an explicit set: a None/"any" wildcard previously let `vault delete`,
+# `vault edit`, and `vault user grant` through.
+RUN_ALLOWLIST: dict[str, set[str]] = {
+    "vault": {"list", "get"},
+    "item": {"list", "get"},
+    "document": {"get"},
 }
+
+# Flags that change *where* or *how* `op` acts (write files, swap config/session).
+DENIED_FLAGS: set[str] = {"--out-file", "-o", "--output", "--config", "--session", "--force"}
 
 DEFAULT_AUDIT_PATH = Path.home() / ".webspec" / "op-auth-audit.jsonl"
 
@@ -33,19 +36,22 @@ def get_tier(tool_name: str) -> str:
 
 
 def is_run_allowed(subcommand: str, args: list[str] | None = None) -> bool:
-    """Check if a run() subcommand + args combination is on the allowlist."""
-    subcommand = subcommand.lower()
-    if subcommand not in RUN_ALLOWLIST:
+    """Check if a run() subcommand + args combination is on the allowlist.
+
+    The action must be args[0] — not the first non-flag token — because a flag's
+    *value* (``--vault list``) would otherwise be mistaken for the action while `op`
+    parses a later token (``delete``) as the real one.
+    """
+    allowed_actions = RUN_ALLOWLIST.get(subcommand.lower())
+    if not allowed_actions or not args:
         return False
-    allowed_first = RUN_ALLOWLIST[subcommand]
-    if allowed_first is None:
-        return True
-    # Check the first positional arg (skip flags starting with --)
-    if args:
-        first_positional = next((a for a in args if not a.startswith("--")), None)
-        if first_positional and first_positional.lower() in allowed_first:
-            return True
-    return False
+    action = args[0]
+    if action.startswith("-") or action.lower() not in allowed_actions:
+        return False
+    for arg in args[1:]:
+        if arg.split("=", 1)[0].lower() in DENIED_FLAGS:
+            return False
+    return True
 
 
 def write_audit_entry(

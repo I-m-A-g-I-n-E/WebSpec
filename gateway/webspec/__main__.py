@@ -35,6 +35,9 @@ def main() -> None:
         host=resolve_bind_host(),
         port=port,
         log_level=log_level,
+        # GET carries tool arguments in the URL; the audit log records them only as
+        # hashes, so don't write them verbatim to an access log by default.
+        access_log=os.environ.get("WEBSPEC_ACCESS_LOG") == "1",
     )
 
 

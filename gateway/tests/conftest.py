@@ -13,7 +13,7 @@ def _isolate_gateway_state(tmp_path, monkeypatch):
 
     Also points the gateway at a nonexistent config so no test ever reads ~/.claude.json.
     """
-    from webspec import approval, handlers, idempotency
+    from webspec import approval, guard, handlers, idempotency
     from webspec.methods import ContractPins
 
     monkeypatch.setenv("WEBSPEC_AUDIT_LOG", str(tmp_path / "audit.jsonl"))
@@ -21,3 +21,4 @@ def _isolate_gateway_state(tmp_path, monkeypatch):
     monkeypatch.setattr(handlers, "contract_pins", ContractPins())
     monkeypatch.setattr(idempotency, "store", idempotency.IdempotencyStore())
     monkeypatch.setattr(approval, "store", approval.ApprovalStore())
+    monkeypatch.setattr(guard, "spent_clearances", guard._SpentClearances())

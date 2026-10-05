@@ -15,9 +15,9 @@ from starlette.responses import JSONResponse, Response
 from starlette.routing import Host, Route
 
 from .config import ServiceRegistry, get_session_key
-from .guard import GuardError, generate_nonce, validate_guard
+from . import audit
+from .guard import GuardError, duplicate_query_keys, generate_nonce, validate_guard
 from .handlers import (
-    contract_pins,
     handle_index,
     handle_service_head,
     handle_service_invoke,
@@ -25,6 +25,7 @@ from .handlers import (
     handle_service_options,
 )
 from .hostgrammar import qualifiers_allowed, split_labels
+from .methods import ALL_METHODS
 from .pool import ConnectionPool
 
 logger = logging.getLogger("webspec")
@@ -67,7 +68,8 @@ async def _config_reload_loop() -> None:
                     for removed in old_names - new_names:
                         logger.info("Config reload: removing service %s", removed)
                         await pool.remove_service(removed)
-                        contract_pins.forget_service(removed)
+                        # Contract pins are deliberately kept: removing and re-adding a
+                        # service must not be a way to reset them (methods.ContractPins).
                     # Modified/added services will be lazily re-created
                     for added in new_names - old_names:
                         logger.info("Config reload: new service available: %s", added)
@@ -79,73 +81,82 @@ async def _config_reload_loop() -> None:
 # ── Route handlers that pull service from Host() match ──
 
 
+def _deny(request: Request, service: str, status: int, error: str, detail: str) -> JSONResponse:
+    """Refuse before any tool is resolved — and audit it (spec §11: every decision)."""
+    audit.record_request(request, service=service, outcome="denied", status=status, reason=error)
+    return JSONResponse({"error": error, "detail": detail}, status_code=status)
+
+
 async def _service_dispatch(request: Request) -> Response:
     """Dispatch to the correct handler based on HTTP method for a service subdomain."""
     method = request.method.upper()
     path = request.path_params.get("path", "").strip("/")
+    captured = request.path_params.get("service", "")
 
     # Host grammar: {qualifier}*.{destination}.{domain}. Only the destination routes.
-    parsed = split_labels(request.path_params.get("service", ""))
+    parsed = split_labels(captured)
     if parsed is None:
-        return JSONResponse({"error": "invalid_host", "detail": "Host labels must be lowercase DNS labels."},
-                            status_code=404)
+        return _deny(request, captured, 404, "invalid_host", "Host labels must be lowercase DNS labels.")
     service, qualifiers = parsed
 
-    # Check if this service requires guard authentication
+    # One argument, one value: with a repeated key the tool would see only one of the
+    # values, so no signature or fingerprint could bind the argument actually used.
+    dupes = duplicate_query_keys(request.url.query)
+    if dupes:
+        return _deny(request, service, 400, "duplicate_query_key",
+                     f"Query keys must not repeat ({', '.join(dupes)}); encode lists as JSON.")
+
     if registry is not None:
         entry = registry.get(service)
         host_header = request.headers.get("host", "")
-        if qualifiers and (entry is None or not qualifiers_allowed(qualifiers, entry.labels)):
-            return JSONResponse(
-                {"error": "unknown_qualifier",
-                 "detail": "These qualifier labels are not allowed for this destination."},
-                status_code=404,
-            )
+        if qualifiers:
+            if entry is None or not qualifiers_allowed(qualifiers, entry.labels):
+                return _deny(request, service, 404, "unknown_qualifier",
+                             "These qualifier labels are not allowed for this destination.")
+            # Allowed by grammar, but per-qualifier backends are Proposed (C). Refuse rather
+            # than silently serve every qualifier from the same backend (a false sense of
+            # region/residency routing).
+            return _deny(request, service, 404, "qualifier_not_routable",
+                         "Qualifier labels are recognized but do not route to a separate backend yet.")
         if entry is not None and not entry.guard and _is_public_host(host_header):
-            return JSONResponse(
-                {"error": "unguarded_public",
-                 "detail": "Unguarded services are not exposed on the public domain."},
-                status_code=403,
-            )
+            return _deny(request, service, 403, "unguarded_public",
+                         "Unguarded services are not exposed on the public domain.")
         if entry is not None and entry.guard:
             # Handle /__nonce bootstrap endpoint
             if path == "__nonce" and method == "GET":
                 return await _handle_nonce(request, service)
 
-            # Handle /__challenge endpoint for dangerous-tier human confirmation
+            # Retired endpoint (was: dangerous-tier confirmation that nothing verified)
             if path == "__challenge" and method == "GET":
                 return await _handle_challenge(request, service)
 
-            # Enforce guard on all other requests
+            # Enforce guard on all other requests. It signs the request line, body, query,
+            # definer verb and Idempotency-Key, so none can be swapped in flight.
             body = await request.body()
-            host = request.headers.get("host", "")
             guard_result = validate_guard(
                 session_key=get_session_key(),
                 method=method,
-                host=host,
+                host=host_header,
                 path=f"/{path}" if path else "/",
                 body=body,
                 guard_header=request.headers.get("X-WebSpec-Guard"),
                 nonce_header=request.headers.get("X-WebSpec-Nonce"),
                 query=request.url.query,
                 audience=service,
+                definer=request.headers.get("X-Gimme-Definer", ""),
+                idempotency_key=request.headers.get("Idempotency-Key", ""),
             )
             if isinstance(guard_result, GuardError):
-                return JSONResponse(
-                    {"error": guard_result.error_type, "detail": guard_result.detail},
-                    status_code=guard_result.status_code,
-                )
+                return _deny(request, service, guard_result.status_code, guard_result.error_type, guard_result.detail)
 
     if method == "HEAD":
         return await handle_service_head(request, service, pool, registry)
-    elif method == "OPTIONS":
+    if method == "OPTIONS":
         return await handle_service_options(request, service, pool, registry)
-    elif method == "GET" and not path:
+    if method == "GET" and not path:
         return await handle_service_list(request, service, pool, registry)
-    elif method in ("GET", "POST", "PUT", "PATCH", "DELETE"):
-        return await handle_service_invoke(request, service, pool, registry)
-    else:
-        return Response(status_code=405, headers={"Allow": "HEAD, OPTIONS, GET, POST, PUT, PATCH, DELETE"})
+    # Starlette's Route(methods=ALL_METHODS) has already refused anything else with 405.
+    return await handle_service_invoke(request, service, pool, registry)
 
 
 async def _handle_nonce(request: Request, service: str) -> Response:
@@ -162,10 +173,7 @@ async def _handle_nonce(request: Request, service: str) -> Response:
         is_nonce_request=True,
     )
     if isinstance(guard_result, GuardError):
-        return JSONResponse(
-            {"error": guard_result.error_type, "detail": guard_result.detail},
-            status_code=guard_result.status_code,
-        )
+        return _deny(request, service, guard_result.status_code, guard_result.error_type, guard_result.detail)
     audience = service
     nonce_data = generate_nonce(audience)
     return JSONResponse(nonce_data)
@@ -195,8 +203,8 @@ async def _index_dispatch(request: Request) -> Response:
 
 service_routes = Starlette(
     routes=[
-        Route("/", _service_dispatch, methods=["HEAD", "OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"]),
-        Route("/{path:path}", _service_dispatch, methods=["HEAD", "OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"]),
+        Route("/", _service_dispatch, methods=list(ALL_METHODS)),
+        Route("/{path:path}", _service_dispatch, methods=list(ALL_METHODS)),
     ],
 )
 
@@ -260,7 +268,7 @@ def create_app() -> Starlette:
             Middleware(
                 CORSMiddleware,
                 allow_origins=cors_origins(),
-                allow_methods=["GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"],
+                allow_methods=list(ALL_METHODS),
                 allow_headers=["X-WebSpec-Guard", "X-WebSpec-Nonce", "X-Gimme-Definer",
                                "X-UFO-Clearance", "X-UFO-Provenance", "X-WebSpec-Approval",
                                "Idempotency-Key", "Content-Type"],

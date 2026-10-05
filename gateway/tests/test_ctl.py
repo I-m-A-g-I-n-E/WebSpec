@@ -163,7 +163,7 @@ def test_ls_shows_services(mock_health, config_file, capsys):
     out = capsys.readouterr().out
     assert "existing-svc" in out
     assert "http" in out
-    assert "yes" in out  # guard
+    assert "1 signed" in out  # guard: true → level 1
 
 
 @patch("webspec.ctl._health_check", return_value=True)
@@ -346,3 +346,20 @@ def test_add_without_https_shows_http_url(mock_health, mock_wait, mock_reload, c
     assert rc == 0
     out = capsys.readouterr().out
     assert "http://plain-svc.i-a-m.live" in out
+
+
+@patch("webspec.ctl.reload_caddy", return_value=True)
+@patch("webspec.ctl._wait_for_gateway", return_value=True)
+@patch("webspec.ctl._health_check", return_value=True)
+def test_add_force_keeps_security_settings(mock_health, mock_wait, mock_reload, config_file, capsys):
+    """--force must not silently drop level / tool overrides / labels."""
+    import json as _json
+    cfg = _json.loads(config_file.read_text())
+    cfg["mcpServers"]["existing-svc"].update({"level": 4, "tools": {"x": {"tier": "dangerous"}}, "labels": ["eu"]})
+    config_file.write_text(_json.dumps(cfg))
+    rc = main(["add", "existing-svc", "--type", "http", "--url", "http://new", "--force"])
+    assert rc == 0
+    entry = _json.loads(config_file.read_text())["mcpServers"]["existing-svc"]
+    assert entry["level"] == 4 and entry["tools"] == {"x": {"tier": "dangerous"}} and entry["labels"] == ["eu"]
+    rc = main(["add", "existing-svc", "--type", "http", "--url", "http://new", "--force", "--level", "2"])
+    assert _json.loads(config_file.read_text())["mcpServers"]["existing-svc"]["level"] == 2

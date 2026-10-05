@@ -26,6 +26,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from .guard import canonical_json
 from .methods import ToolContract
 
 logger = logging.getLogger("webspec.audit")
@@ -42,11 +43,11 @@ class Context:
     host: str
     method: str
     path: str
-    tool: str
-    level: int
-    contract: ToolContract
-    query: str
-    body: bytes
+    tool: str | None = None
+    level: int | None = None
+    contract: ToolContract | None = None
+    query: str = ""
+    body: bytes = b""
 
 
 def _log_path() -> Path | None:
@@ -71,6 +72,14 @@ def _last_hash(path: Path) -> str:
         return GENESIS
 
 
+def record_request(request, *, service: str, outcome: str, status: int | None, reason: str | None) -> None:
+    """Audit a decision made before a tool was resolved (bad host, failed guard, unknown tool…)."""
+    path = request.url.path or "/"
+    record(Context(service=service, host=request.headers.get("host", ""), method=request.method.upper(),
+                   path=path, query=request.url.query or ""),
+           outcome=outcome, status=status, reason=reason)
+
+
 def record(ctx: Context, *, outcome: str, status: int | None, reason: str | None, **extra) -> None:
     path = _log_path()
     if path is None:
@@ -85,8 +94,8 @@ def record(ctx: Context, *, outcome: str, status: int | None, reason: str | None
         "body_sha256": hashlib.sha256(ctx.body).hexdigest() if ctx.body else None,
         "tool": ctx.tool,
         "level": ctx.level,
-        "tier": ctx.contract.tier,
-        "risk": ctx.contract.risk,
+        "tier": ctx.contract.tier if ctx.contract else None,
+        "risk": ctx.contract.risk if ctx.contract else None,
         "outcome": outcome,
         "status": status,
         "reason": reason,
@@ -98,7 +107,7 @@ def record(ctx: Context, *, outcome: str, status: int | None, reason: str | None
             key = str(path)
             prev = _state.get(key) or _last_hash(path)
             entry["prev"] = prev
-            line = json.dumps(entry, sort_keys=True, separators=(",", ":")).encode()
+            line = canonical_json(entry).encode()
             fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
             try:
                 os.write(fd, line + b"\n")
@@ -109,9 +118,16 @@ def record(ctx: Context, *, outcome: str, status: int | None, reason: str | None
         logger.exception("Audit log write failed (%s)", path)
 
 
-def verify_chain(path: Path) -> int | None:
-    """Return the 1-based line number of the first broken link, or None if intact."""
-    prev = GENESIS
+def verify_chain(path: Path, first_prev: str = GENESIS) -> int | None:
+    """Return the 1-based line number of the first broken link, or None if intact.
+
+    Rotation: rotate by *renaming* the file. The gateway keeps chaining from the last
+    line it wrote, so the new file's first ``prev`` is the hash of the rotated file's
+    last line — verify a continuation segment with ``first_prev`` set to that hash.
+    Truncating the file in place (logrotate ``copytruncate``) is indistinguishable from
+    tampering, by design.
+    """
+    prev = first_prev
     with path.open("rb") as f:
         for n, raw in enumerate(f, start=1):
             line = raw.rstrip(b"\n")

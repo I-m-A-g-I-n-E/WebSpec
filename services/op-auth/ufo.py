@@ -15,17 +15,18 @@ TIERS: dict[str, str] = {
     "run": "dangerous",
 }
 
-# run() allowlist: subcommand -> allowed action (the FIRST argument, before any flag).
-# Every entry is an explicit set: a None/"any" wildcard previously let `vault delete`,
-# `vault edit`, and `vault user grant` through.
-RUN_ALLOWLIST: dict[str, set[str]] = {
-    "vault": {"list", "get"},
-    "item": {"list", "get"},
-    "document": {"get"},
+# run() allowlist: (subcommand, action) -> the ONLY flags that action may carry.
+# The action must be the first argument. Every other token is either a positional
+# value or exactly one of these long flags (``--flag value`` or ``--flag=value``):
+# no short flags, no attached values (pflag reads ``-o/path`` as ``--out-file /path``),
+# and nothing that writes files or swaps account/config/session.
+RUN_ALLOWLIST: dict[tuple[str, str], set[str]] = {
+    ("vault", "list"): set(),
+    ("vault", "get"): set(),
+    ("item", "list"): {"--vault", "--categories", "--tags"},
+    ("item", "get"): {"--vault", "--fields"},
+    ("document", "get"): {"--vault"},
 }
-
-# Flags that change *where* or *how* `op` acts (write files, swap config/session).
-DENIED_FLAGS: set[str] = {"--out-file", "-o", "--output", "--config", "--session", "--force"}
 
 DEFAULT_AUDIT_PATH = Path.home() / ".webspec" / "op-auth-audit.jsonl"
 
@@ -36,22 +37,27 @@ def get_tier(tool_name: str) -> str:
 
 
 def is_run_allowed(subcommand: str, args: list[str] | None = None) -> bool:
-    """Check if a run() subcommand + args combination is on the allowlist.
-
-    The action must be args[0] — not the first non-flag token — because a flag's
-    *value* (``--vault list``) would otherwise be mistaken for the action while `op`
-    parses a later token (``delete``) as the real one.
-    """
-    allowed_actions = RUN_ALLOWLIST.get(subcommand.lower())
-    if not allowed_actions or not args:
+    """Check a run() subcommand + args against the per-action flag allowlist."""
+    if not args:
         return False
     action = args[0]
-    if action.startswith("-") or action.lower() not in allowed_actions:
+    allowed_flags = RUN_ALLOWLIST.get((subcommand.lower(), action.lower()))
+    if allowed_flags is None or action.startswith("-"):
         return False
+    expect_value = False
     for arg in args[1:]:
-        if arg.split("=", 1)[0].lower() in DENIED_FLAGS:
+        if expect_value:  # value of the preceding long flag
+            if arg.startswith("-"):
+                return False
+            expect_value = False
+            continue
+        if not arg.startswith("-"):
+            continue  # positional (item / document name)
+        name, has_value, _ = arg.partition("=")
+        if name not in allowed_flags:
             return False
-    return True
+        expect_value = not has_value
+    return not expect_value
 
 
 def write_audit_entry(

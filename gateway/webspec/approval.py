@@ -25,7 +25,6 @@ import asyncio
 import base64
 import binascii
 import hashlib
-import json
 import logging
 import os
 import secrets
@@ -36,12 +35,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .guard import canonical_json  # one canonical form for every MAC / fingerprint
+
 logger = logging.getLogger("webspec.approval")
 
 APPROVAL_NAMESPACE = "webspec-approval"
 APPROVAL_TTL = 300  # seconds
 SIGN_PREFIX = "webspec-approval/v1"
 MAX_PENDING = 1000
+MAX_FAILED_ATTEMPTS = 5
 SSH_KEYGEN_TIMEOUT = 10.0
 
 PENDING = "pending"
@@ -49,8 +51,6 @@ VERIFYING = "verifying"
 USED = "used"
 
 
-def canonical_json(obj: Any) -> str:
-    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
 def request_summary(
@@ -93,27 +93,39 @@ class _Challenge:
     fingerprint: str
     created_at: float
     state: str = PENDING
+    failures: int = 0
 
 
 class ApprovalStore:
     def __init__(self, ttl: float = APPROVAL_TTL, max_pending: int = MAX_PENDING):
         self._ttl = ttl
         self._max = max_pending
-        self._challenges: dict[str, _Challenge] = {}
+        self._challenges: dict[str, _Challenge] = {}  # insertion order == age order
 
     def _purge(self, now: float) -> None:
-        for cid in [c for c, ch in self._challenges.items() if now - ch.created_at > self._ttl]:
+        while self._challenges:
+            cid, ch = next(iter(self._challenges.items()))
+            if now - ch.created_at <= self._ttl:
+                break
             del self._challenges[cid]
-        while len(self._challenges) >= self._max:
-            oldest = min(self._challenges, key=lambda c: self._challenges[c].created_at)
-            del self._challenges[oldest]
 
-    def issue(self, summary: dict[str, Any]) -> dict[str, Any]:
+    def issue(self, summary: dict[str, Any]) -> dict[str, Any] | None:
+        """Challenge for this exact request, or None if the queue is full.
+
+        Pending challenges are never evicted to make room — otherwise anyone holding the
+        guard key could flush out the challenge a human is in the middle of signing. A
+        retry of the same request gets the same pending challenge back.
+        """
         now = time.monotonic()
         self._purge(now)
         fingerprint = summary_fingerprint(summary)
-        cid = secrets.token_hex(16)
-        self._challenges[cid] = _Challenge(fingerprint=fingerprint, created_at=now)
+        cid = next((c for c, ch in self._challenges.items()
+                    if ch.fingerprint == fingerprint and ch.state == PENDING), None)
+        if cid is None:
+            if len(self._challenges) >= self._max:
+                return None
+            cid = secrets.token_hex(16)
+            self._challenges[cid] = _Challenge(fingerprint=fingerprint, created_at=now)
         return {
             "error": "approval_required",
             "detail": "This action requires human approval (level 4). "
@@ -124,7 +136,7 @@ class ApprovalStore:
             "summary": summary,
             "sign_message": sign_message(cid, fingerprint),
             "namespace": APPROVAL_NAMESPACE,
-            "expires_in": int(self._ttl),
+            "expires_in": max(0, int(self._ttl - (now - self._challenges[cid].created_at))),
         }
 
     async def verify(self, header: str | None, fingerprint: str) -> str | None:
@@ -161,16 +173,21 @@ class ApprovalStore:
             return "approval_unavailable"
 
         ch.state = VERIFYING  # exclusive: a concurrent retry can't double-spend this challenge
+        ok = False
         try:
             ok = await _ssh_verify(keygen, approvers, blob, sign_message(cid, fingerprint))
         except Exception:
             logger.exception("Approval verification crashed")
-            ok = False
-        if not ok:
-            ch.state = PENDING
-            return "approval_invalid"
-        ch.state = USED
-        return None
+        finally:
+            # Runs on cancellation too, so a challenge can never be stranded in VERIFYING.
+            if ok:
+                ch.state = USED
+            else:
+                ch.failures += 1
+                ch.state = PENDING
+                if ch.failures >= MAX_FAILED_ATTEMPTS:
+                    self._challenges.pop(cid, None)
+        return None if ok else "approval_invalid"
 
 
 async def _run(argv: list[str], stdin: bytes | None = None) -> tuple[int, bytes]:
@@ -182,10 +199,13 @@ async def _run(argv: list[str], stdin: bytes | None = None) -> tuple[int, bytes]
     )
     try:
         out, _err = await asyncio.wait_for(proc.communicate(stdin), timeout=SSH_KEYGEN_TIMEOUT)
-    except asyncio.TimeoutError:
-        proc.kill()
-        await proc.wait()
-        return -1, b""
+    except BaseException as exc:  # timeout or cancellation: never orphan the child
+        if proc.returncode is None:
+            proc.kill()
+            await asyncio.shield(proc.wait())
+        if isinstance(exc, asyncio.TimeoutError):
+            return -1, b""
+        raise
     return proc.returncode if proc.returncode is not None else -1, out
 
 

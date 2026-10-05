@@ -30,11 +30,15 @@ def _render(summary: dict) -> str:
 
 
 def _confirm(prompt: str) -> bool:
-    """Ask on the controlling terminal. Raises OSError if there is none."""
-    with open("/dev/tty", "r+", encoding="utf-8") as tty:
-        tty.write(prompt)
-        tty.flush()
-        return tty.readline().strip() == "approve"
+    """Ask on the controlling terminal. Raises OSError if there is none.
+
+    A tty is not seekable, so it must be opened as separate read and write streams
+    (text-mode "r+" requires a seekable file and fails on every real terminal).
+    """
+    with open("/dev/tty", "w", encoding="utf-8") as out, open("/dev/tty", "r", encoding="utf-8") as inp:
+        out.write(prompt)
+        out.flush()
+        return inp.readline().strip() == "approve"
 
 
 def _show(text: str) -> None:

@@ -162,7 +162,11 @@ def test_challenge_endpoint_is_retired(monkeypatch):
 
 def test_qualifier_labels(monkeypatch):
     client, pool = make_client(monkeypatch, [entry(level=1, labels=("eu", "v2"))], _tools())
-    assert request(client, "GET", "eu.v2.svc.localhost", "/read_thing", guarded=True).status_code == 200
+    # Allowed by grammar, but there is no per-qualifier backend yet: fail closed rather than
+    # serve "eu" from the default backend (review finding: false sense of residency).
+    r = request(client, "GET", "eu.v2.svc.localhost", "/read_thing")
+    assert r.status_code == 404 and r.json()["error"] == "qualifier_not_routable"
+    assert pool.calls == []
     r = request(client, "GET", "v2.eu.svc.localhost", "/read_thing")
     assert r.status_code == 404 and r.json()["error"] == "unknown_qualifier"
     assert request(client, "GET", "ap.svc.localhost", "/read_thing").status_code == 404
@@ -235,16 +239,16 @@ def test_level3_requires_clearance_for_mutations_and_sensitive_reads(monkeypatch
     r = request(client, "GET", H, "/read_secret", query="ref=a", guarded=True)
     assert r.status_code == 403 and r.json()["error"] == "clearance_missing"
     r = request(client, "GET", H, "/read_secret", query="ref=a", guarded=True,
-                headers={"X-UFO-Clearance": clearance("read_secret", {"ref": "a"})})
+                headers={"X-UFO-Clearance": clearance("read_secret", {"ref": "a"}, method="GET")})
     assert r.status_code == 200
     r = request(client, "GET", H, "/read_secret", query="ref=b", guarded=True,
-                headers={"X-UFO-Clearance": clearance("read_secret", {"ref": "a"})})
+                headers={"X-UFO-Clearance": clearance("read_secret", {"ref": "a"}, method="GET")})
     assert r.json()["error"] == "clearance_invalid"  # bound to the exact arguments
     body = b'{"to":"x"}'
     hdrs = {"X-Gimme-Definer": bookend("POST", "SEND", body), "Idempotency-Key": "c-1"}
     r = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
     assert r.json()["error"] == "clearance_missing"
-    hdrs["X-UFO-Clearance"] = clearance("send_thing", {"to": "x"})
+    hdrs["X-UFO-Clearance"] = clearance("send_thing", {"to": "x"}, method="POST")
     assert request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs).status_code == 200
 
 
@@ -258,7 +262,8 @@ def test_level4_human_approval_round_trip(monkeypatch, tmp_path):
 
     def attempt(query, approval=None):
         hdrs = {"X-Gimme-Definer": bookend("DELETE", "REMOVE", b""),
-                "X-UFO-Clearance": clearance("delete_thing", dict(p.split("=") for p in query.split("&")))}
+                "X-UFO-Clearance": clearance("delete_thing", dict(p.split("=") for p in query.split("&")),
+                                             method="DELETE")}
         if approval:
             hdrs["X-WebSpec-Approval"] = approval
         return request(client, "DELETE", H, "/delete_thing", query=query, guarded=True, headers=hdrs)
@@ -285,7 +290,8 @@ def test_level4_rejects_a_signature_from_an_unlisted_key(monkeypatch, tmp_path):
     rogue, _ = make_approver(tmp_path / "rogue")
     monkeypatch.setenv("WEBSPEC_APPROVERS_FILE", str(signers))
     client, pool = make_client(monkeypatch, [entry(level=4)], _tools())
-    hdrs = {"X-Gimme-Definer": bookend("DELETE", "REMOVE", b""), "X-UFO-Clearance": clearance("delete_thing", {"id": "1"})}
+    hdrs = {"X-Gimme-Definer": bookend("DELETE", "REMOVE", b""),
+            "X-UFO-Clearance": clearance("delete_thing", {"id": "1"}, method="DELETE")}
     ch = request(client, "DELETE", H, "/delete_thing", query="id=1", guarded=True, headers=hdrs).json()
     hdrs["X-WebSpec-Approval"] = f"{ch['challenge']}:{ssh_sign(rogue, sign_message(ch['challenge'], ch['fingerprint']))}"
     r = request(client, "DELETE", H, "/delete_thing", query="id=1", guarded=True, headers=hdrs)
@@ -296,7 +302,8 @@ def test_level4_rejects_a_signature_from_an_unlisted_key(monkeypatch, tmp_path):
 def test_level4_without_approvers_fails_closed(monkeypatch):
     monkeypatch.delenv("WEBSPEC_APPROVERS_FILE", raising=False)
     client, pool = make_client(monkeypatch, [entry(level=4)], _tools())
-    hdrs = {"X-Gimme-Definer": bookend("DELETE", "REMOVE", b""), "X-UFO-Clearance": clearance("delete_thing", {"id": "1"})}
+    hdrs = {"X-Gimme-Definer": bookend("DELETE", "REMOVE", b""),
+            "X-UFO-Clearance": clearance("delete_thing", {"id": "1"}, method="DELETE")}
     ch = request(client, "DELETE", H, "/delete_thing", query="id=1", guarded=True, headers=hdrs).json()
     hdrs["X-WebSpec-Approval"] = f"{ch['challenge']}:U1NIU0lH"  # base64("SSHSIG")
     r = request(client, "DELETE", H, "/delete_thing", query="id=1", guarded=True, headers=hdrs)

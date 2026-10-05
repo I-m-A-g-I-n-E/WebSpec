@@ -29,6 +29,7 @@ from .caddy import (
     write_site_block,
 )
 from .config import ServiceRegistry, normalize_name
+from .methods import LEVEL_NAMES, parse_level
 from .config_writer import (
     add_env_var,
     add_service,
@@ -171,6 +172,15 @@ def cmd_add(args: argparse.Namespace) -> int:
     if args.namespace:
         entry["namespace"] = args.namespace
 
+    # Security settings are never silently dropped by --force: keep the existing
+    # level / tool overrides / qualifier labels unless explicitly replaced.
+    previous = existing.get(name, {}) if isinstance(existing, dict) else {}
+    for key in ("level", "tools", "labels"):
+        if key in previous:
+            entry[key] = previous[key]
+    if args.level is not None:
+        entry["level"] = args.level
+
     # Write config
     add_service(name, entry)
     print(f"Added service '{name}' to ~/.claude.json")
@@ -224,17 +234,18 @@ def cmd_ls(args: argparse.Namespace) -> int:
         return 0
 
     # Header
-    print(f"{'NAME':<20} {'TYPE':<8} {'GUARD':<8} {'HEALTH':<10} {'URL'}")
+    print(f"{'NAME':<20} {'TYPE':<8} {'LEVEL':<8} {'HEALTH':<10} {'URL'}")
     print("-" * 75)
 
     for name, cfg in sorted(services.items()):
         normalized = normalize_name(name)
         svc_type = cfg.get("type", "stdio")
-        guard = "yes" if cfg.get("guard") else "no"
+        level = parse_level(cfg.get("level"), guard=bool(cfg.get("guard")), service=normalized)
+        level_text = f"{level} {LEVEL_NAMES[level]}"
         healthy = _health_check(normalized, port=CADDY_PORT, timeout=2.0)
         health = "ok" if healthy else "down"
         url = f"{normalized}.{DOMAIN}"
-        print(f"{normalized:<20} {svc_type:<8} {guard:<8} {health:<10} {url}")
+        print(f"{normalized:<20} {svc_type:<8} {level_text:<12} {health:<10} {url}")
 
     return 0
 
@@ -356,6 +367,9 @@ def build_parser() -> argparse.ArgumentParser:
     add_p.add_argument("--https", action="store_true",
                        help="Display public URL with https:// (TLS via Cloudflare)")
     add_p.add_argument("--namespace", help="Namespace scheme (phase 2)")
+    add_p.add_argument("--level", type=int, choices=range(0, 5),
+                       help="Security level 0-4 (docs/http-methods/method-profiles.md); "
+                            "with --force, an existing level is kept unless this is given")
     add_p.add_argument("--force", action="store_true",
                        help="Overwrite existing service")
 

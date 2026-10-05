@@ -26,11 +26,11 @@ def load_key():
     return _derive_guard_key(raw)
 
 
-def guard_hmac(key, method, host, path, nonce, body=b""):
-    body_hash = hashlib.sha256(body).hexdigest()
-    message = f"{method}:{host}:{path}:{nonce}:{body_hash}".encode()
-    mac = hmac.new(key, message, hashlib.sha256).digest()
-    return mac[:4].hex()
+def guard_hmac(key, method, host, path, nonce, body=b"", query="", definer="", idempotency_key=""):
+    """Sign with the gateway's own implementation so this script can't drift from it."""
+    from webspec.guard import canonical_query, compute_guard_hmac
+    return compute_guard_hmac(key, method, host, path, nonce, body, canonical_query(query),
+                              definer=definer, idempotency_key=idempotency_key)
 
 
 def clearance_token(key, tool, args, ts):

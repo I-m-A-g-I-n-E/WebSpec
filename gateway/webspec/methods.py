@@ -46,7 +46,7 @@ LEVEL_NAMES = {0: "local", 1: "signed", 2: "bound", 3: "cleared", 4: "witnessed"
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 DISCOVERY_METHODS = frozenset({"HEAD", "OPTIONS"})  # never invoke a tool
 INVOKING_METHODS = ("GET", "POST", "PUT", "PATCH", "DELETE")
-NON_IDEMPOTENT_METHODS = frozenset({"POST", "PATCH"})  # Idempotency-Key applies
+ALL_METHODS = ("HEAD", "OPTIONS") + INVOKING_METHODS  # canonical order (routes, CORS, Allow)
 
 # ── Tiers ──
 
@@ -126,9 +126,8 @@ def admissible_methods(contract: ToolContract) -> frozenset[str]:
 
 def allow_header(contract: ToolContract) -> str:
     """RFC 9110 Allow header value for a tool path."""
-    order = ("HEAD", "OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE")
     allowed = admissible_methods(contract) | DISCOVERY_METHODS
-    return ", ".join(m for m in order if m in allowed)
+    return ", ".join(m for m in ALL_METHODS if m in allowed)
 
 
 def contract_from_annotations(annotations: Any, meta: Mapping[str, Any] | None = None) -> ToolContract:
@@ -186,11 +185,17 @@ def apply_override(contract: ToolContract, override: Mapping[str, Any] | None) -
         if key in override and not isinstance(override[key], bool):
             logger.error("Override field %s must be bool, got %r — failing closed", key, override[key])
             return STRICTEST
-    if "tier" in override and override["tier"] not in _TIER_RANK:
+    if "tier" in override and (not isinstance(override["tier"], str) or override["tier"] not in _TIER_RANK):
         logger.error("Override tier must be one of %s, got %r — failing closed", TIERS, override["tier"])
         return STRICTEST
 
-    merged = replace(contract, source="override", **{k: override[k] for k in override})
+    base = contract
+    if override.get("read_only") is False and contract.read_only:
+        # Un-marking a tool read-only must land on the strict MCP defaults, not on the
+        # read-only normalization (non-destructive, idempotent, open) — that would be
+        # *weaker* than an unannotated tool and drop the level-4 gate.
+        base = ToolContract()
+    merged = replace(base, source="override", **{k: override[k] for k in override})
     if merged.read_only:
         # A read-only tool cannot be destructive; keep the struct internally consistent.
         merged = replace(merged, destructive=False, idempotent=True)
@@ -207,6 +212,7 @@ class ContractPins:
 
     def __init__(self) -> None:
         self._pins: dict[tuple[str, str], ToolContract] = {}
+        self._warned: set[tuple[str, str, ToolContract]] = set()
 
     def observe(self, service: str, tool_name: str, observed: ToolContract) -> ToolContract:
         key = (service, tool_name)
@@ -215,7 +221,8 @@ class ContractPins:
             effective = observed
         else:
             effective = pinned.join(observed)
-            if effective != observed:
+            if effective != observed and (service, tool_name, observed) not in self._warned:
+                self._warned.add((service, tool_name, observed))
                 logger.warning(
                     "Contract loosening blocked for %s/%s: observed %s, keeping %s",
                     service, tool_name, observed.as_dict(), effective.as_dict(),
@@ -223,12 +230,11 @@ class ContractPins:
         self._pins[key] = effective
         return effective
 
-    def forget_service(self, service: str) -> None:
-        for key in [k for k in self._pins if k[0] == service]:
-            del self._pins[key]
-
-    # TODO(C): persist pins across restarts (operator-approved contract snapshot file);
-    # see docs/ROADMAP-C.md. Until then a restart re-trusts the first tools/list.
+    # Pins live for the process lifetime and deliberately survive a service being
+    # removed from config and re-added (otherwise editing the config would be a way to
+    # reset them). TODO(C): persist pins across restarts (operator-approved contract
+    # snapshot file); see docs/ROADMAP-C.md. Until then a restart re-trusts the first
+    # tools/list.
 
 
 def effective_contract(
@@ -252,8 +258,9 @@ def effective_contract(
 
 @dataclass(frozen=True)
 class Requirements:
-    """What a request must carry, beyond the guard (which app.py enforces at L≥1)."""
+    """What a request must carry. ``guard`` is enforced in app.py, before the handler."""
 
+    guard: bool = False            # X-WebSpec-Guard HMAC + single-use nonce
     definer: bool = False          # X-Gimme-Definer from this method's family
     bookend: bool = False          # Tier-2 bookend HMAC in the definer header
     idempotency_key: bool = False  # Idempotency-Key header (POST/PATCH)
@@ -263,6 +270,7 @@ class Requirements:
 
     def as_dict(self) -> dict[str, bool]:
         return {
+            "guard": self.guard,
             "definer": self.definer,
             "bookend": self.bookend,
             "idempotency_key": self.idempotency_key,
@@ -280,14 +288,21 @@ def requirements(method: str, contract: ToolContract, level: int) -> Requirement
     method = method.upper()
     unsafe = method not in SAFE_METHODS
     return Requirements(
+        guard=level >= L1_SIGNED,
         # Method rules
         definer=unsafe,
         bookend=unsafe and level >= L2_BOUND,
-        idempotency_key=method in NON_IDEMPOTENT_METHODS and level >= L2_BOUND,
         empty_body=method == "GET",
-        # Contract + tier rules
+        # Contract rules. The key follows the *tool*, not the method: a non-idempotent
+        # tool needs one whichever unsafe method reaches it (DELETE included).
+        idempotency_key=unsafe and not contract.idempotent and level >= L2_BOUND,
+        # Tier rules
         clearance=level >= L3_CLEARED and (contract.risk >= 1 or contract.tier_rank >= 1),
-        approval=level >= L4_WITNESSED and (contract.risk >= 2 or contract.tier == "dangerous"),
+        # A human witnesses anything destructive, anything dangerous, and any mutation
+        # that reaches the open world (the exfiltration step: read a secret, then send it).
+        approval=level >= L4_WITNESSED and (
+            contract.risk >= 2 or contract.tier == "dangerous" or (contract.risk >= 1 and contract.open_world)
+        ),
     )
 
 

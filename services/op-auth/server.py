@@ -47,7 +47,7 @@ def _audit(tool: str, args: dict, outcome: str, clearance_valid: bool = True,
     )
 
 
-@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": False}, meta={"webspec/tier": "sensitive"})
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": False}, meta={"webspec/tier": get_tier("read")})
 def read(reference: str) -> str:
     """Read a single secret by its 1Password reference URI.
 
@@ -82,7 +82,7 @@ def list_vaults() -> str:
         return f"Error: {e}"
 
 
-@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": False}, meta={"webspec/tier": "sensitive"})
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": False}, meta={"webspec/tier": get_tier("list_items")})
 def list_items(vault: str) -> str:
     """List items in a specific vault.
 
@@ -102,7 +102,7 @@ def list_items(vault: str) -> str:
         return f"Error: {e}"
 
 
-@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": False}, meta={"webspec/tier": "sensitive"})
+@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": False}, meta={"webspec/tier": get_tier("get_item")})
 def get_item(vault: str, item: str) -> str:
     """Get full details of a specific item.
 
@@ -123,12 +123,13 @@ def get_item(vault: str, item: str) -> str:
         return f"Error: {e}"
 
 
-@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": True, "idempotentHint": False, "openWorldHint": False}, meta={"webspec/tier": "dangerous"})
+@mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False}, meta={"webspec/tier": get_tier("run")})
 def run(subcommand: str, args: list[str] | None = None) -> str:
     """Run an op CLI command (allowlisted subcommands only).
 
-    Allowed: vault (any), item list, item get, document get.
-    Everything else is denied.
+    Allowed: vault list/get, item list/get (--vault, --categories, --tags, --fields),
+    document get (--vault). Everything else — other actions, short flags, file-writing
+    or account/config flags — is denied.
 
     Args:
         subcommand: The op subcommand (e.g. "item", "vault", "document").

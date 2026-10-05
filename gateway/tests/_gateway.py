@@ -1,9 +1,15 @@
-"""Test harness: the real Starlette app over a fake registry + fake MCP pool."""
+"""Test harness: the real Starlette app over a fake registry + fake MCP pool.
+
+Documented mock exception (AGENTS.md: "mocks only by documented exception"): FakePool
+stands in for MCP servers here because these tests need deterministic fault injection
+(timeouts, protocol rejections, unserializable results) and exact control over tool
+annotations, which a live server cannot provide. The real path — a stdio FastMCP server
+through the real ConnectionPool — is covered without mocks in test_stdio_integration.py.
+"""
 
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import json
 import shutil
 import subprocess
@@ -91,10 +97,11 @@ def bookend(method: str, verb: str, body: bytes) -> str:
     return f"{verb}:{compute_bookend_hash(KEY, method, verb, body)}"
 
 
-def clearance(tool_name: str, args: dict, ts: int | None = None) -> str:
+def clearance(tool_name: str, args: dict, *, service: str = "svc", method: str, ts: int | None = None) -> str:
     import time
     ts = int(time.time()) if ts is None else ts
-    return f"{compute_clearance_token(KEY, tool_name, args, str(ts))}:{ts}"
+    token = compute_clearance_token(KEY, tool_name, args, str(ts), service=service, method=method)
+    return f"{token}:{ts}"
 
 
 def request(client: TestClient, method: str, host: str, path: str, *, query: str = "",
@@ -108,7 +115,9 @@ def request(client: TestClient, method: str, host: str, path: str, *, query: str
         assert r.status_code == 200, r.text
         nonce = r.json()["nonce"]
         q = canonical_query(query if sign_query is None else sign_query)
-        hdrs["X-WebSpec-Guard"] = compute_guard_hmac(KEY, method, host, path, nonce, body, q)
+        hdrs["X-WebSpec-Guard"] = compute_guard_hmac(
+            KEY, method, host, path, nonce, body, q,
+            definer=hdrs.get("X-Gimme-Definer", ""), idempotency_key=hdrs.get("Idempotency-Key", ""))
         hdrs["X-WebSpec-Nonce"] = nonce
     url = path + (f"?{query}" if query else "")
     return client.request(method, url, headers=hdrs, content=body)
@@ -131,5 +140,3 @@ def ssh_sign(key: Path, message: str) -> str:
     return dearmor(out)
 
 
-def sha256(b: bytes) -> str:
-    return hashlib.sha256(b).hexdigest()

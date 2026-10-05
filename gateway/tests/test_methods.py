@@ -101,8 +101,7 @@ def test_pins_block_loosening_but_accept_tightening():
     assert pins.observe("s", "t", ro) == ro
     assert pins.observe("s", "t", destructive) == destructive   # tighten: accepted
     assert pins.observe("s", "t", ro) == destructive            # loosen: blocked
-    pins.forget_service("s")
-    assert pins.observe("s", "t", ro) == ro
+    assert pins.observe("other", "t", ro) == ro                 # pins are per service
 
 
 # ── overrides ──
@@ -139,7 +138,7 @@ def test_requirements_are_monotone_in_level():
 def test_method_rules():
     ro = ToolContract(read_only=True, destructive=False, idempotent=True, tier="open")
     assert requirements("GET", ro, 4).as_dict() == {
-        "definer": False, "bookend": False, "idempotency_key": False,
+        "guard": True, "definer": False, "bookend": False, "idempotency_key": False,
         "empty_body": True, "clearance": False, "approval": False,
     }
     add = ToolContract(destructive=False)
@@ -147,12 +146,18 @@ def test_method_rules():
     assert r.definer and r.bookend and r.idempotency_key and not r.clearance
     assert not requirements("PUT", ToolContract(destructive=False, idempotent=True), 2).idempotency_key
     assert requirements("PATCH", add, 2).idempotency_key
+    # The key follows the tool, not the method: DELETE can't dodge it (review finding).
+    assert requirements("DELETE", ToolContract(), 2).idempotency_key
+    assert not requirements("DELETE", ToolContract(idempotent=True), 2).idempotency_key
+    assert requirements("GET", ro, 1).guard and not requirements("GET", ro, 0).guard
 
 
 def test_contract_and_tier_rules():
-    add = ToolContract(destructive=False)
+    add = ToolContract(destructive=False, open_world=False)
     assert requirements("POST", add, 3).clearance and not requirements("POST", add, 3).approval
-    assert not requirements("POST", add, 4).approval          # additive: no human needed
+    assert not requirements("POST", add, 4).approval          # closed-world additive: no human needed
+    # An open-world mutation is the exfiltration step (read a secret, then send it): witnessed.
+    assert requirements("POST", ToolContract(destructive=False, open_world=True), 4).approval
     assert requirements("DELETE", ToolContract(), 4).approval  # destructive: human needed
     sensitive_read = ToolContract(read_only=True, destructive=False, idempotent=True, tier="sensitive")
     assert requirements("GET", sensitive_read, 3).clearance
@@ -181,3 +186,17 @@ def test_service_entry_keeps_guard_and_level_consistent():
     e = ServiceEntry(name="a", original_name="a", transport_type="stdio", level=3)
     assert e.guard is True and e.level == 3
     assert ServiceEntry(name="a", original_name="a", transport_type="stdio").guard is False
+
+
+def test_unmarking_read_only_lands_on_strict_defaults():
+    """Review finding: {"read_only": false} used to produce a contract weaker than an unannotated tool."""
+    ro = ToolContract(read_only=True, destructive=False, idempotent=True, tier="open", open_world=False)
+    c = apply_override(ro, {"read_only": False})
+    assert (c.destructive, c.idempotent, c.tier) == (True, False, "sensitive")
+    assert admissible_methods(c) == {"POST", "DELETE"} and requirements("DELETE", c, 4).approval
+
+
+@pytest.mark.parametrize("bad_tier", [["open"], {"t": 1}, 3, None])
+def test_non_string_tier_override_fails_closed(bad_tier):
+    """Review finding: an unhashable tier crashed discovery for the whole service."""
+    assert apply_override(ToolContract(), {"tier": bad_tier}) == STRICTEST

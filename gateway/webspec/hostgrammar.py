@@ -17,17 +17,14 @@ Spec: docs/http-methods/method-profiles.md § Host grammar
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 from typing import Sequence
 
 _LABEL = re.compile(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?")
 MAX_QUALIFIERS = 4
 
 
-@dataclass(frozen=True)
-class HostMatch:
-    destination: str
-    qualifiers: tuple[str, ...]
+def is_label(text: str) -> bool:
+    return bool(_LABEL.fullmatch(text))
 
 
 def split_labels(captured: str) -> tuple[str, tuple[str, ...]] | None:
@@ -36,7 +33,7 @@ def split_labels(captured: str) -> tuple[str, tuple[str, ...]] | None:
     Returns None if any label is not a canonical lowercase DNS label.
     """
     labels = captured.split(".")
-    if not labels or any(not _LABEL.fullmatch(lbl) for lbl in labels):
+    if not all(is_label(lbl) for lbl in labels):
         return None
     return labels[-1], tuple(labels[:-1])
 
@@ -45,11 +42,9 @@ def qualifiers_allowed(qualifiers: Sequence[str], allow_list: Sequence[str] | No
     """True iff every qualifier is allow-listed, none repeats, and they follow allow-list order."""
     if not qualifiers:
         return True
-    if not allow_list or len(qualifiers) > MAX_QUALIFIERS:
+    if len(qualifiers) > MAX_QUALIFIERS:
         return False
-    positions = []
-    for q in qualifiers:
-        if q not in allow_list:
-            return False
-        positions.append(list(allow_list).index(q))
-    return positions == sorted(set(positions)) and len(positions) == len(set(positions))
+    index = {q: i for i, q in enumerate(allow_list or ())}
+    positions = [index.get(q, -1) for q in qualifiers]
+    # Every qualifier allow-listed, strictly increasing positions ⇒ canonical order, no repeats.
+    return -1 not in positions and all(a < b for a, b in zip(positions, positions[1:]))

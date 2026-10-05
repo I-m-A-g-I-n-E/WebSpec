@@ -1,0 +1,2325 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A protocol specification for tool invocation that meshes with web architecture">
+      
+      
+      
+        <link rel="canonical" href="https://webspec.gimme.tools/superpowers/specs/2026-07-11-webspec-roadmap-design/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>WebSpec Roadmap & Design — Self-Hostable (B) with Multi-Tenant (C) Scaffolding - WebSpec</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#webspec-roadmap-design-self-hostable-b-with-multi-tenant-c-scaffolding" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="WebSpec" class="md-header__button md-logo" aria-label="WebSpec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            WebSpec
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              WebSpec Roadmap &amp; Design — Self-Hostable (B) with Multi-Tenant (C) Scaffolding
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/psentro/webspec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    I-m-A-g-I-n-E/webspec
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="WebSpec" class="md-nav__button md-logo" aria-label="WebSpec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    WebSpec
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/psentro/webspec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    I-m-A-g-I-n-E/webspec
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../philosophy/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Philosophy
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Philosophy
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../philosophy/permissions-as-love-grammar/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Permissions as Love Grammar
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../philosophy/trust-gradients-philia-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trust Gradients (Philia Model)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../url-grammar/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    URL Grammar
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    URL Grammar
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../url-grammar/core-syntax/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Syntax
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../url-grammar/object-type-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Object Type System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../url-grammar/type-resolution-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Type Resolution & Inference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../url-grammar/complete-grammar-ebnf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Complete Grammar (EBNF)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../http-methods/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HTTP Methods
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    HTTP Methods
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../http-methods/method-semantics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Method Semantics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../http-methods/permission-scoping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Permission Scoping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../http-methods/head-options-discovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HEAD & OPTIONS Discovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../http-methods/method-tokenization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    METHOD Tokenization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../http-methods/definer-verbs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Definer Verbs & Payload Binding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../subdomain-architecture/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subdomain Architecture
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Subdomain Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../subdomain-architecture/isolation-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Isolation Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../subdomain-architecture/cookie-token-scoping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookie & Token Scoping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../subdomain-architecture/local-bridge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    local.gimme.tools Bridge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../subdomain-architecture/local-service-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Service Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../auth/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Authentication
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/auth-flow-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Flow Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/keychain-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Keychain Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/onboarding-subdomain-provisioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding & Provisioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/token-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Token Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../discovery/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Discovery
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Service Discovery
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../discovery/nlp-driven-resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    NLP-Driven Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../discovery/embedding-schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../discovery/three-way-join/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Three-Way Join
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../registration/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Registration
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Service Registration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registration/registration-schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registration/domain-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/comparison-with-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comparison with MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/moltbook-case-study/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MoltBook Case Study
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0-tiers-the-organizing-principle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0. Tiers (the organizing principle)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-starting-reality-what-actually-exists-today" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Starting reality (what actually exists today)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-architecture-the-decomposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Architecture: the decomposition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-track-a-self-hostable-hardened" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Track A — Self-hostable &amp; hardened
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Track A — Self-hostable &amp; hardened">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-auth-model-the-password-manager-is-the-session-authority" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Auth model: the password manager IS the session authority
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-hardening-pass-each-item-a-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Hardening pass (each item = a test)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-config-externalization-kills-host-path-assumptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Config externalization (kills host-path assumptions)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-docker-topology-a-compose-stack-not-one-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 Docker topology: a compose stack (not one image)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-docs-reconciliation-see-6-for-the-specifics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 Docs reconciliation (see §6 for the specifics)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-trunk-catalog-normalization-shared-by-b1-b2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Trunk — Catalog + Normalization (shared by B1 &amp; B2)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Trunk — Catalog + Normalization (shared by B1 &amp; B2)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-catalogpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 catalog.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-normalizepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 normalize.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-tests-b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Tests (B)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-track-b1-resolver-b2-keychain-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Track B1 (resolver) &amp; B2 (keychain graph)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Track B1 (resolver) &amp; B2 (keychain graph)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-b1-semantic-resolver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 B1 — Semantic resolver
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-b2-keychain-graph-secrets-catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 B2 — Keychain graph &amp; secrets catalog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-tests-b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Tests (B)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-docs-reconciliation-track-a-deliverable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Docs reconciliation (Track A deliverable)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-test-strategy-done-for-b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Test strategy &amp; "done" for B
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-c-located-not-built-summary-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. C — located, not built (summary index)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-execution-notes-for-whoever-runs-this-without-the-author" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Execution notes (for whoever runs this without the author)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/psentro/webspec/edit/main/docs/superpowers/specs/2026-07-11-webspec-roadmap-design.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="webspec-roadmap-design-self-hostable-b-with-multi-tenant-c-scaffolding">WebSpec Roadmap &amp; Design — Self-Hostable (B) with Multi-Tenant (C) Scaffolding<a class="headerlink" href="#webspec-roadmap-design-self-hostable-b-with-multi-tenant-c-scaffolding" title="Permanent link">&para;</a></h1>
+<p><strong>Date:</strong> 2026-07-11
+<strong>Status:</strong> Approved design — ready for implementation planning
+<strong>Author:</strong> Design session (Preston + Claude Fable 5)</p>
+<blockquote>
+<p><strong>Purpose of this document.</strong> WebSpec is currently a live personal deployment (tier A) whose
+published spec describes a much larger product than the code implements. This document defines
+the next milestone — a <strong>self-hostable</strong> WebSpec (tier B) — and <em>locates</em> (without building) the
+<strong>multi-tenant</strong> future (tier C). It is written to be executed by someone other than its author:
+every tier-B behavior is defined precisely enough to become a failing test, and every tier-C
+extension point is named and mapped so it can be picked up later. The companion implementation
+plan (produced next, via the planning workflow) turns this into ordered, checkpointed steps.</p>
+</blockquote>
+<hr />
+<h2 id="0-tiers-the-organizing-principle">0. Tiers (the organizing principle)<a class="headerlink" href="#0-tiers-the-organizing-principle" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Meaning</th>
+<th>This round</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A</strong></td>
+<td>Personal gateway — one trusted operator, host-coupled (current live state)</td>
+<td>starting point</td>
+</tr>
+<tr>
+<td><strong>B</strong></td>
+<td>Self-hostable — a stranger can <code>docker compose up</code> their own instance with their own secrets</td>
+<td><strong>BUILD (test-first)</strong></td>
+</tr>
+<tr>
+<td><strong>C</strong></td>
+<td>Multi-tenant service — one deployment, many users, OAuth/JWT, per-user keychains</td>
+<td><strong>LOCATE (<code>TODO(C)</code> + roadmap)</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Rule for every component below:</strong> B behavior ships with failing tests first (the tests <em>are</em> the
+spec). C behavior ships as <code># TODO(C): …</code> markers in code plus an entry in <code>docs/ROADMAP-C.md</code>
+that maps the marker to its section here. Nothing about C is implemented; everything about C is findable.</p>
+<hr />
+<h2 id="1-starting-reality-what-actually-exists-today">1. Starting reality (what actually exists today)<a class="headerlink" href="#1-starting-reality-what-actually-exists-today" title="Permanent link">&para;</a></h2>
+<p>Grounding facts, verified 2026-07-11 on the live host:</p>
+<ul>
+<li><strong>Live path:</strong> <code>*.i-a-m.live</code> → cloudflared → Caddy <code>:7001</code> → gateway (uvicorn) <code>:7002</code> → MCP service.
+  Both <code>caddy-webspec.service</code> and <code>webspec-gateway.service</code> are active system units.</li>
+<li><strong>Catalog:</strong> 3 MCP servers in <code>~/.claude.json</code> — <code>mail-proton</code> (stdio, <strong>guard=false</strong>),
+  <code>op-auth</code> (stdio, guard), <code>supabase</code> (http, guard).</li>
+<li><strong>Implemented:</strong> HTTP→MCP bridge (path = literal MCP tool name, slash→underscore fallback);
+  HMAC guard (<code>session_key</code> + single-use audience-bound nonce); definer verb families;
+  op-auth UFO tiers (open/sensitive/dangerous, run() allowlist, audit log, <code>/__challenge</code>).</li>
+<li><strong>Not implemented (docs describe it anyway):</strong> clean REST <code>/collection/id</code> hierarchy, format
+  suffixes, DELETE, OAuth/JWT, NLP resolution, embedding registry, three-way join, keychain wiring.</li>
+<li><strong>Known defects to fix in this round:</strong></li>
+<li><code>mail-proton</code> is an <strong>unauthenticated public email relay</strong> (guard=false + public tunnel; only gate
+    is a non-secret <code>X-Gimme-Definer: SEND</code> header). Verified reachable.</li>
+<li>Guard/definer HMACs truncate to 32 bits (tamper-evidence strength, not auth strength).</li>
+<li>CORS is <code>allow_origins=["*"]</code> on a gateway that proxies 1Password.</li>
+<li>Gateway binds <code>0.0.0.0:7002</code> (LAN-reachable, bypasses Caddy rate limiting).</li>
+<li><code>docs/</code> self-contradicts (see §6) and duplicates <code>wiki/</code>.</li>
+</ul>
+<hr />
+<h2 id="2-architecture-the-decomposition">2. Architecture: the decomposition<a class="headerlink" href="#2-architecture-the-decomposition" title="Permanent link">&para;</a></h2>
+<p>Four units. <strong>Track A</strong> is independent and can run end-to-end alone. The <strong>Trunk</strong> is a shared
+foundation. <strong>B1</strong> and <strong>B2</strong> both grow on the Trunk and can then proceed in parallel.</p>
+<div class="highlight"><pre><span></span><code>                      ┌─────────────────────────────────────────┐
+   Track A (ship)     │  docker-compose: Caddy + gateway +       │   independent —
+   ───────────────    │  registry service; hardening; docs       │   runs without B
+                      └─────────────────────────────────────────┘
+
+                      ┌─────────────────────────────────────────┐
+   Trunk (shared)     │  Catalog + Normalization                 │   build once
+   ───────────────    │  harvest OPTIONS → (service,tool,verb,    │
+                      │  noun,tier,schema) records               │
+                      └───────────────┬──────────────┬──────────┘
+                                      │              │
+        ┌─────────────────────────────┘              └──────────────────────────┐
+        ▼                                                                        ▼
+  ┌──────────────────────────┐                          ┌──────────────────────────────┐
+  │ Track B1 — Resolver      │                          │ Track B2 — Keychain graph     │
+  │ embed/rank catalog;      │                          │ 1P metadata → merge catalog → │
+  │ "what tool does X";      │                          │ services→nouns→verbs poset    │
+  │ keychain leg via op-auth │                          │ graph + secrets catalog       │
+  └──────────────────────────┘                          └──────────────────────────────┘
+</code></pre></div>
+<p>Both B1 and B2 are exposed by a single new <strong><code>registry</code> service</strong> (its own subdomain, in the
+compose stack), so they are testable in isolation and route through the existing gateway model.</p>
+<hr />
+<h2 id="3-track-a-self-hostable-hardened">3. Track A — Self-hostable &amp; hardened<a class="headerlink" href="#3-track-a-self-hostable-hardened" title="Permanent link">&para;</a></h2>
+<h3 id="31-auth-model-the-password-manager-is-the-session-authority">3.1 Auth model: the password manager IS the session authority<a class="headerlink" href="#31-auth-model-the-password-manager-is-the-session-authority" title="Permanent link">&para;</a></h3>
+<p><strong>Decision (approved).</strong> Eliminate the gateway's separate <code>~/.webspec/session.key</code>. The guard key
+becomes a secret sourced from a password manager (1Password in the reference implementation). This
+is on-thesis: WebSpec's trust root <em>is</em> the keychain.</p>
+<p><strong>Mechanism (B):</strong></p>
+<ul>
+<li>The gateway reads its guard key from the environment variable <strong><code>WEBSPEC_GUARD_KEY</code></strong>.</li>
+<li>That variable is populated <strong>from the vault at process launch</strong> — via <code>op run -- …</code> or
+  <code>op read "op://&lt;vault&gt;/&lt;item&gt;/&lt;field&gt;"</code> in the container entrypoint / systemd <code>ExecStartPre</code>.
+  The key never lands in a plaintext file the way <code>session.key</code> did; its lifetime is the process.</li>
+<li><code>config.get_session_key()</code> is rewritten: decode <code>WEBSPEC_GUARD_KEY</code> (hex/base64) to 32 bytes.
+  <strong>Fail closed</strong> if absent — do NOT silently generate a random key (that would resurrect the
+  second secret). A documented dev-only escape hatch (<code>WEBSPEC_GUARD_KEY_DEV_EPHEMERAL=1</code>) may mint
+  an ephemeral in-memory key for local testing, printed loudly as insecure.</li>
+<li>Authorized <strong>clients</strong> obtain the same key by reading the same vault item (their own biometric /
+  service-account unlock gates that read). Requests are signed exactly as today (HMAC + nonce).</li>
+<li><strong>Keep the nonce store</strong> unchanged — replay protection is orthogonal to key source.</li>
+<li>The gateway process is headless, so it authenticates to 1Password with a <strong>service account</strong>
+  (<code>OP_SERVICE_ACCOUNT_TOKEN</code>), not biometrics. Biometric unlock is a <em>client-side</em> human gesture only.</li>
+</ul>
+<p>This leaves <strong>one</strong> root of trust (the vault), down from two (vault + <code>session.key</code>).</p>
+<p><strong><code>TODO(C)</code> here:</strong>
+- Pluggable secret backend (1Password Connect, other password managers, HashiCorp Vault) behind a
+  <code>SecretBackend</code> interface. B ships only the <code>op</code>-CLI backend.
+- Per-user / asymmetric keys: replace the single shared symmetric key with per-user vault items or
+  client-holds-private-key / gateway-holds-public-key (Ed25519) so tenants can't sign for each other.
+- 1Password-issued bearer validated per-request (a "real" server-side session), instead of a shared
+  symmetric secret.</p>
+<h3 id="32-hardening-pass-each-item-a-test">3.2 Hardening pass (each item = a test)<a class="headerlink" href="#32-hardening-pass-each-item-a-test" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Public exposure requires guard.</strong> Invariant: a service with <code>guard=false</code> must not be reachable
+   on the public domain. Enforce at two layers — the Caddy generator refuses to write a public host
+   block for an unguarded service (localhost block only), and the gateway refuses guard-less requests
+   whose <code>Host</code> is the public domain. This closes the mail-proton relay by construction, not by a
+   one-off flag.</li>
+<li><strong>Bind localhost.</strong> Gateway default bind becomes <code>127.0.0.1</code>; <code>0.0.0.0</code> only via explicit
+   <code>WEBSPEC_HOST</code> override (documented as "you are fronting it yourself").</li>
+<li><strong>Lock CORS.</strong> Default <code>allow_origins</code> to an empty/explicit allowlist from <code>WEBSPEC_CORS_ORIGINS</code>;
+   never wildcard by default. Guarded services shouldn't be browser-reachable cross-origin at all.</li>
+<li><strong>Guard-by-default.</strong> New services provisioned via <code>webspec-ctl</code> default to <code>guard=true</code>.
+   <code>--no-guard</code> requires the service to be localhost-only (ties to invariant #1).</li>
+<li><strong>HMAC strength note.</strong> Keep 4-byte truncation for the <em>definer</em> (it's a tamper-evidence
+   checksum, documented as non-auth), but document explicitly that the <em>guard</em> HMAC's security rests
+   on the nonce + key secrecy, not the 32-bit tag. <code>TODO(C)</code>: widen guard tag to ≥16 bytes when the
+   header-length budget allows, or move to Ed25519 signatures.</li>
+</ol>
+<h3 id="33-config-externalization-kills-host-path-assumptions">3.3 Config externalization (kills host-path assumptions)<a class="headerlink" href="#33-config-externalization-kills-host-path-assumptions" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>WEBSPEC_CONFIG</code> (default <code>~/.claude.json</code>) — path to the MCP-server catalog.</li>
+<li><code>WEBSPEC_ENV_FILE</code> (default <code>~/.env</code>) — secret placeholders.</li>
+<li>Guard key via <code>WEBSPEC_GUARD_KEY</code> (§3.1). Remove all direct <code>Path.home()</code> couplings from the
+  request path; they become defaults, not hardcodes.</li>
+</ul>
+<h3 id="34-docker-topology-a-compose-stack-not-one-image">3.4 Docker topology: a compose stack (not one image)<a class="headerlink" href="#34-docker-topology-a-compose-stack-not-one-image" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>docker/Dockerfile</code></strong> — builds gateway + registry (one Python image, two entrypoints).</li>
+<li><strong><code>docker/docker-compose.yml</code></strong> — services: <code>caddy</code> (fronts <code>:7001</code>, generated conf.d),
+  <code>gateway</code> (<code>:7002</code>, localhost within the compose network), <code>registry</code> (<code>:7003</code>).</li>
+<li><strong>The <code>registry</code> service runs <code>guard=true</code>.</strong> It exposes your full tool inventory, service graph,
+  and 1Password account catalog — sensitive by definition — so it is subject to the same
+  "public exposure requires guard" invariant (§3.2 #1) and must never be reachable unguarded.</li>
+<li><strong>stdio MCP services stay host/sidecar.</strong> op-auth (<code>op</code> CLI + service token) and mail-proton
+  (Protonmail Bridge) can't be generically containerized for a stranger. Ship a documented
+  <strong>"bring your own MCP service"</strong> pattern: http-transport services join the stack as containers;
+  stdio services run on the host and are referenced by the mounted <code>WEBSPEC_CONFIG</code>.</li>
+<li><strong><code>webspec-ctl</code> compose mode.</strong> <code>ctl.py</code> currently shells to <code>systemctl</code>/<code>caddy reload</code>. Add a
+  compose-native path (regenerate conf.d + <code>caddy reload</code> via the admin API) so provisioning works
+  inside the stack. Host/systemd mode remains for tier-A users.</li>
+</ul>
+<h3 id="35-docs-reconciliation-see-6-for-the-specifics">3.5 Docs reconciliation (see §6 for the specifics)<a class="headerlink" href="#35-docs-reconciliation-see-6-for-the-specifics" title="Permanent link">&para;</a></h3>
+<p>Part of Track A because you must not ship an image whose docs describe a different system.</p>
+<hr />
+<h2 id="4-trunk-catalog-normalization-shared-by-b1-b2">4. Trunk — Catalog + Normalization (shared by B1 &amp; B2)<a class="headerlink" href="#4-trunk-catalog-normalization-shared-by-b1-b2" title="Permanent link">&para;</a></h2>
+<p>New module set in a sibling <strong><code>webspec_registry</code></strong> package (recommended over folding into the gateway
+package, so the registry service stays independently deployable and testable).</p>
+<h3 id="41-catalogpy">4.1 <code>catalog.py</code><a class="headerlink" href="#41-catalogpy" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>harvest(services) -&gt; list[ToolRecord]</code> — for each service, fetch its tools (name, description,
+  inputSchema). Source of truth is the gateway's existing <code>OPTIONS /{service}/</code> response, consumed
+  over HTTP so the registry stays decoupled from the pool internals.</li>
+<li><code>ToolRecord = {service, tool, description, input_schema, verb, noun, tier}</code>.</li>
+</ul>
+<h3 id="42-normalizepy">4.2 <code>normalize.py</code><a class="headerlink" href="#42-normalizepy" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>normalize(tool, description) -&gt; (verb, noun)</code>:</li>
+<li>Seed map from the docs' predicate/object tables (<code>send/post/notify → send</code>, <code>note/dm → message</code>, …).</li>
+<li>Heuristic fallback: split <code>snake_case</code> tool names (<code>send_email → verb=send, noun=email</code>),
+    lemmatize lightly, canonicalize against the seed vocabulary.</li>
+<li><code>tier_of(service, tool) -&gt; "open"|"sensitive"|"dangerous"</code> — reuse op-auth UFO tiers where the
+  service exposes them; default per method (GET→open, mutating→sensitive) otherwise.</li>
+<li>Partial order: <code>open ⊑ sensitive ⊑ dangerous</code> (the poset's ordering relation for §5.2).</li>
+</ul>
+<h3 id="43-tests-b">4.3 Tests (B)<a class="headerlink" href="#43-tests-b" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>test_catalog_harvest.py</code> — harvest yields ToolRecords for the live/mock services; missing service
+  degrades gracefully.</li>
+<li><code>test_normalize.py</code> — <code>send_email → (send,email)</code>; <code>read → (read,·)</code>; unknown tool → heuristic;
+  tier mapping matches UFO for op-auth.</li>
+</ul>
+<hr />
+<h2 id="5-track-b1-resolver-b2-keychain-graph">5. Track B1 (resolver) &amp; B2 (keychain graph)<a class="headerlink" href="#5-track-b1-resolver-b2-keychain-graph" title="Permanent link">&para;</a></h2>
+<h3 id="51-b1-semantic-resolver">5.1 B1 — Semantic resolver<a class="headerlink" href="#51-b1-semantic-resolver" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>resolver.py</code>: <code>resolve(query, catalog, user_ctx) -&gt; list[Ranked]</code>.</li>
+<li><code>Matcher</code> interface: <code>score(query, record) -&gt; float</code>.</li>
+<li><strong>Default <code>LexicalMatcher</code></strong> — token overlap + verb/noun canonicalization. Zero external deps;
+    B works with no API key and no model download.</li>
+<li><strong>Optional <code>EmbeddingMatcher</code></strong> — local small model (e.g. a bundled ONNX/sentence-transformer)
+    or an API backend, selected by config. Off by default.</li>
+<li>Ranking = <code>matcher_score × status_weight × recency × preference</code>, where <code>status_weight</code> implements
+  the three-way join legs: <strong>connected</strong> (in pool) &gt; <strong>keychain</strong> (op-auth has creds) &gt; <strong>available</strong>.</li>
+<li><strong>Keychain leg via op-auth</strong>: query op-auth <em>metadata</em> to decide whether a service's credential
+  exists (see §5.2 rules — metadata only, never secret values).</li>
+<li>Exposed on the <code>registry</code> service: <code>GET registry.&lt;domain&gt;/resolve?q=…</code> → ranked JSON.</li>
+</ul>
+<p><strong><code>TODO(C)</code>:</strong> multi-vector search (canonical/predicate/object indices), per-user preference &amp;
+history boosts, negative-example repulsion, query expansion. (All described in <code>docs/discovery/*</code>.)</p>
+<h3 id="52-b2-keychain-graph-secrets-catalog">5.2 B2 — Keychain graph &amp; secrets catalog<a class="headerlink" href="#52-b2-keychain-graph-secrets-catalog" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>keychain.py</code>: read 1Password <strong>metadata</strong> via op-auth <code>list_vaults</code> / <code>list_items</code> / <code>get_item</code>
+  → <code>AccountRecord = {vault, item, title, category, urls, fields_present[], updated_at,
+  linked_gateway_service?}</code>.</li>
+<li><strong>Hard invariant (test-enforced): never call <code>op-auth.read()</code> and never surface secret values.</strong>
+    Only titles, categories, URLs, field <em>names</em>, timestamps leave 1Password.</li>
+<li><code>graph.py</code>: merge catalog (§4) + accounts → a directed graph.</li>
+<li><strong>Nodes:</strong> services, nouns, verbs, accounts (1P items).</li>
+<li><strong>Edges:</strong> <code>service —exposes→ (verb,noun)</code>; <code>account —credentials→ service</code> (matched by URL/name);
+    <code>(verb,noun) —tier→ {open|sensitive|dangerous}</code>.</li>
+<li><strong>Poset:</strong> the combinatorial ordering the user asked for — nouns partially ordered by
+    containment (e.g. <code>message ⊑ channel ⊑ workspace</code>), verbs grouped by definer family, tiers by §4.2.</li>
+<li><strong>Outputs:</strong> JSON (nodes/edges), Graphviz <strong>DOT</strong>, and a <strong>secrets catalog</strong> table
+    <code>{service, vault, item, category, has_credential, last_updated, linked_gateway_service}</code>.</li>
+<li>Exposed on <code>registry</code>: <code>GET /graph</code> (JSON/DOT), <code>GET /catalog</code> (secrets table).</li>
+</ul>
+<p><strong><code>TODO(C)</code>:</strong> balance/quota/liveness enrichment — per-provider billing calls to answer "does this
+API key still have credit / an active account." No generic shortcut; one adapter per provider.</p>
+<h3 id="53-tests-b">5.3 Tests (B)<a class="headerlink" href="#53-tests-b" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>test_resolver_ranks.py</code> — "fire off a note to Sarah" ranks a send/message tool first;
+  connected &gt; keychain &gt; available ordering holds; lexical matcher works with no model present.</li>
+<li><code>test_keychain_metadata_only.py</code> — the keychain reader never invokes <code>read()</code>; asserts no field
+  value from a 1P item appears in output (property test over a mock vault).</li>
+<li><code>test_graph_output.py</code> — graph contains expected service/noun/verb/account nodes and edges; DOT
+  renders; poset ordering respects tier and noun-containment relations.</li>
+</ul>
+<hr />
+<h2 id="6-docs-reconciliation-track-a-deliverable">6. Docs reconciliation (Track A deliverable)<a class="headerlink" href="#6-docs-reconciliation-track-a-deliverable" title="Permanent link">&para;</a></h2>
+<p>The published spec must describe the system that ships. Concrete actions:</p>
+<ol>
+<li><strong>Resolve the core contradiction.</strong> <code>docs/url-grammar/*</code> bans <code>object.provider</code> path syntax
+   (<code>message.slack</code> labeled "WRONG"), but <code>docs/discovery/*</code> is built entirely on that banned form
+   (<code>POST /message.slack</code>). Pick one model and make both sections agree. Since the <em>code</em> routes by
+   MCP tool name, document that as the normative reality and mark REST-hierarchy/format-suffixes as
+   proposed.</li>
+<li><strong>Collapse redundancy.</strong> <code>url-grammar/core-syntax.md</code>, <code>complete-grammar-ebnf.md</code>, and
+   <code>object-type-system.md</code> re-explain "subdomain IS provider" three times → one normative grammar
+   page + one examples page.</li>
+<li><strong>Add an Implemented-vs-Proposed status matrix</strong> to <code>docs/index.md</code> so no reader mistakes vision
+   for reality. Every "Draft" section gets an honest tag: <em>Implemented (B)</em> / <em>Proposed (C)</em> /
+   <em>Conceptual</em>.</li>
+<li><strong>Reconcile domain &amp; ports:</strong> docs say <code>gimme.tools</code> and gateway-on-7001; reality is <code>i-a-m.live</code>
+   and Caddy-on-7001 / gateway-on-7002. State the real topology; keep <code>gimme.tools</code> as the docs/site
+   and the C-tier public vision, explicitly labeled.</li>
+<li><strong>De-duplicate <code>docs/</code> vs <code>wiki/</code>.</strong> They are near-identical hand-maintained mirrors. Make <code>wiki/</code>
+   generated from <code>docs/</code> (or drop it). Single source of truth.</li>
+<li><strong><code>docs/ROADMAP-C.md</code> (new):</strong> the index of every <code>TODO(C)</code> marker → the §here that specifies it.</li>
+</ol>
+<hr />
+<h2 id="7-test-strategy-done-for-b">7. Test strategy &amp; "done" for B<a class="headerlink" href="#7-test-strategy-done-for-b" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Framework: <code>pytest</code> (matches existing <code>gateway/tests/</code>).</li>
+<li><strong>Test-first</strong>: each B behavior above gets a failing test before implementation.</li>
+<li>Layers: unit (normalize, matcher, keychain-metadata invariant), component (resolver ranking, graph
+  output, guard-key-from-vault, public-exposure-requires-guard), integration
+  (<code>test_compose_smoke.py</code> — <code>docker compose up</code>, then an end-to-end request through Caddy→gateway).</li>
+<li><strong>Definition of done for B</strong> = all B tests green + <code>docker compose up</code> yields a working stack with
+  no host-path assumptions + docs status matrix present + <code>session.key</code> removed and guard key sourced
+  from the vault + no unguarded service reachable on the public domain.</li>
+</ul>
+<hr />
+<h2 id="8-c-located-not-built-summary-index">8. C — located, not built (summary index)<a class="headerlink" href="#8-c-located-not-built-summary-index" title="Permanent link">&para;</a></h2>
+<p>Every item lives as <code># TODO(C):</code> in the nearest relevant module and in <code>docs/ROADMAP-C.md</code>:</p>
+<ul>
+<li>Pluggable <code>SecretBackend</code>; per-user / asymmetric guard keys; 1P-bearer per-request session (§3.1).</li>
+<li>Wider guard HMAC tag / Ed25519 signatures (§3.2).</li>
+<li>Multi-vector semantic search, per-user preference/history, query expansion, negative examples (§5.1).</li>
+<li>Provider billing/quota/liveness enrichment (§5.2).</li>
+<li>OAuth/JWT identity, multi-tenant config &amp; isolation, format suffixes, REST collection hierarchy,
+  DELETE method (the aspirational <code>docs/</code> surface not needed for B).</li>
+</ul>
+<hr />
+<h2 id="9-execution-notes-for-whoever-runs-this-without-the-author">9. Execution notes (for whoever runs this without the author)<a class="headerlink" href="#9-execution-notes-for-whoever-runs-this-without-the-author" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Tracks are independent: <strong>A</strong>, and <strong>Trunk→(B1 ∥ B2)</strong>. A can be done first, last, or in parallel.</li>
+<li>Each track should become its own implementation plan (spec → plan → build) if handed to separate
+  agents. This document is the shared source of truth they all reference.</li>
+<li>Start every track from its failing tests. If a test here is ambiguous, the test file is the tie-breaker;
+  make the ambiguity explicit there.</li>
+<li>The one ordering constraint: <strong>Trunk before B1/B2</strong>; <strong>docs reconciliation before publishing an image</strong>.
+```</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

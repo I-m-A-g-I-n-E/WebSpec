@@ -1,0 +1,2830 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A protocol specification for tool invocation that meshes with web architecture">
+      
+      
+      
+        <link rel="canonical" href="https://webspec.gimme.tools/superpowers/plans/2026-07-11-webspec-registry-catalog-resolver-graph/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>WebSpec Registry — Catalog, Resolver & Keychain Graph — Implementation Plan - WebSpec</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#webspec-registry-catalog-resolver-keychain-graph-implementation-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="WebSpec" class="md-header__button md-logo" aria-label="WebSpec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            WebSpec
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              WebSpec Registry — Catalog, Resolver &amp; Keychain Graph — Implementation Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/psentro/webspec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    I-m-A-g-I-n-E/webspec
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="WebSpec" class="md-nav__button md-logo" aria-label="WebSpec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    WebSpec
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/psentro/webspec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    I-m-A-g-I-n-E/webspec
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../philosophy/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Philosophy
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Philosophy
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../philosophy/permissions-as-love-grammar/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Permissions as Love Grammar
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../philosophy/trust-gradients-philia-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trust Gradients (Philia Model)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../url-grammar/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    URL Grammar
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    URL Grammar
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../url-grammar/core-syntax/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Syntax
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../url-grammar/object-type-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Object Type System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../url-grammar/type-resolution-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Type Resolution & Inference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../url-grammar/complete-grammar-ebnf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Complete Grammar (EBNF)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../http-methods/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HTTP Methods
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    HTTP Methods
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../http-methods/method-semantics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Method Semantics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../http-methods/permission-scoping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Permission Scoping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../http-methods/head-options-discovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HEAD & OPTIONS Discovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../http-methods/method-tokenization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    METHOD Tokenization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../http-methods/definer-verbs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Definer Verbs & Payload Binding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../subdomain-architecture/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subdomain Architecture
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Subdomain Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../subdomain-architecture/isolation-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Isolation Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../subdomain-architecture/cookie-token-scoping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookie & Token Scoping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../subdomain-architecture/local-bridge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    local.gimme.tools Bridge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../subdomain-architecture/local-service-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Service Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../auth/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Authentication
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/auth-flow-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Flow Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/keychain-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Keychain Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/onboarding-subdomain-provisioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding & Provisioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/token-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Token Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../discovery/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Discovery
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Service Discovery
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../discovery/nlp-driven-resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    NLP-Driven Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../discovery/embedding-schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../discovery/three-way-join/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Three-Way Join
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../registration/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Registration
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Service Registration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registration/registration-schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registration/domain-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/comparison-with-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comparison with MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/moltbook-case-study/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MoltBook Case Study
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#global-constraints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global Constraints
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Global Constraints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#task-1-package-scaffold-record-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 1: Package scaffold + record types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-2-normalization-verbnoun-canonicalization-tier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 2: Normalization (verb/noun canonicalization + tier)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-3-catalog-harvester" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 3: Catalog harvester
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-4-matcher-lexical-pluggable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 4: Matcher (lexical, pluggable)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-5-resolver-three-way-join-ranking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 5: Resolver (three-way-join ranking)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-6-keychain-reader-metadata-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 6: Keychain reader (metadata only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-7-graph-poset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 7: Graph + poset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-8-registry-service-localhost-only-entrypoint-roadmap-c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 8: Registry service (localhost-only) + entrypoint + ROADMAP-C
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#self-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Self-Review
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/psentro/webspec/edit/main/docs/superpowers/plans/2026-07-11-webspec-registry-catalog-resolver-graph.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="webspec-registry-catalog-resolver-keychain-graph-implementation-plan">WebSpec Registry — Catalog, Resolver &amp; Keychain Graph — Implementation Plan<a class="headerlink" href="#webspec-registry-catalog-resolver-keychain-graph-implementation-plan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>For agentic workers:</strong> REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (<code>- [ ]</code>) syntax for tracking.</p>
+</blockquote>
+<p><strong>Goal:</strong> Build a new <code>webspec_registry</code> package that harvests the gateway's tool catalog, resolves natural-language intent to ranked tools (goal 2), and emits a services→nouns→verbs graph plus a metadata-only 1Password secrets catalog (goal 3).</p>
+<p><strong>Architecture:</strong> A standalone package (sibling to <code>webspec</code>) with a shared Trunk (<code>records</code>, <code>normalize</code>, <code>catalog</code>) feeding two independent branches: a resolver (<code>matcher</code>, <code>resolver</code>) and a keychain graph (<code>keychain</code>, <code>graph</code>). A small Starlette service (<code>app</code>, <code>__main__</code>) exposes <code>/resolve</code>, <code>/catalog</code>, <code>/graph</code>. The service is <strong>localhost-only</strong> for tier B (public exposure requires porting the guard middleware — a <code>TODO(C)</code>).</p>
+<p><strong>Tech Stack:</strong> Python 3.11, Starlette, uvicorn, pytest. Default matcher is pure-Python lexical (zero external deps); embeddings are an opt-in <code>TODO(C)</code>.</p>
+<h2 id="global-constraints">Global Constraints<a class="headerlink" href="#global-constraints" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Python <code>&gt;=3.11</code>. <strong>No heavy new runtime deps</strong> — the default resolver must work with the stdlib only.</li>
+<li>Package lives at <code>gateway/webspec_registry/</code>; tests at <code>gateway/tests/test_registry_*.py</code>; run from <code>gateway/</code>.</li>
+<li><strong>Keychain hard invariant:</strong> never call the op-auth <code>read()</code> tool and never surface a secret field <em>value</em>. Only titles, categories, URLs, and timestamps may leave 1Password. This is test-enforced.</li>
+<li>The Trunk (Tasks 1-3) must land before the branches (Tasks 4-5 resolver; Tasks 6-7 graph). Tasks 4-5 and 6-7 are independent of each other and may be done in parallel.</li>
+<li>Every C extension point is a <code># TODO(C): …</code> comment plus a line in <code>docs/ROADMAP-C.md</code>.</li>
+<li>Commit after every task.</li>
+</ul>
+<hr />
+<h3 id="task-1-package-scaffold-record-types">Task 1: Package scaffold + record types<a class="headerlink" href="#task-1-package-scaffold-record-types" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Create: <code>gateway/webspec_registry/__init__.py</code>, <code>gateway/webspec_registry/records.py</code>
+- Modify: <code>gateway/pyproject.toml</code> (register the second package + a console script)
+- Test: <code>gateway/tests/test_registry_records.py</code> (create)</p>
+<p><strong>Interfaces:</strong>
+- Produces: <code>ToolRecord(service, tool, description, verb, noun, tier, input_schema)</code> and
+  <code>AccountRecord(vault, item, title, category, urls, fields_present, updated_at, linked_service)</code>,
+  both frozen dataclasses. Every later task depends on these exact field names/order.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write the failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_registry_records.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec_registry.records</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolRecord</span><span class="p">,</span> <span class="n">AccountRecord</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_tool_record_fields</span><span class="p">():</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">ToolRecord</span><span class="p">(</span><span class="n">service</span><span class="o">=</span><span class="s2">"mail-proton"</span><span class="p">,</span> <span class="n">tool</span><span class="o">=</span><span class="s2">"send_email"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Send an email"</span><span class="p">,</span>
+                   <span class="n">verb</span><span class="o">=</span><span class="s2">"send"</span><span class="p">,</span> <span class="n">noun</span><span class="o">=</span><span class="s2">"message"</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">"sensitive"</span><span class="p">,</span> <span class="n">input_schema</span><span class="o">=</span><span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">})</span>
+    <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">service</span> <span class="o">==</span> <span class="s2">"mail-proton"</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">verb</span> <span class="o">==</span> <span class="s2">"send"</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">noun</span> <span class="o">==</span> <span class="s2">"message"</span>
+    <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">tier</span> <span class="o">==</span> <span class="s2">"sensitive"</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">input_schema</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"object"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_account_record_defaults</span><span class="p">():</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">AccountRecord</span><span class="p">(</span><span class="n">vault</span><span class="o">=</span><span class="s2">"Personal"</span><span class="p">,</span> <span class="n">item</span><span class="o">=</span><span class="s2">"OpenAI"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"OpenAI"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="s2">"API_CREDENTIAL"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">a</span><span class="o">.</span><span class="n">urls</span> <span class="o">==</span> <span class="p">()</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">fields_present</span> <span class="o">==</span> <span class="p">()</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">linked_service</span> <span class="ow">is</span> <span class="kc">None</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_registry_records.py -v</code>
+Expected: FAIL (<code>ModuleNotFoundError: webspec_registry</code>).</p>
+<ul>
+<li>[ ] <strong>Step 3: Create the package and records</strong></li>
+</ul>
+<p><code>gateway/webspec_registry/__init__.py</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="sd">"""WebSpec registry: tool catalog, semantic resolver, and keychain graph."""</span>
+</code></pre></div>
+<p><code>gateway/webspec_registry/records.py</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ToolRecord</span><span class="p">:</span>
+    <span class="n">service</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">tool</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">verb</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">noun</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">tier</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># "open" | "sensitive" | "dangerous"</span>
+    <span class="n">input_schema</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AccountRecord</span><span class="p">:</span>
+    <span class="n">vault</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">item</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">category</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">urls</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">fields_present</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">updated_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">linked_service</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+<p>In <code>gateway/pyproject.toml</code>, add the console script under <code>[project.scripts]</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">webspec-registry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"webspec_registry.__main__:main"</span>
+</code></pre></div>
+<p>and append a build target so both packages are included:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[tool.hatch.build.targets.wheel]</span>
+<span class="n">packages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"webspec"</span><span class="p">,</span><span class="w"> </span><span class="s2">"webspec_registry"</span><span class="p">]</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 4: Run test to verify it passes</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_registry_records.py -v</code>
+Expected: PASS (2 passed).</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec_registry/<span class="w"> </span>gateway/pyproject.toml<span class="w"> </span>gateway/tests/test_registry_records.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(registry): scaffold webspec_registry package and record types"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-2-normalization-verbnoun-canonicalization-tier">Task 2: Normalization (verb/noun canonicalization + tier)<a class="headerlink" href="#task-2-normalization-verbnoun-canonicalization-tier" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Create: <code>gateway/webspec_registry/normalize.py</code>
+- Test: <code>gateway/tests/test_registry_normalize.py</code> (create)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: nothing.
+- Produces: <code>normalize(tool: str, description: str = "") -&gt; tuple[str, str]</code> (verb, noun) and
+  <code>tier_of(service: str, tool: str, verb: str) -&gt; str</code>. Used by <code>catalog.py</code> and <code>matcher.py</code>.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write the failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_registry_normalize.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec_registry.normalize</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">tier_of</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_send_email</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="n">normalize</span><span class="p">(</span><span class="s2">"send_email"</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="s2">"send"</span><span class="p">,</span> <span class="s2">"message"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_list_vaults_singularizes_noun</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="n">normalize</span><span class="p">(</span><span class="s2">"list_vaults"</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="s2">"read"</span><span class="p">,</span> <span class="s2">"vault"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_colloquial_query_verb_and_noun</span><span class="p">():</span>
+    <span class="c1"># "fire off a note" → send / message</span>
+    <span class="k">assert</span> <span class="n">normalize</span><span class="p">(</span><span class="s2">"fire off a note"</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="s2">"send"</span><span class="p">,</span> <span class="s2">"message"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_tier_opauth_known</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="n">tier_of</span><span class="p">(</span><span class="s2">"op-auth"</span><span class="p">,</span> <span class="s2">"run"</span><span class="p">,</span> <span class="s2">"invoke"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"dangerous"</span>
+    <span class="k">assert</span> <span class="n">tier_of</span><span class="p">(</span><span class="s2">"op-auth"</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"sensitive"</span>
+    <span class="k">assert</span> <span class="n">tier_of</span><span class="p">(</span><span class="s2">"op-auth"</span><span class="p">,</span> <span class="s2">"list_vaults"</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"open"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_tier_default_by_verb</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="n">tier_of</span><span class="p">(</span><span class="s2">"mail-proton"</span><span class="p">,</span> <span class="s2">"send_email"</span><span class="p">,</span> <span class="s2">"send"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"sensitive"</span>
+    <span class="k">assert</span> <span class="n">tier_of</span><span class="p">(</span><span class="s2">"some-svc"</span><span class="p">,</span> <span class="s2">"get_thing"</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"open"</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_registry_normalize.py -v</code>
+Expected: FAIL (<code>ModuleNotFoundError</code>).</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement <code>normalize.py</code></strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+
+<span class="c1"># Canonical verb map (seeded from docs/discovery predicate tables).</span>
+<span class="n">VERB_CANON</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"send"</span><span class="p">:</span> <span class="s2">"send"</span><span class="p">,</span> <span class="s2">"post"</span><span class="p">:</span> <span class="s2">"send"</span><span class="p">,</span> <span class="s2">"notify"</span><span class="p">:</span> <span class="s2">"send"</span><span class="p">,</span> <span class="s2">"ping"</span><span class="p">:</span> <span class="s2">"send"</span><span class="p">,</span> <span class="s2">"dm"</span><span class="p">:</span> <span class="s2">"send"</span><span class="p">,</span>
+    <span class="s2">"fire"</span><span class="p">:</span> <span class="s2">"send"</span><span class="p">,</span> <span class="s2">"shoot"</span><span class="p">:</span> <span class="s2">"send"</span><span class="p">,</span> <span class="s2">"drop"</span><span class="p">:</span> <span class="s2">"send"</span><span class="p">,</span> <span class="s2">"email"</span><span class="p">:</span> <span class="s2">"send"</span><span class="p">,</span>
+    <span class="s2">"read"</span><span class="p">:</span> <span class="s2">"read"</span><span class="p">,</span> <span class="s2">"get"</span><span class="p">:</span> <span class="s2">"read"</span><span class="p">,</span> <span class="s2">"list"</span><span class="p">:</span> <span class="s2">"read"</span><span class="p">,</span> <span class="s2">"fetch"</span><span class="p">:</span> <span class="s2">"read"</span><span class="p">,</span> <span class="s2">"search"</span><span class="p">:</span> <span class="s2">"read"</span><span class="p">,</span>
+    <span class="s2">"grab"</span><span class="p">:</span> <span class="s2">"read"</span><span class="p">,</span> <span class="s2">"pull"</span><span class="p">:</span> <span class="s2">"read"</span><span class="p">,</span> <span class="s2">"check"</span><span class="p">:</span> <span class="s2">"read"</span><span class="p">,</span> <span class="s2">"view"</span><span class="p">:</span> <span class="s2">"read"</span><span class="p">,</span>
+    <span class="s2">"create"</span><span class="p">:</span> <span class="s2">"create"</span><span class="p">,</span> <span class="s2">"add"</span><span class="p">:</span> <span class="s2">"create"</span><span class="p">,</span> <span class="s2">"new"</span><span class="p">:</span> <span class="s2">"create"</span><span class="p">,</span>
+    <span class="s2">"delete"</span><span class="p">:</span> <span class="s2">"delete"</span><span class="p">,</span> <span class="s2">"remove"</span><span class="p">:</span> <span class="s2">"delete"</span><span class="p">,</span> <span class="s2">"nuke"</span><span class="p">:</span> <span class="s2">"delete"</span><span class="p">,</span> <span class="s2">"trash"</span><span class="p">:</span> <span class="s2">"delete"</span><span class="p">,</span>
+    <span class="s2">"update"</span><span class="p">:</span> <span class="s2">"modify"</span><span class="p">,</span> <span class="s2">"modify"</span><span class="p">:</span> <span class="s2">"modify"</span><span class="p">,</span> <span class="s2">"patch"</span><span class="p">:</span> <span class="s2">"modify"</span><span class="p">,</span> <span class="s2">"edit"</span><span class="p">:</span> <span class="s2">"modify"</span><span class="p">,</span>
+    <span class="s2">"set"</span><span class="p">:</span> <span class="s2">"modify"</span><span class="p">,</span> <span class="s2">"tweak"</span><span class="p">:</span> <span class="s2">"modify"</span><span class="p">,</span> <span class="s2">"fix"</span><span class="p">:</span> <span class="s2">"modify"</span><span class="p">,</span> <span class="s2">"rename"</span><span class="p">:</span> <span class="s2">"modify"</span><span class="p">,</span>
+    <span class="s2">"run"</span><span class="p">:</span> <span class="s2">"invoke"</span><span class="p">,</span> <span class="s2">"invoke"</span><span class="p">:</span> <span class="s2">"invoke"</span><span class="p">,</span> <span class="s2">"execute"</span><span class="p">:</span> <span class="s2">"invoke"</span><span class="p">,</span> <span class="s2">"exec"</span><span class="p">:</span> <span class="s2">"invoke"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">NOUN_CANON</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"email"</span><span class="p">:</span> <span class="s2">"message"</span><span class="p">,</span> <span class="s2">"message"</span><span class="p">:</span> <span class="s2">"message"</span><span class="p">,</span> <span class="s2">"note"</span><span class="p">:</span> <span class="s2">"message"</span><span class="p">,</span> <span class="s2">"dm"</span><span class="p">:</span> <span class="s2">"message"</span><span class="p">,</span>
+    <span class="s2">"msg"</span><span class="p">:</span> <span class="s2">"message"</span><span class="p">,</span> <span class="s2">"mail"</span><span class="p">:</span> <span class="s2">"message"</span><span class="p">,</span> <span class="s2">"notification"</span><span class="p">:</span> <span class="s2">"message"</span><span class="p">,</span>
+    <span class="s2">"file"</span><span class="p">:</span> <span class="s2">"file"</span><span class="p">,</span> <span class="s2">"document"</span><span class="p">:</span> <span class="s2">"document"</span><span class="p">,</span> <span class="s2">"doc"</span><span class="p">:</span> <span class="s2">"document"</span><span class="p">,</span> <span class="s2">"page"</span><span class="p">:</span> <span class="s2">"document"</span><span class="p">,</span>
+    <span class="s2">"secret"</span><span class="p">:</span> <span class="s2">"secret"</span><span class="p">,</span> <span class="s2">"item"</span><span class="p">:</span> <span class="s2">"secret"</span><span class="p">,</span> <span class="s2">"password"</span><span class="p">:</span> <span class="s2">"secret"</span><span class="p">,</span> <span class="s2">"credential"</span><span class="p">:</span> <span class="s2">"secret"</span><span class="p">,</span>
+    <span class="s2">"vault"</span><span class="p">:</span> <span class="s2">"vault"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">_READ_VERBS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"read"</span><span class="p">}</span>
+
+<span class="n">_OPAUTH_TIERS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"list_vaults"</span><span class="p">:</span> <span class="s2">"open"</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">:</span> <span class="s2">"sensitive"</span><span class="p">,</span> <span class="s2">"list_items"</span><span class="p">:</span> <span class="s2">"sensitive"</span><span class="p">,</span>
+    <span class="s2">"get_item"</span><span class="p">:</span> <span class="s2">"sensitive"</span><span class="p">,</span> <span class="s2">"run"</span><span class="p">:</span> <span class="s2">"dangerous"</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_tokens</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[_\W]+"</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span> <span class="k">if</span> <span class="n">t</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_canon_noun</span><span class="p">(</span><span class="n">tok</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">NOUN_CANON</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">NOUN_CANON</span><span class="p">[</span><span class="n">tok</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">tok</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"s"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">tok</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">NOUN_CANON</span><span class="p">:</span>  <span class="c1"># light singularization (vaults→vault)</span>
+        <span class="k">return</span> <span class="n">NOUN_CANON</span><span class="p">[</span><span class="n">tok</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="n">tok</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize</span><span class="p">(</span><span class="n">tool</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return (canonical_verb, canonical_noun) for a tool name or free-text query."""</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">_tokens</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span>
+    <span class="n">verb</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>                      <span class="c1"># first token that maps to a verb</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">VERB_CANON</span><span class="p">:</span>
+            <span class="n">verb</span> <span class="o">=</span> <span class="n">VERB_CANON</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+            <span class="k">break</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">verb</span> <span class="ow">and</span> <span class="n">parts</span><span class="p">:</span>
+        <span class="n">verb</span> <span class="o">=</span> <span class="n">VERB_CANON</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">noun</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">parts</span><span class="p">):</span>            <span class="c1"># last token that maps to a noun</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">_canon_noun</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">NOUN_CANON</span> <span class="ow">or</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"s"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">p</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">NOUN_CANON</span><span class="p">):</span>
+            <span class="n">noun</span> <span class="o">=</span> <span class="n">c</span>
+            <span class="k">break</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">noun</span> <span class="ow">and</span> <span class="n">parts</span><span class="p">:</span>
+        <span class="n">noun</span> <span class="o">=</span> <span class="n">_canon_noun</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">verb</span><span class="p">,</span> <span class="n">noun</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">tier_of</span><span class="p">(</span><span class="n">service</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tool</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">verb</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Sensitivity tier. op-auth uses its UFO tiers; others default by verb."""</span>
+    <span class="k">if</span> <span class="n">service</span> <span class="o">==</span> <span class="s2">"op-auth"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_OPAUTH_TIERS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="s2">"dangerous"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">"open"</span> <span class="k">if</span> <span class="n">verb</span> <span class="ow">in</span> <span class="n">_READ_VERBS</span> <span class="k">else</span> <span class="s2">"sensitive"</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 4: Run test to verify it passes</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_registry_normalize.py -v</code>
+Expected: PASS (5 passed).</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec_registry/normalize.py<span class="w"> </span>gateway/tests/test_registry_normalize.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(registry): verb/noun normalization and sensitivity tiers"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-3-catalog-harvester">Task 3: Catalog harvester<a class="headerlink" href="#task-3-catalog-harvester" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Create: <code>gateway/webspec_registry/catalog.py</code>
+- Test: <code>gateway/tests/test_registry_catalog.py</code> (create)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: <code>ToolRecord</code>, <code>normalize</code>, <code>tier_of</code>.
+- Produces: <code>harvest(services: list[str], fetch_tools) -&gt; list[ToolRecord]</code>, where
+  <code>fetch_tools(service) -&gt; list[dict]</code> yields dicts with keys <code>name</code>, <code>description</code>, <code>inputSchema</code>.
+  Also <code>http_fetch_tools(gateway_url: str)</code> factory returning such a callable (used by the service).</p>
+<ul>
+<li>[ ] <strong>Step 1: Write the failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_registry_catalog.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec_registry.catalog</span><span class="w"> </span><span class="kn">import</span> <span class="n">harvest</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fake_fetch</span><span class="p">(</span><span class="n">service</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"mail-proton"</span><span class="p">:</span> <span class="p">[{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"send_email"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Send an email"</span><span class="p">,</span> <span class="s2">"inputSchema"</span><span class="p">:</span> <span class="p">{}}],</span>
+        <span class="s2">"op-auth"</span><span class="p">:</span> <span class="p">[{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"run"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Run op subcommand"</span><span class="p">,</span> <span class="s2">"inputSchema"</span><span class="p">:</span> <span class="p">{}}],</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">service</span> <span class="o">==</span> <span class="s2">"broken"</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"unreachable"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">service</span><span class="p">,</span> <span class="p">[])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_harvest_builds_records</span><span class="p">():</span>
+    <span class="n">recs</span> <span class="o">=</span> <span class="n">harvest</span><span class="p">([</span><span class="s2">"mail-proton"</span><span class="p">,</span> <span class="s2">"op-auth"</span><span class="p">],</span> <span class="n">_fake_fetch</span><span class="p">)</span>
+    <span class="n">by_tool</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">tool</span><span class="p">:</span> <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">recs</span><span class="p">}</span>
+    <span class="k">assert</span> <span class="n">by_tool</span><span class="p">[</span><span class="s2">"send_email"</span><span class="p">]</span><span class="o">.</span><span class="n">verb</span> <span class="o">==</span> <span class="s2">"send"</span> <span class="ow">and</span> <span class="n">by_tool</span><span class="p">[</span><span class="s2">"send_email"</span><span class="p">]</span><span class="o">.</span><span class="n">noun</span> <span class="o">==</span> <span class="s2">"message"</span>
+    <span class="k">assert</span> <span class="n">by_tool</span><span class="p">[</span><span class="s2">"send_email"</span><span class="p">]</span><span class="o">.</span><span class="n">tier</span> <span class="o">==</span> <span class="s2">"sensitive"</span>
+    <span class="k">assert</span> <span class="n">by_tool</span><span class="p">[</span><span class="s2">"run"</span><span class="p">]</span><span class="o">.</span><span class="n">tier</span> <span class="o">==</span> <span class="s2">"dangerous"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_harvest_skips_unreachable_service</span><span class="p">():</span>
+    <span class="n">recs</span> <span class="o">=</span> <span class="n">harvest</span><span class="p">([</span><span class="s2">"broken"</span><span class="p">,</span> <span class="s2">"mail-proton"</span><span class="p">],</span> <span class="n">_fake_fetch</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">service</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">recs</span><span class="p">}</span> <span class="o">==</span> <span class="p">{</span><span class="s2">"mail-proton"</span><span class="p">}</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_registry_catalog.py -v</code>
+Expected: FAIL (<code>ModuleNotFoundError</code>).</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement <code>catalog.py</code></strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.request</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.normalize</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize</span><span class="p">,</span> <span class="n">tier_of</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.records</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolRecord</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"webspec.registry.catalog"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">harvest</span><span class="p">(</span><span class="n">services</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">fetch_tools</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ToolRecord</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Build ToolRecords for each service. fetch_tools(service) -&gt; list[{name,description,inputSchema}]."""</span>
+    <span class="n">records</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ToolRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">svc</span> <span class="ow">in</span> <span class="n">services</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">tools</span> <span class="o">=</span> <span class="n">fetch_tools</span><span class="p">(</span><span class="n">svc</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># a down service must not sink the whole catalog</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"catalog: skipping </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span> <span class="n">svc</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tools</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+            <span class="n">desc</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"description"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span>
+            <span class="n">verb</span><span class="p">,</span> <span class="n">noun</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span>
+            <span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ToolRecord</span><span class="p">(</span>
+                <span class="n">service</span><span class="o">=</span><span class="n">svc</span><span class="p">,</span> <span class="n">tool</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">desc</span><span class="p">,</span>
+                <span class="n">verb</span><span class="o">=</span><span class="n">verb</span><span class="p">,</span> <span class="n">noun</span><span class="o">=</span><span class="n">noun</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="n">tier_of</span><span class="p">(</span><span class="n">svc</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">verb</span><span class="p">),</span>
+                <span class="n">input_schema</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"inputSchema"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{},</span>
+            <span class="p">))</span>
+    <span class="k">return</span> <span class="n">records</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">http_fetch_tools</span><span class="p">(</span><span class="n">gateway_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Return a fetch_tools callable that reads OPTIONS {gateway_url}/ per service subdomain.</span>
+
+<span class="sd">    The gateway's index (GET {gateway_url}/) lists services; OPTIONS {service}.&lt;host&gt;/ lists tools.</span>
+<span class="sd">    Here we hit the gateway index for the tool list per service via its JSON `tools` array.</span>
+<span class="sd">    """</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fetch</span><span class="p">(</span><span class="n">service</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+        <span class="c1"># The gateway serves OPTIONS /{service}/ as {"service","tools":[...]}</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">gateway_url</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"/"</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"OPTIONS"</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"Host"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">.localhost"</span><span class="p">})</span>
+        <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
+            <span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tools"</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">return</span> <span class="n">_fetch</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 4: Run test to verify it passes</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_registry_catalog.py -v</code>
+Expected: PASS (2 passed).</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec_registry/catalog.py<span class="w"> </span>gateway/tests/test_registry_catalog.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(registry): catalog harvester over gateway OPTIONS"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-4-matcher-lexical-pluggable">Task 4: Matcher (lexical, pluggable)<a class="headerlink" href="#task-4-matcher-lexical-pluggable" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Create: <code>gateway/webspec_registry/matcher.py</code>
+- Test: <code>gateway/tests/test_registry_matcher.py</code> (create)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: <code>ToolRecord</code>, <code>normalize</code>.
+- Produces: <code>Matcher</code> (ABC with <code>score(query, record) -&gt; float</code>) and <code>LexicalMatcher</code>. Consumed by <code>resolver.py</code>.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write the failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_registry_matcher.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec_registry.matcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">LexicalMatcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec_registry.records</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolRecord</span>
+
+<span class="n">SEND</span> <span class="o">=</span> <span class="n">ToolRecord</span><span class="p">(</span><span class="s2">"slack"</span><span class="p">,</span> <span class="s2">"send_message"</span><span class="p">,</span> <span class="s2">"Send a message to a channel"</span><span class="p">,</span> <span class="s2">"send"</span><span class="p">,</span> <span class="s2">"message"</span><span class="p">,</span> <span class="s2">"sensitive"</span><span class="p">)</span>
+<span class="n">READ</span> <span class="o">=</span> <span class="n">ToolRecord</span><span class="p">(</span><span class="s2">"gdrive"</span><span class="p">,</span> <span class="s2">"get_file"</span><span class="p">,</span> <span class="s2">"Download a file"</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">,</span> <span class="s2">"file"</span><span class="p">,</span> <span class="s2">"open"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_relevant_scores_higher_than_irrelevant</span><span class="p">():</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">LexicalMatcher</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="s2">"send a message"</span><span class="p">,</span> <span class="n">SEND</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">m</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="s2">"send a message"</span><span class="p">,</span> <span class="n">READ</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_verb_noun_bonus</span><span class="p">():</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">LexicalMatcher</span><span class="p">()</span>
+    <span class="c1"># canonical verb+noun match should push score above raw token overlap alone</span>
+    <span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="s2">"fire off a note"</span><span class="p">,</span> <span class="n">SEND</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.0</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_empty_query_is_zero</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="n">LexicalMatcher</span><span class="p">()</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="n">SEND</span><span class="p">)</span> <span class="o">==</span> <span class="mf">0.0</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_registry_matcher.py -v</code>
+Expected: FAIL (<code>ModuleNotFoundError</code>).</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement <code>matcher.py</code></strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.normalize</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.records</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolRecord</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_tokens</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[_\W]+"</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span> <span class="k">if</span> <span class="n">t</span><span class="p">}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Matcher</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Scores how well a natural-language query matches a tool. Range [0.0, 1.0]."""</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">ToolRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span> <span class="o">...</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">LexicalMatcher</span><span class="p">(</span><span class="n">Matcher</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Zero-dependency matcher: token overlap + canonical verb/noun bonus."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">ToolRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">_tokens</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">q</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="n">doc</span> <span class="o">=</span> <span class="n">_tokens</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">tool</span><span class="p">)</span> <span class="o">|</span> <span class="n">_tokens</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">description</span><span class="p">)</span> <span class="o">|</span> <span class="p">{</span><span class="n">record</span><span class="o">.</span><span class="n">verb</span><span class="p">,</span> <span class="n">record</span><span class="o">.</span><span class="n">noun</span><span class="p">}</span>
+        <span class="n">overlap</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">q</span> <span class="o">&amp;</span> <span class="n">doc</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="n">qverb</span><span class="p">,</span> <span class="n">qnoun</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">bonus</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">qverb</span> <span class="ow">and</span> <span class="n">qverb</span> <span class="o">==</span> <span class="n">record</span><span class="o">.</span><span class="n">verb</span><span class="p">:</span>
+            <span class="n">bonus</span> <span class="o">+=</span> <span class="mf">0.25</span>
+        <span class="k">if</span> <span class="n">qnoun</span> <span class="ow">and</span> <span class="n">qnoun</span> <span class="o">==</span> <span class="n">record</span><span class="o">.</span><span class="n">noun</span><span class="p">:</span>
+            <span class="n">bonus</span> <span class="o">+=</span> <span class="mf">0.25</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">overlap</span> <span class="o">+</span> <span class="n">bonus</span><span class="p">)</span>
+
+<span class="c1"># TODO(C): EmbeddingMatcher — local small model or API backend, multi-vector</span>
+<span class="c1"># (canonical/predicate/object) search. See docs/discovery/embedding-schema.md.</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 4: Run test to verify it passes</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_registry_matcher.py -v</code>
+Expected: PASS (3 passed).</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec_registry/matcher.py<span class="w"> </span>gateway/tests/test_registry_matcher.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(registry): pluggable lexical matcher (zero-dep default)"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-5-resolver-three-way-join-ranking">Task 5: Resolver (three-way-join ranking)<a class="headerlink" href="#task-5-resolver-three-way-join-ranking" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Create: <code>gateway/webspec_registry/resolver.py</code>
+- Test: <code>gateway/tests/test_registry_resolver.py</code> (create)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: <code>Matcher</code>, <code>LexicalMatcher</code>, <code>ToolRecord</code>.
+- Produces: <code>Ranked(record, score, status)</code> and
+  <code>resolve(query, catalog, status_of=None, matcher=None, top_k=10) -&gt; list[Ranked]</code>, where
+  <code>status_of(record) -&gt; str</code> returns one of <code>"connected"|"keychain"|"available"|"unavailable"</code>.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write the failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_registry_resolver.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec_registry.resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec_registry.records</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolRecord</span>
+
+<span class="n">CATALOG</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">ToolRecord</span><span class="p">(</span><span class="s2">"slack"</span><span class="p">,</span> <span class="s2">"send_message"</span><span class="p">,</span> <span class="s2">"Send a message"</span><span class="p">,</span> <span class="s2">"send"</span><span class="p">,</span> <span class="s2">"message"</span><span class="p">,</span> <span class="s2">"sensitive"</span><span class="p">),</span>
+    <span class="n">ToolRecord</span><span class="p">(</span><span class="s2">"email"</span><span class="p">,</span> <span class="s2">"send_email"</span><span class="p">,</span> <span class="s2">"Send an email"</span><span class="p">,</span> <span class="s2">"send"</span><span class="p">,</span> <span class="s2">"message"</span><span class="p">,</span> <span class="s2">"sensitive"</span><span class="p">),</span>
+    <span class="n">ToolRecord</span><span class="p">(</span><span class="s2">"gdrive"</span><span class="p">,</span> <span class="s2">"get_file"</span><span class="p">,</span> <span class="s2">"Download a file"</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">,</span> <span class="s2">"file"</span><span class="p">,</span> <span class="s2">"open"</span><span class="p">),</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_ranks_relevant_tool_first</span><span class="p">():</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="s2">"fire off a note"</span><span class="p">,</span> <span class="n">CATALOG</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">noun</span> <span class="o">==</span> <span class="s2">"message"</span>
+    <span class="k">assert</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">service</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"slack"</span><span class="p">,</span> <span class="s2">"email"</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_status_weight_orders_connected_over_keychain</span><span class="p">():</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">status_of</span><span class="p">(</span><span class="n">rec</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"connected"</span> <span class="k">if</span> <span class="n">rec</span><span class="o">.</span><span class="n">service</span> <span class="o">==</span> <span class="s2">"email"</span> <span class="k">else</span> <span class="s2">"keychain"</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="s2">"send a message"</span><span class="p">,</span> <span class="n">CATALOG</span><span class="p">,</span> <span class="n">status_of</span><span class="o">=</span><span class="n">status_of</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">service</span> <span class="o">==</span> <span class="s2">"email"</span>  <span class="c1"># connected (1.0) beats keychain (0.8)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_unavailable_filtered_out</span><span class="p">():</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="s2">"send a message"</span><span class="p">,</span> <span class="n">CATALOG</span><span class="p">,</span> <span class="n">status_of</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="s2">"unavailable"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">results</span> <span class="o">==</span> <span class="p">[]</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_registry_resolver.py -v</code>
+Expected: FAIL (<code>ModuleNotFoundError</code>).</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement <code>resolver.py</code></strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.matcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">LexicalMatcher</span><span class="p">,</span> <span class="n">Matcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.records</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolRecord</span>
+
+<span class="n">STATUS_WEIGHT</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"connected"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"keychain"</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">,</span> <span class="s2">"available"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">"unavailable"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Ranked</span><span class="p">:</span>
+    <span class="n">record</span><span class="p">:</span> <span class="n">ToolRecord</span>
+    <span class="n">score</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">catalog</span><span class="p">,</span> <span class="n">status_of</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">matcher</span><span class="p">:</span> <span class="n">Matcher</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Rank catalog tools for a query using matcher score × status weight (the three-way join)."""</span>
+    <span class="n">matcher</span> <span class="o">=</span> <span class="n">matcher</span> <span class="ow">or</span> <span class="n">LexicalMatcher</span><span class="p">()</span>
+    <span class="n">status_of</span> <span class="o">=</span> <span class="n">status_of</span> <span class="ow">or</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="s2">"available"</span><span class="p">)</span>
+    <span class="n">ranked</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Ranked</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">catalog</span><span class="p">:</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="n">matcher</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">rec</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">raw</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">status_of</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
+        <span class="n">final</span> <span class="o">=</span> <span class="n">raw</span> <span class="o">*</span> <span class="n">STATUS_WEIGHT</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">final</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">ranked</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Ranked</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="n">rec</span><span class="p">,</span> <span class="n">score</span><span class="o">=</span><span class="n">final</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">))</span>
+    <span class="n">ranked</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">score</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ranked</span><span class="p">[:</span><span class="n">top_k</span><span class="p">]</span>
+
+<span class="c1"># TODO(C): recency_boost, preference_boost, per-user history — see docs/discovery/three-way-join.md.</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 4: Run test to verify it passes</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_registry_resolver.py -v</code>
+Expected: PASS (3 passed).</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec_registry/resolver.py<span class="w"> </span>gateway/tests/test_registry_resolver.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(registry): intent resolver with three-way-join status weighting"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-6-keychain-reader-metadata-only">Task 6: Keychain reader (metadata only)<a class="headerlink" href="#task-6-keychain-reader-metadata-only" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Create: <code>gateway/webspec_registry/keychain.py</code>
+- Test: <code>gateway/tests/test_registry_keychain.py</code> (create)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: <code>AccountRecord</code>; an <code>op_client</code> object exposing <code>list_vaults()</code>, <code>list_items(vault)</code>
+  (both return metadata dicts). <strong>Must not</strong> call <code>op_client.read()</code> or <code>op_client.get_item()</code>.
+- Produces: <code>read_accounts(op_client) -&gt; list[AccountRecord]</code>.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write the failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_registry_keychain.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec_registry.keychain</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_accounts</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">FakeOp</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Mimics op-auth. read()/get_item() raise if called — they must never be."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">read_called</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_vaults</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"v1"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Personal"</span><span class="p">}]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vault</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[{</span>
+            <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"i1"</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">:</span> <span class="s2">"OpenAI"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">:</span> <span class="s2">"API_CREDENTIAL"</span><span class="p">,</span>
+            <span class="s2">"urls"</span><span class="p">:</span> <span class="p">[{</span><span class="s2">"href"</span><span class="p">:</span> <span class="s2">"https://platform.openai.com"</span><span class="p">}],</span>
+            <span class="s2">"updated_at"</span><span class="p">:</span> <span class="s2">"2026-01-01T00:00:00Z"</span><span class="p">,</span>
+            <span class="c1"># a value MUST NOT appear in output even if present here</span>
+            <span class="s2">"fields"</span><span class="p">:</span> <span class="p">[{</span><span class="s2">"label"</span><span class="p">:</span> <span class="s2">"api_key"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="s2">"sk-SECRET-123"</span><span class="p">}],</span>
+        <span class="p">}]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">k</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">read_called</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="s2">"read() must never be called by the keychain reader"</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">k</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="s2">"get_item() must never be called by the keychain reader"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_reads_metadata_into_account_records</span><span class="p">():</span>
+    <span class="n">op</span> <span class="o">=</span> <span class="n">FakeOp</span><span class="p">()</span>
+    <span class="n">accounts</span> <span class="o">=</span> <span class="n">read_accounts</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">accounts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">accounts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">a</span><span class="o">.</span><span class="n">vault</span> <span class="o">==</span> <span class="s2">"Personal"</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">title</span> <span class="o">==</span> <span class="s2">"OpenAI"</span>
+    <span class="k">assert</span> <span class="n">a</span><span class="o">.</span><span class="n">category</span> <span class="o">==</span> <span class="s2">"API_CREDENTIAL"</span>
+    <span class="k">assert</span> <span class="n">a</span><span class="o">.</span><span class="n">urls</span> <span class="o">==</span> <span class="p">(</span><span class="s2">"https://platform.openai.com"</span><span class="p">,)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_never_surfaces_secret_values</span><span class="p">():</span>
+    <span class="n">op</span> <span class="o">=</span> <span class="n">FakeOp</span><span class="p">()</span>
+    <span class="n">accounts</span> <span class="o">=</span> <span class="n">read_accounts</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
+    <span class="n">blob</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">accounts</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="s2">"sk-SECRET-123"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">blob</span>
+    <span class="k">assert</span> <span class="n">op</span><span class="o">.</span><span class="n">read_called</span> <span class="ow">is</span> <span class="kc">False</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_registry_keychain.py -v</code>
+Expected: FAIL (<code>ModuleNotFoundError</code>).</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement <code>keychain.py</code></strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.records</span><span class="w"> </span><span class="kn">import</span> <span class="n">AccountRecord</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">read_accounts</span><span class="p">(</span><span class="n">op_client</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">AccountRecord</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Inventory 1Password using metadata only.</span>
+
+<span class="sd">    Uses list_vaults() + list_items(vault). Deliberately NEVER calls read() or get_item(),</span>
+<span class="sd">    so no secret field value ever enters this process. Field *values* are ignored even if a</span>
+<span class="sd">    list_items payload includes them.</span>
+<span class="sd">    """</span>
+    <span class="n">accounts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AccountRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">vault</span> <span class="ow">in</span> <span class="n">op_client</span><span class="o">.</span><span class="n">list_vaults</span><span class="p">():</span>
+        <span class="n">vname</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">vault</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"id"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">op_client</span><span class="o">.</span><span class="n">list_items</span><span class="p">(</span><span class="n">vname</span><span class="p">):</span>
+            <span class="n">urls</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"href"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"urls"</span><span class="p">,</span> <span class="p">[])</span> <span class="k">if</span> <span class="n">u</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"href"</span><span class="p">))</span>
+            <span class="c1"># field *labels* only — never values</span>
+            <span class="n">fields_present</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"id"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fields"</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="p">)</span>
+            <span class="n">accounts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">AccountRecord</span><span class="p">(</span>
+                <span class="n">vault</span><span class="o">=</span><span class="n">vname</span><span class="p">,</span>
+                <span class="n">item</span><span class="o">=</span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"id"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
+                <span class="n">category</span><span class="o">=</span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"category"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
+                <span class="n">urls</span><span class="o">=</span><span class="n">urls</span><span class="p">,</span>
+                <span class="n">fields_present</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">fp</span> <span class="k">for</span> <span class="n">fp</span> <span class="ow">in</span> <span class="n">fields_present</span> <span class="k">if</span> <span class="n">fp</span><span class="p">),</span>
+                <span class="n">updated_at</span><span class="o">=</span><span class="n">item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"updated_at"</span><span class="p">),</span>
+            <span class="p">))</span>
+    <span class="k">return</span> <span class="n">accounts</span>
+
+<span class="c1"># TODO(C): balance/quota/liveness enrichment — per-provider billing calls to answer</span>
+<span class="c1"># "does this API key still have credit / an active account". One adapter per provider.</span>
+<span class="c1"># TODO(C): link_service(account, catalog) matching by URL/title to a gateway service.</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 4: Run test to verify it passes</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_registry_keychain.py -v</code>
+Expected: PASS (2 passed).</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec_registry/keychain.py<span class="w"> </span>gateway/tests/test_registry_keychain.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(registry): metadata-only 1Password keychain reader"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-7-graph-poset">Task 7: Graph + poset<a class="headerlink" href="#task-7-graph-poset" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Create: <code>gateway/webspec_registry/graph.py</code>
+- Test: <code>gateway/tests/test_registry_graph.py</code> (create)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: <code>ToolRecord</code>, <code>AccountRecord</code>.
+- Produces: <code>Graph(nodes, edges)</code>; <code>build_graph(catalog, accounts=()) -&gt; Graph</code>;
+  <code>to_dot(graph) -&gt; str</code>; <code>poset(catalog) -&gt; dict[tuple[str, str], int]</code> (a (verb,noun)→max-tier-rank map).</p>
+<ul>
+<li>[ ] <strong>Step 1: Write the failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_registry_graph.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec_registry.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_graph</span><span class="p">,</span> <span class="n">to_dot</span><span class="p">,</span> <span class="n">poset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec_registry.records</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolRecord</span><span class="p">,</span> <span class="n">AccountRecord</span>
+
+<span class="n">CATALOG</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">ToolRecord</span><span class="p">(</span><span class="s2">"slack"</span><span class="p">,</span> <span class="s2">"send_message"</span><span class="p">,</span> <span class="s2">"Send a message"</span><span class="p">,</span> <span class="s2">"send"</span><span class="p">,</span> <span class="s2">"message"</span><span class="p">,</span> <span class="s2">"sensitive"</span><span class="p">),</span>
+    <span class="n">ToolRecord</span><span class="p">(</span><span class="s2">"op-auth"</span><span class="p">,</span> <span class="s2">"run"</span><span class="p">,</span> <span class="s2">"Run op"</span><span class="p">,</span> <span class="s2">"invoke"</span><span class="p">,</span> <span class="s2">"run"</span><span class="p">,</span> <span class="s2">"dangerous"</span><span class="p">),</span>
+<span class="p">]</span>
+<span class="n">ACCOUNTS</span> <span class="o">=</span> <span class="p">[</span><span class="n">AccountRecord</span><span class="p">(</span><span class="s2">"Personal"</span><span class="p">,</span> <span class="s2">"i1"</span><span class="p">,</span> <span class="s2">"Slack"</span><span class="p">,</span> <span class="s2">"LOGIN"</span><span class="p">,</span> <span class="n">linked_service</span><span class="o">=</span><span class="s2">"slack"</span><span class="p">)]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_graph_has_service_noun_verb_nodes</span><span class="p">():</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">build_graph</span><span class="p">(</span><span class="n">CATALOG</span><span class="p">,</span> <span class="n">ACCOUNTS</span><span class="p">)</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">nodes</span><span class="p">}</span>
+    <span class="k">assert</span> <span class="s2">"service:slack"</span> <span class="ow">in</span> <span class="n">ids</span> <span class="ow">and</span> <span class="s2">"noun:message"</span> <span class="ow">in</span> <span class="n">ids</span> <span class="ow">and</span> <span class="s2">"verb:send"</span> <span class="ow">in</span> <span class="n">ids</span>
+    <span class="k">assert</span> <span class="s2">"account:Personal/i1"</span> <span class="ow">in</span> <span class="n">ids</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_graph_links_account_to_service</span><span class="p">():</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">build_graph</span><span class="p">(</span><span class="n">CATALOG</span><span class="p">,</span> <span class="n">ACCOUNTS</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">any</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s2">"src"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"account:Personal/i1"</span> <span class="ow">and</span> <span class="n">e</span><span class="p">[</span><span class="s2">"dst"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"service:slack"</span>
+               <span class="ow">and</span> <span class="n">e</span><span class="p">[</span><span class="s2">"rel"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"credentials"</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_to_dot_renders</span><span class="p">():</span>
+    <span class="n">dot</span> <span class="o">=</span> <span class="n">to_dot</span><span class="p">(</span><span class="n">build_graph</span><span class="p">(</span><span class="n">CATALOG</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="n">dot</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"digraph webspec {"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="s2">"-&gt;"</span> <span class="ow">in</span> <span class="n">dot</span> <span class="ow">and</span> <span class="n">dot</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"}"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_poset_ranks_by_tier</span><span class="p">():</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">poset</span><span class="p">(</span><span class="n">CATALOG</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">p</span><span class="p">[(</span><span class="s2">"send"</span><span class="p">,</span> <span class="s2">"message"</span><span class="p">)]</span> <span class="o">==</span> <span class="mi">1</span>   <span class="c1"># sensitive</span>
+    <span class="k">assert</span> <span class="n">p</span><span class="p">[(</span><span class="s2">"invoke"</span><span class="p">,</span> <span class="s2">"run"</span><span class="p">)]</span> <span class="o">==</span> <span class="mi">2</span>     <span class="c1"># dangerous</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_registry_graph.py -v</code>
+Expected: FAIL (<code>ModuleNotFoundError</code>).</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement <code>graph.py</code></strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="n">TIER_RANK</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"open"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"sensitive"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"dangerous"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Graph</span><span class="p">:</span>
+    <span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span>  <span class="c1"># {id, type, label}</span>
+    <span class="n">edges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span>  <span class="c1"># {src, dst, rel}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_graph</span><span class="p">(</span><span class="n">catalog</span><span class="p">,</span> <span class="n">accounts</span><span class="o">=</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">Graph</span><span class="p">:</span>
+    <span class="n">nodes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">edges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">nid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ntype</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">nodes</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">nid</span><span class="p">,</span> <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="n">nid</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="n">ntype</span><span class="p">,</span> <span class="s2">"label"</span><span class="p">:</span> <span class="n">label</span> <span class="ow">or</span> <span class="n">nid</span><span class="p">})</span>
+
+    <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">catalog</span><span class="p">:</span>
+        <span class="n">s</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"service:</span><span class="si">{</span><span class="n">rec</span><span class="o">.</span><span class="n">service</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"verb:</span><span class="si">{</span><span class="n">rec</span><span class="o">.</span><span class="n">verb</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                      <span class="sa">f</span><span class="s2">"noun:</span><span class="si">{</span><span class="n">rec</span><span class="o">.</span><span class="n">noun</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"tier:</span><span class="si">{</span><span class="n">rec</span><span class="o">.</span><span class="n">tier</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">add</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s2">"service"</span><span class="p">);</span> <span class="n">add</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s2">"verb"</span><span class="p">);</span> <span class="n">add</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="s2">"noun"</span><span class="p">);</span> <span class="n">add</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">"tier"</span><span class="p">)</span>
+        <span class="n">edges</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"src"</span><span class="p">:</span> <span class="n">s</span><span class="p">,</span> <span class="s2">"dst"</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span> <span class="s2">"rel"</span><span class="p">:</span> <span class="s2">"exposes"</span><span class="p">})</span>
+        <span class="n">edges</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"src"</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span> <span class="s2">"dst"</span><span class="p">:</span> <span class="n">v</span><span class="p">,</span> <span class="s2">"rel"</span><span class="p">:</span> <span class="n">rec</span><span class="o">.</span><span class="n">tool</span><span class="p">})</span>
+        <span class="n">edges</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"src"</span><span class="p">:</span> <span class="n">v</span><span class="p">,</span> <span class="s2">"dst"</span><span class="p">:</span> <span class="n">t</span><span class="p">,</span> <span class="s2">"rel"</span><span class="p">:</span> <span class="s2">"tier"</span><span class="p">})</span>
+
+    <span class="k">for</span> <span class="n">acc</span> <span class="ow">in</span> <span class="n">accounts</span><span class="p">:</span>
+        <span class="n">aid</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"account:</span><span class="si">{</span><span class="n">acc</span><span class="o">.</span><span class="n">vault</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">acc</span><span class="o">.</span><span class="n">item</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">add</span><span class="p">(</span><span class="n">aid</span><span class="p">,</span> <span class="s2">"account"</span><span class="p">,</span> <span class="n">acc</span><span class="o">.</span><span class="n">title</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">acc</span><span class="o">.</span><span class="n">linked_service</span><span class="p">:</span>
+            <span class="n">add</span><span class="p">(</span><span class="sa">f</span><span class="s2">"service:</span><span class="si">{</span><span class="n">acc</span><span class="o">.</span><span class="n">linked_service</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"service"</span><span class="p">)</span>
+            <span class="n">edges</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"src"</span><span class="p">:</span> <span class="n">aid</span><span class="p">,</span> <span class="s2">"dst"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"service:</span><span class="si">{</span><span class="n">acc</span><span class="o">.</span><span class="n">linked_service</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"rel"</span><span class="p">:</span> <span class="s2">"credentials"</span><span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">Graph</span><span class="p">(</span><span class="n">nodes</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">nodes</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">edges</span><span class="o">=</span><span class="n">edges</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">to_dot</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">Graph</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"digraph webspec {"</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">nd</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  "</span><span class="si">{</span><span class="n">nd</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span><span class="si">}</span><span class="s1">" [label="</span><span class="si">{</span><span class="n">nd</span><span class="p">[</span><span class="s2">"label"</span><span class="p">]</span><span class="si">}</span><span class="s1">"];'</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  "</span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="s2">"src"</span><span class="p">]</span><span class="si">}</span><span class="s1">" -&gt; "</span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="s2">"dst"</span><span class="p">]</span><span class="si">}</span><span class="s1">" [label="</span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="s2">"rel"</span><span class="p">]</span><span class="si">}</span><span class="s1">"];'</span><span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"}"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">poset</span><span class="p">(</span><span class="n">catalog</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""(verb, noun) → highest tier rank observed. The ordering relation is open ⊑ sensitive ⊑ dangerous."""</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">catalog</span><span class="p">:</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">rec</span><span class="o">.</span><span class="n">verb</span><span class="p">,</span> <span class="n">rec</span><span class="o">.</span><span class="n">noun</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">TIER_RANK</span><span class="p">[</span><span class="n">rec</span><span class="o">.</span><span class="n">tier</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+<span class="c1"># TODO(C): noun-containment ordering (message ⊑ channel ⊑ workspace) for a richer poset —</span>
+<span class="c1"># requires the noun hierarchy sketched in docs/url-grammar/object-type-system.md.</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 4: Run test to verify it passes</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_registry_graph.py -v</code>
+Expected: PASS (4 passed).</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec_registry/graph.py<span class="w"> </span>gateway/tests/test_registry_graph.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(registry): services→nouns→verbs graph, DOT export, tier poset"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-8-registry-service-localhost-only-entrypoint-roadmap-c">Task 8: Registry service (localhost-only) + entrypoint + ROADMAP-C<a class="headerlink" href="#task-8-registry-service-localhost-only-entrypoint-roadmap-c" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Create: <code>gateway/webspec_registry/app.py</code>, <code>gateway/webspec_registry/__main__.py</code>
+- Modify: <code>docs/ROADMAP-C.md</code> (append the registry <code>TODO(C)</code> items)
+- Test: <code>gateway/tests/test_registry_service.py</code> (create)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: <code>harvest</code>, <code>resolve</code>, <code>build_graph</code>, <code>to_dot</code>, <code>read_accounts</code>.
+- Produces: <code>create_registry_app(catalog_fn, accounts_fn=lambda: []) -&gt; Starlette</code> with routes
+  <code>GET /resolve?q=</code>, <code>GET /catalog</code>, <code>GET /graph[?format=dot]</code>; <code>main()</code> for <code>python -m webspec_registry</code>.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write the failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_registry_service.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">starlette.testclient</span><span class="w"> </span><span class="kn">import</span> <span class="n">TestClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec_registry.app</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_registry_app</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec_registry.records</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolRecord</span><span class="p">,</span> <span class="n">AccountRecord</span>
+
+<span class="n">CATALOG</span> <span class="o">=</span> <span class="p">[</span><span class="n">ToolRecord</span><span class="p">(</span><span class="s2">"slack"</span><span class="p">,</span> <span class="s2">"send_message"</span><span class="p">,</span> <span class="s2">"Send a message"</span><span class="p">,</span> <span class="s2">"send"</span><span class="p">,</span> <span class="s2">"message"</span><span class="p">,</span> <span class="s2">"sensitive"</span><span class="p">)]</span>
+<span class="n">ACCOUNTS</span> <span class="o">=</span> <span class="p">[</span><span class="n">AccountRecord</span><span class="p">(</span><span class="s2">"Personal"</span><span class="p">,</span> <span class="s2">"i1"</span><span class="p">,</span> <span class="s2">"Slack"</span><span class="p">,</span> <span class="s2">"LOGIN"</span><span class="p">,</span> <span class="n">linked_service</span><span class="o">=</span><span class="s2">"slack"</span><span class="p">)]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_client</span><span class="p">():</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">create_registry_app</span><span class="p">(</span><span class="n">catalog_fn</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">CATALOG</span><span class="p">,</span> <span class="n">accounts_fn</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">ACCOUNTS</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">TestClient</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_resolve_endpoint</span><span class="p">():</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">_client</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/resolve"</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"q"</span><span class="p">:</span> <span class="s2">"send a message"</span><span class="p">})</span>
+    <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">body</span><span class="p">[</span><span class="s2">"results"</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">"service"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"slack"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_catalog_endpoint</span><span class="p">():</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">_client</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/catalog"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+    <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">"tools"</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">"tool"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"send_message"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_graph_dot_endpoint</span><span class="p">():</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">_client</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/graph"</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"format"</span><span class="p">:</span> <span class="s2">"dot"</span><span class="p">})</span>
+    <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+    <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"digraph webspec {"</span><span class="p">)</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_registry_service.py -v</code>
+Expected: FAIL (<code>ModuleNotFoundError</code>).</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement <code>app.py</code> and <code>__main__.py</code></strong></li>
+</ul>
+<p><code>gateway/webspec_registry/app.py</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">starlette.applications</span><span class="w"> </span><span class="kn">import</span> <span class="n">Starlette</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">starlette.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONResponse</span><span class="p">,</span> <span class="n">PlainTextResponse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">starlette.routing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Route</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_graph</span><span class="p">,</span> <span class="n">to_dot</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">create_registry_app</span><span class="p">(</span><span class="n">catalog_fn</span><span class="p">,</span> <span class="n">accounts_fn</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span> <span class="o">-&gt;</span> <span class="n">Starlette</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build the registry service. catalog_fn() -&gt; list[ToolRecord]; accounts_fn() -&gt; list[AccountRecord].</span>
+
+<span class="sd">    NOTE (tier B): this app is localhost-only. Exposing it publicly requires porting the gateway</span>
+<span class="sd">    guard middleware — TODO(C).</span>
+<span class="sd">    """</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">resolve_ep</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">query_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"q"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">catalog_fn</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">JSONResponse</span><span class="p">({</span><span class="s2">"query"</span><span class="p">:</span> <span class="n">q</span><span class="p">,</span> <span class="s2">"results"</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s2">"service"</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">service</span><span class="p">,</span> <span class="s2">"tool"</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">tool</span><span class="p">,</span> <span class="s2">"verb"</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">verb</span><span class="p">,</span>
+             <span class="s2">"noun"</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">noun</span><span class="p">,</span> <span class="s2">"tier"</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">record</span><span class="o">.</span><span class="n">tier</span><span class="p">,</span> <span class="s2">"status"</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+             <span class="s2">"score"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">score</span><span class="p">,</span> <span class="mi">3</span><span class="p">)}</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">]})</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">catalog_ep</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">JSONResponse</span><span class="p">({</span><span class="s2">"tools"</span><span class="p">:</span> <span class="p">[</span><span class="n">asdict</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">catalog_fn</span><span class="p">()]})</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">graph_ep</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">build_graph</span><span class="p">(</span><span class="n">catalog_fn</span><span class="p">(),</span> <span class="n">accounts_fn</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">query_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"dot"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PlainTextResponse</span><span class="p">(</span><span class="n">to_dot</span><span class="p">(</span><span class="n">g</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">JSONResponse</span><span class="p">({</span><span class="s2">"nodes"</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">nodes</span><span class="p">,</span> <span class="s2">"edges"</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">edges</span><span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">Starlette</span><span class="p">(</span><span class="n">routes</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">Route</span><span class="p">(</span><span class="s2">"/resolve"</span><span class="p">,</span> <span class="n">resolve_ep</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">"GET"</span><span class="p">]),</span>
+        <span class="n">Route</span><span class="p">(</span><span class="s2">"/catalog"</span><span class="p">,</span> <span class="n">catalog_ep</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">"GET"</span><span class="p">]),</span>
+        <span class="n">Route</span><span class="p">(</span><span class="s2">"/graph"</span><span class="p">,</span> <span class="n">graph_ep</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">"GET"</span><span class="p">]),</span>
+    <span class="p">])</span>
+</code></pre></div>
+<p><code>gateway/webspec_registry/__main__.py</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">uvicorn</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.app</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_registry_app</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.catalog</span><span class="w"> </span><span class="kn">import</span> <span class="n">harvest</span><span class="p">,</span> <span class="n">http_fetch_tools</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_default_catalog</span><span class="p">():</span>
+    <span class="n">gateway_url</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"WEBSPEC_GATEWAY_URL"</span><span class="p">,</span> <span class="s2">"http://localhost:7002"</span><span class="p">)</span>
+    <span class="c1"># Discover service names from the gateway index, then harvest each.</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">urllib.request</span>
+    <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">gateway_url</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"/"</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
+        <span class="n">services</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">())</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"services"</span><span class="p">,</span> <span class="p">[])]</span>
+    <span class="k">return</span> <span class="n">harvest</span><span class="p">(</span><span class="n">services</span><span class="p">,</span> <span class="n">http_fetch_tools</span><span class="p">(</span><span class="n">gateway_url</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">port</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"WEBSPEC_INTERNAL_PORT"</span><span class="p">,</span> <span class="s2">"7003"</span><span class="p">))</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">create_registry_app</span><span class="p">(</span><span class="n">catalog_fn</span><span class="o">=</span><span class="n">_default_catalog</span><span class="p">)</span>
+    <span class="c1"># localhost-only for tier B (see create_registry_app note).</span>
+    <span class="n">uvicorn</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"WEBSPEC_HOST"</span><span class="p">,</span> <span class="s2">"127.0.0.1"</span><span class="p">),</span> <span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+<p>Append to <code>docs/ROADMAP-C.md</code> (created in Track A Task 8; if running this plan first, create it):</p>
+<div class="highlight"><pre><span></span><code><span class="gu">## Registry (from the registry plan)</span>
+<span class="k">-</span><span class="w"> </span>EmbeddingMatcher / multi-vector semantic search (matcher.py) — spec §5.1
+<span class="k">-</span><span class="w"> </span>recency &amp; preference boosts, per-user history (resolver.py) — spec §5.1
+<span class="k">-</span><span class="w"> </span>balance/quota/liveness enrichment per provider (keychain.py) — spec §5.2
+<span class="k">-</span><span class="w"> </span>account→service linking by URL/title (keychain.py) — spec §5.2
+<span class="k">-</span><span class="w"> </span>noun-containment poset ordering (graph.py) — spec §5.2
+<span class="k">-</span><span class="w"> </span>public exposure of the registry service via ported guard middleware (app.py) — spec §3.4
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 4: Run test to verify it passes</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_registry_service.py -v</code>
+Expected: PASS (3 passed).</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec_registry/app.py<span class="w"> </span>gateway/webspec_registry/__main__.py<span class="w"> </span>docs/ROADMAP-C.md<span class="w"> </span>gateway/tests/test_registry_service.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(registry): localhost-only service exposing resolve/catalog/graph"</span>
+</code></pre></div>
+<hr />
+<h2 id="self-review">Self-Review<a class="headerlink" href="#self-review" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Spec coverage:</strong> Trunk §4 → Tasks 1-3; B1 resolver §5.1 → Tasks 4-5; B2 keychain graph §5.2 →
+  Tasks 6-7; service exposure → Task 8. The keychain metadata-only invariant (§5.2) is enforced by
+  <code>test_registry_keychain.py</code>.</li>
+<li><strong>Placeholder scan:</strong> all C items are real <code># TODO(C):</code> markers with a <code>docs/ROADMAP-C.md</code> line, not
+  vague gaps; every code step shows complete code.</li>
+<li><strong>Type consistency:</strong> <code>ToolRecord</code>/<code>AccountRecord</code> field names are fixed in Task 1 and used
+  verbatim in Tasks 3, 4, 5, 6, 7, 8. <code>resolve(...)</code>, <code>harvest(...)</code>, <code>build_graph(...)</code>, <code>to_dot(...)</code>,
+  <code>read_accounts(...)</code>, <code>create_registry_app(...)</code> signatures match between their defining task and
+  every consumer.</li>
+<li><strong>Cross-plan dependency:</strong> Track A Task 7's compose <code>registry</code> service runs <code>python -m
+  webspec_registry</code> (this plan's Task 8). Either plan can be built first; the compose <code>registry</code>
+  block only <em>runs</em> once this plan lands. <code>docs/ROADMAP-C.md</code> is created by whichever plan runs first.</li>
+<li><strong>op_client wiring:</strong> the registry service consumes op-auth as its keychain source. For B, wire
+  <code>accounts_fn</code> to an op-auth client in a follow-up when the deployment provides op-auth (documented
+  in <code>docker/README.md</code>); tests inject a fake so the invariant is verified independently.
+```</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

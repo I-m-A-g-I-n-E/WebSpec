@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -590,54 +590,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#core-insight-subdomain-is-the-provider" class="md-nav__link">
+  <a href="#examples-standard-collections-by-provider" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Core Insight: Subdomain IS the Provider
+        Examples: Standard Collections by Provider
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#format-suffixes-content-negotiation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Format Suffixes (Content Negotiation)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Format Suffixes (Content Negotiation)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#format-suffix-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Format Suffix Examples
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#standard-collections-by-provider" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Standard Collections by Provider
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Standard Collections by Provider">
+    <nav class="md-nav" aria-label="Examples: Standard Collections by Provider">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -705,17 +666,6 @@
     <span class="md-ellipsis">
       
         Collection Hierarchy
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#conversion-via-format-suffix" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Conversion via Format Suffix
       
     </span>
   </a>
@@ -1877,54 +1827,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#core-insight-subdomain-is-the-provider" class="md-nav__link">
+  <a href="#examples-standard-collections-by-provider" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Core Insight: Subdomain IS the Provider
+        Examples: Standard Collections by Provider
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#format-suffixes-content-negotiation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Format Suffixes (Content Negotiation)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Format Suffixes (Content Negotiation)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#format-suffix-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Format Suffix Examples
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#standard-collections-by-provider" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Standard Collections by Provider
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Standard Collections by Provider">
+    <nav class="md-nav" aria-label="Examples: Standard Collections by Provider">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1998,17 +1909,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#conversion-via-format-suffix" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Conversion via Format Suffix
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -2035,87 +1935,18 @@
 
 
 <h1 id="object-type-system">Object Type System<a class="headerlink" href="#object-type-system" title="Permanent link">&para;</a></h1>
-<p>The object type system organizes resources into standard collections with format suffixes for content negotiation.</p>
-<h2 id="core-insight-subdomain-is-the-provider">Core Insight: Subdomain IS the Provider<a class="headerlink" href="#core-insight-subdomain-is-the-provider" title="Permanent link">&para;</a></h2>
-<p>With the clean URL design, we don't need <code>.provider</code> in the path -- the subdomain already tells us:</p>
-<div class="highlight"><pre><span></span><code>slack.gimme.tools/channels/C123/messages/M456
-      ^
-   provider is slack (no need to say it again!)
-</code></pre></div>
-<p>Format suffixes handle <strong>how</strong> content is returned, not <strong>where</strong> it comes from:</p>
-<div class="highlight"><pre><span></span><code>gdrive.gimme.tools/files/abc123<span class="w">        </span><span class="c1"># native format</span>
-gdrive.gimme.tools/files/abc123.json<span class="w">   </span><span class="c1"># metadata as JSON</span>
-gdrive.gimme.tools/files/abc123.md<span class="w">     </span><span class="c1"># content as Markdown</span>
-gdrive.gimme.tools/files/abc123.pdf<span class="w">    </span><span class="c1"># content as PDF</span>
-</code></pre></div>
-<hr />
-<h2 id="format-suffixes-content-negotiation">Format Suffixes (Content Negotiation)<a class="headerlink" href="#format-suffixes-content-negotiation" title="Permanent link">&para;</a></h2>
-<p>Format suffixes specify <strong>how</strong> to return content, following familiar file extension conventions:</p>
-<table>
-<thead>
-<tr>
-<th>Suffix</th>
-<th>Purpose</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>.json</td>
-<td>Metadata/structured data</td>
-<td><code>/files/abc.json</code></td>
-</tr>
-<tr>
-<td>.pdf</td>
-<td>PDF format</td>
-<td><code>/documents/xyz.pdf</code></td>
-</tr>
-<tr>
-<td>.md</td>
-<td>Markdown</td>
-<td><code>/pages/123.md</code></td>
-</tr>
-<tr>
-<td>.html</td>
-<td>HTML render</td>
-<td><code>/pages/123.html</code></td>
-</tr>
-<tr>
-<td>.txt</td>
-<td>Plain text</td>
-<td><code>/documents/xyz.txt</code></td>
-</tr>
-<tr>
-<td>.csv</td>
-<td>Comma-separated values</td>
-<td><code>/spreadsheets/abc.csv</code></td>
-</tr>
-<tr>
-<td>.xml</td>
-<td>XML data</td>
-<td><code>/data/records.xml</code></td>
-</tr>
-<tr>
-<td>(none)</td>
-<td>Native/default format</td>
-<td><code>/files/abc</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="format-suffix-examples">Format Suffix Examples<a class="headerlink" href="#format-suffix-examples" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="c1"># Get Notion page in different formats</span>
-GET<span class="w"> </span>notion.gimme.tools/pages/xyz789<span class="w">         </span><span class="c1"># native Notion format</span>
-GET<span class="w"> </span>notion.gimme.tools/pages/xyz789.md<span class="w">      </span><span class="c1"># as Markdown</span>
-GET<span class="w"> </span>notion.gimme.tools/pages/xyz789.html<span class="w">    </span><span class="c1"># as HTML</span>
-GET<span class="w"> </span>notion.gimme.tools/pages/xyz789.json<span class="w">    </span><span class="c1"># metadata only</span>
-
-<span class="c1"># Get Google Drive file in different formats</span>
-GET<span class="w"> </span>gdrive.gimme.tools/files/abc123<span class="w">         </span><span class="c1"># native format</span>
-GET<span class="w"> </span>gdrive.gimme.tools/files/abc123.pdf<span class="w">     </span><span class="c1"># export as PDF</span>
-GET<span class="w"> </span>gdrive.gimme.tools/files/abc123.txt<span class="w">     </span><span class="c1"># extract plain text</span>
-</code></pre></div>
-<hr />
-<h2 id="standard-collections-by-provider">Standard Collections by Provider<a class="headerlink" href="#standard-collections-by-provider" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Status: Proposed (C).</strong> This page is the examples appendix for the REST-hierarchy grammar in
+<a href="../complete-grammar-ebnf/">Complete Grammar (EBNF)</a> — collections, IDs, and format suffixes are
+not implemented today. The current gateway routes by subdomain + literal MCP tool name; see the
+<a href="../../#status">status matrix</a> and <a href="../../ROADMAP-C/">ROADMAP-C.md</a>. Format-suffix rules
+live in <a href="../complete-grammar-ebnf/#format-suffix-content-negotiation">Complete Grammar (EBNF) → Format Suffix</a>;
+this page only holds the provider-by-provider collection tables.</p>
+</blockquote>
+<h2 id="examples-standard-collections-by-provider">Examples: Standard Collections by Provider<a class="headerlink" href="#examples-standard-collections-by-provider" title="Permanent link">&para;</a></h2>
+<p>Each provider defines its own collection hierarchy under the proposed REST-hierarchy grammar.
+Resources are organized into standard collections (channels, files, pages, issues) with format
+suffixes (<code>.json</code>, <code>.md</code>, <code>.pdf</code>) for content negotiation.</p>
 <h3 id="communication-slack-discord-teams">Communication (slack, discord, teams)<a class="headerlink" href="#communication-slack-discord-teams" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -2313,31 +2144,14 @@ GET<span class="w"> </span>gdrive.gimme.tools/files/abc123.txt<span class="w">  
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">commits</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">contents</span>
 </code></pre></div>
-<p>This enables intuitive URL construction:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Navigate the hierarchy naturally</span>
+<p>This enables intuitive URL construction under the proposed grammar:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Navigate the hierarchy naturally (Proposed C)</span>
 GET<span class="w"> </span>slack.gimme.tools/channels<span class="w">                            </span><span class="c1"># list channels</span>
 GET<span class="w"> </span>slack.gimme.tools/channels/C123<span class="w">                       </span><span class="c1"># channel info</span>
 GET<span class="w"> </span>slack.gimme.tools/channels/C123/messages<span class="w">              </span><span class="c1"># messages in channel</span>
 GET<span class="w"> </span>slack.gimme.tools/channels/C123/messages/M456<span class="w">         </span><span class="c1"># specific message</span>
 GET<span class="w"> </span>slack.gimme.tools/channels/C123/messages/M456/threads<span class="w"> </span><span class="c1"># thread replies</span>
 </code></pre></div>
-<hr />
-<h2 id="conversion-via-format-suffix">Conversion via Format Suffix<a class="headerlink" href="#conversion-via-format-suffix" title="Permanent link">&para;</a></h2>
-<p>Format suffixes enable natural conversion operations:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Convert Notion page to Markdown</span>
-GET<span class="w"> </span>notion.gimme.tools/pages/xyz789.md
-
-<span class="c1"># Export spreadsheet as CSV</span>
-GET<span class="w"> </span>gdrive.gimme.tools/files/spreadsheet123.csv
-
-<span class="c1"># Get PDF export of a doc</span>
-GET<span class="w"> </span>gdrive.gimme.tools/files/doc456.pdf
-
-<span class="c1"># Get rendered HTML</span>
-GET<span class="w"> </span>notion.gimme.tools/pages/xyz789.html
-</code></pre></div>
-<p>The format suffix tells the server <strong>how</strong> to return the content, leveraging each provider's native export capabilities.</p>
-<p>Each provider defines its own collection hierarchy. Resources are organized into standard collections (channels, files, pages, issues) with format suffixes (.json, .md, .pdf) for content negotiation.</p>
 
 
 
@@ -2396,7 +2210,7 @@ GET<span class="w"> </span>notion.gimme.tools/pages/xyz789.html
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

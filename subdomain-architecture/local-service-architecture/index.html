@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2355,9 +2355,9 @@ srwxr-x---<span class="w"> </span><span class="m">1</span><span class="w"> </spa
 <h2 id="token-routing">Token Routing<a class="headerlink" href="#token-routing" title="Permanent link">&para;</a></h2>
 <p>The <code>aud</code> claim determines which socket receives the request:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;aud&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;file.local.gimme.tools&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;scope&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;GET:file.local.gimme.tools/*&quot;</span><span class="p">],</span>
-<span class="w">  </span><span class="nt">&quot;device_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;device-abc123&quot;</span>
+<span class="w">  </span><span class="nt">"aud"</span><span class="p">:</span><span class="w"> </span><span class="s2">"file.local.gimme.tools"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"scope"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"GET:file.local.gimme.tools/*"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"device_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"device-abc123"</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="routing-table">Routing Table<a class="headerlink" href="#routing-table" title="Permanent link">&para;</a></h3>
@@ -2399,7 +2399,7 @@ srwxr-x---<span class="w"> </span><span class="m">1</span><span class="w"> </spa
    v  HTTPS
 file.local.gimme.tools (cloud)
    |
-   |  Validates: aud=&quot;file.local.gimme.tools&quot;
+   |  Validates: aud="file.local.gimme.tools"
    |
    v  WebSocket tunnel
 localhost:7001 (router daemon)
@@ -2468,7 +2468,7 @@ com.gimme.local.app     &lt;-- XPC service (requires Accessibility)
 </code></pre></div>
 <h3 id="entitlements">Entitlements<a class="headerlink" href="#entitlements" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="cm">&lt;!-- com.gimme.local.file.entitlements --&gt;</span>
-<span class="nt">&lt;plist</span><span class="w"> </span><span class="na">version=</span><span class="s">&quot;1.0&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;plist</span><span class="w"> </span><span class="na">version=</span><span class="s">"1.0"</span><span class="nt">&gt;</span>
 <span class="nt">&lt;dict&gt;</span>
 <span class="w">    </span><span class="nt">&lt;key&gt;</span>com.apple.security.app-sandbox<span class="nt">&lt;/key&gt;</span>
 <span class="w">    </span><span class="nt">&lt;true/&gt;</span>
@@ -2480,7 +2480,7 @@ com.gimme.local.app     &lt;-- XPC service (requires Accessibility)
 <span class="nt">&lt;/plist&gt;</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="cm">&lt;!-- com.gimme.local.code.entitlements --&gt;</span>
-<span class="nt">&lt;plist</span><span class="w"> </span><span class="na">version=</span><span class="s">&quot;1.0&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;plist</span><span class="w"> </span><span class="na">version=</span><span class="s">"1.0"</span><span class="nt">&gt;</span>
 <span class="nt">&lt;dict&gt;</span>
 <span class="w">    </span><span class="nt">&lt;key&gt;</span>com.apple.security.app-sandbox<span class="nt">&lt;/key&gt;</span>
 <span class="w">    </span><span class="nt">&lt;true/&gt;</span>
@@ -2498,7 +2498,7 @@ com.gimme.local.app     &lt;-- XPC service (requires Accessibility)
 <span class="w">    </span><span class="c1">// Verify the connecting process has the right entitlement</span>
 <span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nv">dominated</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="n">SecTaskCopyValueForEntitlement</span><span class="p">(</span>
 <span class="w">        </span><span class="n">SecTaskCreateFromSelf</span><span class="p">(</span><span class="kc">nil</span><span class="p">)</span><span class="o">!</span><span class="p">,</span>
-<span class="w">        </span><span class="s">&quot;com.gimme.capability.file&quot;</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">CFString</span><span class="p">,</span>
+<span class="w">        </span><span class="s">"com.gimme.capability.file"</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">CFString</span><span class="p">,</span>
 <span class="w">        </span><span class="kc">nil</span>
 <span class="w">    </span><span class="p">)</span>
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">dominated</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">nil</span>
@@ -2647,9 +2647,9 @@ unshare<span class="w"> </span>--user<span class="w"> </span>--map-root-user<spa
 <span class="w">  </span><span class="nt">app</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">    </span><span class="nt">allowed_apps</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;Visual</span><span class="nv"> </span><span class="s">Studio</span><span class="nv"> </span><span class="s">Code&quot;</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;Terminal&quot;</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;Finder&quot;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"Visual</span><span class="nv"> </span><span class="s">Studio</span><span class="nv"> </span><span class="s">Code"</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"Terminal"</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"Finder"</span>
 </code></pre></div>
 <hr />
 <h2 id="implementation-status">Implementation Status<a class="headerlink" href="#implementation-status" title="Permanent link">&para;</a></h2>
@@ -2718,7 +2718,7 @@ unshare<span class="w"> </span>--user<span class="w"> </span>--map-root-user<spa
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

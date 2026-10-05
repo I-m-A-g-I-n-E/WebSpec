@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2035,6 +2035,14 @@
 
 
 <h1 id="head-options-discovery">HEAD &amp; OPTIONS Discovery<a class="headerlink" href="#head-options-discovery" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Status: Mixed.</strong> <code>HEAD</code> → ping and <code>OPTIONS</code> → schema dispatch are <strong>Implemented (B)</strong> at the
+gateway (see <code>handlers.py</code>); the rich capability/param discovery payloads and the
+<code>/collection/id</code> REST hierarchy shown in examples below (e.g. <code>/task/LIN-42</code>, <code>/message</code>) are
+<strong>Proposed (C)</strong> — see <a href="../../#status">status matrix</a> and <a href="../../ROADMAP-C/">ROADMAP-C.md</a>.
+The path form actually served today is the MCP tool name (e.g. <code>send_message</code>), not an
+<code>object.provider</code> path segment (banned — see <a href="../../url-grammar/core-syntax/">Core Syntax</a>).</p>
+</blockquote>
 <p>Two HTTP methods enable powerful discovery patterns without custom APIs.</p>
 <h2 id="head-lightweight-probing">HEAD - Lightweight Probing<a class="headerlink" href="#head-lightweight-probing" title="Permanent link">&para;</a></h2>
 <p><code>HEAD</code> is identical to <code>GET</code> but returns only headers, no body. Perfect for:</p>
@@ -2052,7 +2060,7 @@
 Content-Type: application/pdf
 Content-Length: 2048576
 Last-Modified: Sat, 14 Dec 2024 10:30:00 GMT
-ETag: &quot;abc123-v2&quot;
+ETag: "abc123-v2"
 X-Gimme-Object: document.pdf
 X-Gimme-Provider: gdrive
 </code></pre></div>
@@ -2074,7 +2082,7 @@ X-Gimme-Denied: PUT
 <div class="highlight"><pre><span></span><code><span class="c1"># How big is this file before I download it?</span>
 HEAD<span class="w"> </span>https://gdrive.gimme.tools/file/huge-video
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>Content-Length: 5368709120  # 5GB - maybe don&#39;t download on mobile
+<div class="highlight"><pre><span></span><code>Content-Length: 5368709120  # 5GB - maybe don't download on mobile
 Content-Type: video/mp4
 X-Gimme-Duration: 3600       # 1 hour video
 </code></pre></div>
@@ -2089,19 +2097,19 @@ X-Gimme-Duration: 3600       # 1 hour video
 <span class="err">Allow</span><span class="p">:</span><span class="w"> </span><span class="err">GET</span><span class="p">,</span><span class="w"> </span><span class="err">POST</span><span class="p">,</span><span class="w"> </span><span class="err">DELETE</span><span class="p">,</span><span class="w"> </span><span class="err">HEAD</span><span class="p">,</span><span class="w"> </span><span class="err">OPTIONS</span>
 
 <span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slack&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;objects&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;methods&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;POST&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;DELETE&quot;</span><span class="p">],</span>
-<span class="w">      </span><span class="nt">&quot;types&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;html&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;blocks&quot;</span><span class="p">]</span>
+<span class="w">  </span><span class="nt">"service"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slack"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"objects"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"methods"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"GET"</span><span class="p">,</span><span class="w"> </span><span class="s2">"POST"</span><span class="p">,</span><span class="w"> </span><span class="s2">"DELETE"</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"types"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"text"</span><span class="p">,</span><span class="w"> </span><span class="s2">"html"</span><span class="p">,</span><span class="w"> </span><span class="s2">"blocks"</span><span class="p">]</span>
 <span class="w">    </span><span class="p">},</span>
-<span class="w">    </span><span class="nt">&quot;file&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;methods&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;POST&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;DELETE&quot;</span><span class="p">],</span>
-<span class="w">      </span><span class="nt">&quot;types&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;*&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="nt">"file"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"methods"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"GET"</span><span class="p">,</span><span class="w"> </span><span class="s2">"POST"</span><span class="p">,</span><span class="w"> </span><span class="s2">"DELETE"</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"types"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"*"</span><span class="p">]</span>
 <span class="w">    </span><span class="p">},</span>
-<span class="w">    </span><span class="nt">&quot;channel&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;methods&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">],</span>
-<span class="w">      </span><span class="nt">&quot;types&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span>
+<span class="w">    </span><span class="nt">"channel"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"methods"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"GET"</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"types"</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
@@ -2112,32 +2120,32 @@ X-Gimme-Duration: 3600       # 1 hour video
 <p>Response:</p>
 <div class="highlight"><pre><span></span><code><span class="err">Allow</span><span class="p">:</span><span class="w"> </span><span class="err">GET</span><span class="p">,</span><span class="w"> </span><span class="err">POST</span><span class="p">,</span><span class="w"> </span><span class="err">DELETE</span>
 <span class="err">X</span><span class="mi">-</span><span class="err">Gimme</span><span class="mi">-</span><span class="err">Scopes</span><span class="mi">-</span><span class="err">Required</span><span class="p">:</span>
-<span class="w">  </span><span class="err">GET</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GET:/message.*&quot;</span>
-<span class="w">  </span><span class="err">POST</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;POST:/message.*&quot;</span>
-<span class="w">  </span><span class="err">DELETE</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DELETE:/message.*&quot;</span>
+<span class="w">  </span><span class="err">GET</span><span class="p">:</span><span class="w"> </span><span class="s2">"GET:/message.*"</span>
+<span class="w">  </span><span class="err">POST</span><span class="p">:</span><span class="w"> </span><span class="s2">"POST:/message.*"</span>
+<span class="w">  </span><span class="err">DELETE</span><span class="p">:</span><span class="w"> </span><span class="s2">"DELETE:/message.*"</span>
 
 <span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;object&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;message&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;methods&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;GET&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Retrieve messages&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;params&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;channel&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;required&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">},</span>
-<span class="w">        </span><span class="nt">&quot;limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">50</span><span class="p">},</span>
-<span class="w">        </span><span class="nt">&quot;q&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Search query&quot;</span><span class="p">}</span>
+<span class="w">  </span><span class="nt">"object"</span><span class="p">:</span><span class="w"> </span><span class="s2">"message"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"methods"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"GET"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Retrieve messages"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">"channel"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w"> </span><span class="nt">"required"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">},</span>
+<span class="w">        </span><span class="nt">"limit"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"integer"</span><span class="p">,</span><span class="w"> </span><span class="nt">"default"</span><span class="p">:</span><span class="w"> </span><span class="mi">50</span><span class="p">},</span>
+<span class="w">        </span><span class="nt">"q"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w"> </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Search query"</span><span class="p">}</span>
 <span class="w">      </span><span class="p">}</span>
 <span class="w">    </span><span class="p">},</span>
-<span class="w">    </span><span class="nt">&quot;POST&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Send a message&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;params&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;channel&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;required&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">},</span>
-<span class="w">        </span><span class="nt">&quot;body&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;required&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">},</span>
-<span class="w">        </span><span class="nt">&quot;thread&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;required&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">}</span>
+<span class="w">    </span><span class="nt">"POST"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Send a message"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"params"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">"channel"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w"> </span><span class="nt">"required"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">},</span>
+<span class="w">        </span><span class="nt">"body"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w"> </span><span class="nt">"required"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">},</span>
+<span class="w">        </span><span class="nt">"thread"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w"> </span><span class="nt">"required"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">}</span>
 <span class="w">      </span><span class="p">}</span>
 <span class="w">    </span><span class="p">},</span>
-<span class="w">    </span><span class="nt">&quot;DELETE&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Delete a message&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;requires_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">    </span><span class="nt">"DELETE"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Delete a message"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"requires_id"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
@@ -2145,8 +2153,8 @@ X-Gimme-Duration: 3600       # 1 hour video
 <h3 id="example-resolution-preview">Example: Resolution Preview<a class="headerlink" href="#example-resolution-preview" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>OPTIONS<span class="w"> </span>https://api.gimme.tools/resolve?path<span class="o">=</span>/message<span class="p">&amp;</span><span class="nv">body</span><span class="o">=</span>hello
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>X-Gimme-Resolved: /message.text.slack
-X-Gimme-Alternatives: /message.text.email, /message.text.sms
+<div class="highlight"><pre><span></span><code>X-Gimme-Resolved: slack.gimme.tools/send_message
+X-Gimme-Alternatives: email.gimme.tools/send_email, sms.gimme.tools/send_sms
 X-Gimme-Confidence: 0.85
 </code></pre></div>
 <p>Clients can preview resolution before committing.</p>
@@ -2154,7 +2162,7 @@ X-Gimme-Confidence: 0.85
 <h2 id="cors-pre-flight-bonus">CORS Pre-flight (Bonus)<a class="headerlink" href="#cors-pre-flight-bonus" title="Permanent link">&para;</a></h2>
 <p>Browsers already send <code>OPTIONS</code> for CORS pre-flight. WebSpec piggybacks:</p>
 <div class="highlight"><pre><span></span><code># Browser sends automatically:
-OPTIONS /message.slack
+OPTIONS /send_message
 Access-Control-Request-Method: POST
 Access-Control-Request-Headers: Authorization
 
@@ -2162,12 +2170,12 @@ Access-Control-Request-Headers: Authorization
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET, POST, DELETE
 Access-Control-Allow-Headers: Authorization
-X-Gimme-Scopes-Required: POST:/message.slack
+X-Gimme-Scopes-Required: POST:slack.gimme.tools/send_message
 </code></pre></div>
 <p>One request, two purposes.</p>
 <hr />
 <h2 id="discovery-flow">Discovery Flow<a class="headerlink" href="#discovery-flow" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>Client: &quot;What can I do?&quot;
+<div class="highlight"><pre><span></span><code>Client: "What can I do?"
         |
         v
  OPTIONS https://slack.gimme.tools/
@@ -2181,7 +2189,7 @@ X-Gimme-Scopes-Required: POST:/message.slack
 +----------------------------+
         |
         v
-Client: &quot;Tell me about messages&quot;
+Client: "Tell me about messages"
         |
         v
  OPTIONS https://slack.gimme.tools/message
@@ -2264,7 +2272,7 @@ Client: &quot;Tell me about messages&quot;
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

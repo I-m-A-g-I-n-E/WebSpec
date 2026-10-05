@@ -10,13 +10,9 @@
       
       
       
-        <link rel="canonical" href="https://webspec.gimme.tools/registration/">
+        <link rel="canonical" href="https://webspec.gimme.tools/ROADMAP-C/">
       
       
-        <link rel="prev" href="../discovery/three-way-join/">
-      
-      
-        <link rel="next" href="registration-schema/">
       
       
         
@@ -27,7 +23,7 @@
     
     
       
-        <title>Service Registration - WebSpec</title>
+        <title>ROADMAP-C - WebSpec</title>
       
     
     
@@ -78,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#service-registration" class="md-skip">
+        <a href="#roadmap-c" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Service Registration
+              ROADMAP-C
             
           </span>
         </div>
@@ -1402,8 +1398,6 @@
       
   
   
-    
-  
   
   
     
@@ -1426,15 +1420,17 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="./" class="md-nav__link md-nav__link--active">
+            <a href="../registration/" class="md-nav__link ">
               
   
   
@@ -1452,13 +1448,13 @@
             </a>
             
               
-              <label class="md-nav__link md-nav__link--active" for="__nav_8" id="__nav_8_label" tabindex="">
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1478,7 +1474,7 @@
   
   
     <li class="md-nav__item">
-      <a href="registration-schema/" class="md-nav__link">
+      <a href="../registration/registration-schema/" class="md-nav__link">
         
   
   
@@ -1506,7 +1502,7 @@
   
   
     <li class="md-nav__item">
-      <a href="domain-verification/" class="md-nav__link">
+      <a href="../registration/domain-verification/" class="md-nav__link">
         
   
   
@@ -1697,10 +1693,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pages" class="md-nav__link">
+  <a href="#notes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pages
+        Notes
       
     </span>
   </a>
@@ -1724,7 +1720,7 @@
 
 
   
-    <a href="https://github.com/psentro/webspec/edit/main/docs/registration/index.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/psentro/webspec/edit/main/docs/ROADMAP-C.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -1732,14 +1728,63 @@
   
 
 
-<h1 id="service-registration">Service Registration<a class="headerlink" href="#service-registration" title="Permanent link">&para;</a></h1>
-<p>How services register with WebSpec via domain verification and
-tool manifests. The process has two phases: prove domain
-ownership, then define tools.</p>
-<h2 id="pages">Pages<a class="headerlink" href="#pages" title="Permanent link">&para;</a></h2>
+<h1 id="roadmap-c">ROADMAP-C<a class="headerlink" href="#roadmap-c" title="Permanent link">&para;</a></h1>
+<p>Index of every <code>TODO(C)</code> item — multi-tenant (tier C) work that is <strong>located, not built</strong>. Tier C
+is the eventual public, many-user WebSpec service; tier B (what ships today) is the self-hostable
+single-operator gateway. Every row below is Proposed (C): named and mapped to a spec section, but
+not implemented. See the <a href="../#status">status matrix</a> for the Implemented-vs-Proposed summary,
+and the design doc itself —
+<a href="../superpowers/specs/2026-07-11-webspec-roadmap-design/"><code>docs/superpowers/specs/2026-07-11-webspec-roadmap-design.md</code></a>
+— for full detail (this file mirrors its §8 summary index).</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Spec section</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pluggable <code>SecretBackend</code> (1Password Connect, other password managers, HashiCorp Vault) — B ships only the <code>op</code>-CLI backend</td>
+<td><a href="../superpowers/specs/2026-07-11-webspec-roadmap-design/#31-auth-model-the-password-manager-is-the-session-authority">§3.1 Auth model</a></td>
+</tr>
+<tr>
+<td>Per-user / asymmetric guard keys (per-user vault items, or client-holds-private-key / gateway-holds-public-key Ed25519) so tenants can't sign for each other</td>
+<td><a href="../superpowers/specs/2026-07-11-webspec-roadmap-design/#31-auth-model-the-password-manager-is-the-session-authority">§3.1 Auth model</a></td>
+</tr>
+<tr>
+<td>1Password-issued bearer validated per-request (a "real" server-side session), instead of a shared symmetric secret</td>
+<td><a href="../superpowers/specs/2026-07-11-webspec-roadmap-design/#31-auth-model-the-password-manager-is-the-session-authority">§3.1 Auth model</a></td>
+</tr>
+<tr>
+<td>Widen guard HMAC tag to ≥16 bytes, or move to Ed25519 signatures (current 4-byte definer tag is a tamper-evidence checksum, not the auth boundary — the guard HMAC's security rests on nonce + key secrecy)</td>
+<td><a href="../superpowers/specs/2026-07-11-webspec-roadmap-design/#32-hardening-pass-each-item-a-test">§3.2 Hardening pass, item 5</a></td>
+</tr>
+<tr>
+<td>Multi-vector semantic search (canonical/predicate/object indices), per-user preference &amp; history boosts, negative-example repulsion, query expansion</td>
+<td><a href="../superpowers/specs/2026-07-11-webspec-roadmap-design/#51-b1-semantic-resolver">§5.1 B1 — Semantic resolver</a> — described today in <code>docs/discovery/*</code></td>
+</tr>
+<tr>
+<td>Provider billing/quota/liveness enrichment ("does this API key still have credit / an active account") — no generic shortcut, one adapter per provider</td>
+<td><a href="../superpowers/specs/2026-07-11-webspec-roadmap-design/#52-b2-keychain-graph-secrets-catalog">§5.2 B2 — Keychain graph &amp; secrets catalog</a></td>
+</tr>
+<tr>
+<td>OAuth/JWT identity, multi-tenant config &amp; isolation, format suffixes, REST collection hierarchy, <code>DELETE</code> method — the aspirational <code>docs/url-grammar/*</code> and <code>docs/auth/*</code> surface, not needed for B</td>
+<td><a href="../superpowers/specs/2026-07-11-webspec-roadmap-design/#8-c-located-not-built-summary-index">§8 summary index</a></td>
+</tr>
+<tr>
+<td>De-duplicate <code>docs/</code> vs <code>wiki/</code> — they are near-identical hand-maintained mirrors; make <code>wiki/</code> generated from <code>docs/</code> (or drop it) so there is a single source of truth. <strong>Not done in this task</strong> — <code>wiki/</code> is left untouched here and tracked as this follow-up.</td>
+<td><a href="../superpowers/specs/2026-07-11-webspec-roadmap-design/#6-docs-reconciliation-track-a-deliverable">§6, item 5 ("§6.5")</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="registration-schema/">Registration Schema</a></li>
-<li><a href="domain-verification/">Domain Verification</a></li>
+<li>Every C-tier extension point above should also carry a <code># TODO(C): …</code> marker in the nearest
+  relevant module, pointing back to this file (per §0 of the design doc: "C behavior ships as
+  <code># TODO(C): …</code> markers in code plus an entry in <code>docs/ROADMAP-C.md</code>").</li>
+<li>This file is generated by hand from §8 of the design doc; if §8 changes, update this table to
+  match.</li>
 </ul>
 
 

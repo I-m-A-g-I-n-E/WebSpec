@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2182,7 +2182,7 @@
 <h2 id="verification-methods">Verification Methods<a class="headerlink" href="#verification-methods" title="Permanent link">&para;</a></h2>
 <h3 id="1-dns-txt-record-recommended">1. DNS TXT Record (Recommended)<a class="headerlink" href="#1-dns-txt-record-recommended" title="Permanent link">&para;</a></h3>
 <p>Add a TXT record to prove domain ownership:</p>
-<div class="highlight"><pre><span></span><code>_gimme-verify.acme.com  TXT  &quot;gimme-tools-verify=abc123xyz&quot;
+<div class="highlight"><pre><span></span><code>_gimme-verify.acme.com  TXT  "gimme-tools-verify=abc123xyz"
 </code></pre></div>
 <p><strong>Pros:</strong></p>
 <ul>
@@ -2213,7 +2213,7 @@ Contents: gimme-tools-verify=abc123xyz
 </ul>
 <h3 id="3-meta-tag">3. Meta Tag<a class="headerlink" href="#3-meta-tag" title="Permanent link">&para;</a></h3>
 <p>Add to homepage HTML:</p>
-<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;gimme-tools-verify&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;abc123xyz&quot;</span><span class="p">&gt;</span>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">"gimme-tools-verify"</span> <span class="na">content</span><span class="o">=</span><span class="s">"abc123xyz"</span><span class="p">&gt;</span>
 </code></pre></div>
 <p><strong>Pros:</strong></p>
 <ul>
@@ -2231,7 +2231,7 @@ Contents: gimme-tools-verify=abc123xyz
               |
               v
 2. gimme.tools generates unique verification token
-   Token: &quot;gimme-tools-verify=abc123xyz&quot;
+   Token: "gimme-tools-verify=abc123xyz"
               |
               v
 3. Service chooses verification method:
@@ -2295,14 +2295,14 @@ Contents: gimme-tools-verify=abc123xyz
 <h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="nt">canonical_domains</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">acme.com</span><span class="w">           </span><span class="c1"># Verified via DNS</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;*.acme.com&quot;</span><span class="w">       </span><span class="c1"># Auto-verified (subdomain of acme.com)</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"*.acme.com"</span><span class="w">       </span><span class="c1"># Auto-verified (subdomain of acme.com)</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app.acme.io</span><span class="w">        </span><span class="c1"># Verified via well-known file</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oldacme.net</span><span class="w">        </span><span class="c1"># Not verified (registration proceeds without this domain)</span>
 </code></pre></div>
 <hr />
 <h2 id="verification-token-security">Verification Token Security<a class="headerlink" href="#verification-token-security" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="nt">token</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;gimme-tools-verify={random_32_bytes_hex}&quot;</span>
+<span class="w">  </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="s">"gimme-tools-verify={random_32_bytes_hex}"</span>
 <span class="w">  </span><span class="nt">lifetime</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7 days</span>
 <span class="w">  </span><span class="nt">single_use</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false (can re-verify)</span>
 
@@ -2352,7 +2352,7 @@ Day 3: Still failing
 
 Day 7: Still failing
   -&gt; Service suspended
-  -&gt; Users see &quot;Service temporarily unavailable&quot;
+  -&gt; Users see "Service temporarily unavailable"
   -&gt; No new connections allowed
 
 Day 14: Still failing
@@ -2368,22 +2368,22 @@ Authorization:<span class="w"> </span>Bearer<span class="w"> </span><span class=
 </code></pre></div>
 <p>Response:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;service_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;acme&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;verified&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;domains&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="nt">"service_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"acme"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"verified"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"domains"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;domain&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;acme.com&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;verified&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;method&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dns&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;verified_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-12-14T10:00:00Z&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;last_check&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-12-14T15:30:00Z&quot;</span>
+<span class="w">      </span><span class="nt">"domain"</span><span class="p">:</span><span class="w"> </span><span class="s2">"acme.com"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"verified"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"method"</span><span class="p">:</span><span class="w"> </span><span class="s2">"dns"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"verified_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024-12-14T10:00:00Z"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"last_check"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024-12-14T15:30:00Z"</span>
 <span class="w">    </span><span class="p">},</span>
 <span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;domain&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;acme.io&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;verified&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;method&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;well-known&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;verified_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-12-14T10:05:00Z&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;last_check&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-12-14T15:30:00Z&quot;</span>
+<span class="w">      </span><span class="nt">"domain"</span><span class="p">:</span><span class="w"> </span><span class="s2">"acme.io"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"verified"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"method"</span><span class="p">:</span><span class="w"> </span><span class="s2">"well-known"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"verified_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024-12-14T10:05:00Z"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"last_check"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024-12-14T15:30:00Z"</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">]</span>
 <span class="p">}</span>
@@ -2393,7 +2393,7 @@ Authorization:<span class="w"> </span>Bearer<span class="w"> </span><span class=
 Authorization:<span class="w"> </span>Bearer<span class="w"> </span><span class="o">{</span>admin_token<span class="o">}</span>
 
 <span class="o">{</span>
-<span class="w">  </span><span class="s2">&quot;domains&quot;</span>:<span class="w"> </span><span class="o">[</span><span class="s2">&quot;acme.com&quot;</span><span class="o">]</span><span class="w">  </span><span class="c1"># Optional: specific domains, or omit for all</span>
+<span class="w">  </span><span class="s2">"domains"</span>:<span class="w"> </span><span class="o">[</span><span class="s2">"acme.com"</span><span class="o">]</span><span class="w">  </span><span class="c1"># Optional: specific domains, or omit for all</span>
 <span class="o">}</span>
 </code></pre></div>
 <hr />
@@ -2466,7 +2466,7 @@ Authorization:<span class="w"> </span>Bearer<span class="w"> </span><span class=
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

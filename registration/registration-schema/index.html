@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2172,40 +2172,40 @@
 <h3 id="full-manifest-schema">Full Manifest Schema<a class="headerlink" href="#full-manifest-schema" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Service metadata</span>
 <span class="nt">service</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Acme</span><span class="nv"> </span><span class="s">Messaging&quot;</span>
-<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;acme&quot;</span><span class="w">                          </span><span class="c1"># Becomes acme.gimme.tools</span>
-<span class="w">  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Team</span><span class="nv"> </span><span class="s">messaging</span><span class="nv"> </span><span class="s">platform&quot;</span>
-<span class="w">  </span><span class="nt">icon</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://acme.com/icon.png&quot;</span>
-<span class="w">  </span><span class="nt">homepage</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://acme.com&quot;</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Acme</span><span class="nv"> </span><span class="s">Messaging"</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">"acme"</span><span class="w">                          </span><span class="c1"># Becomes acme.gimme.tools</span>
+<span class="w">  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Team</span><span class="nv"> </span><span class="s">messaging</span><span class="nv"> </span><span class="s">platform"</span>
+<span class="w">  </span><span class="nt">icon</span><span class="p">:</span><span class="w"> </span><span class="s">"https://acme.com/icon.png"</span>
+<span class="w">  </span><span class="nt">homepage</span><span class="p">:</span><span class="w"> </span><span class="s">"https://acme.com"</span>
 
 <span class="w">  </span><span class="c1"># Domains this service operates under</span>
 <span class="w">  </span><span class="nt">canonical_domains</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">acme.com</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;*.acme.com&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"*.acme.com"</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app.acme.io</span>
 
 <span class="w">  </span><span class="c1"># OAuth configuration</span>
 <span class="w">  </span><span class="nt">oauth</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">authorization_url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://acme.com/oauth/authorize&quot;</span>
-<span class="w">    </span><span class="nt">token_url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://acme.com/oauth/token&quot;</span>
+<span class="w">    </span><span class="nt">authorization_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://acme.com/oauth/authorize"</span>
+<span class="w">    </span><span class="nt">token_url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://acme.com/oauth/token"</span>
 <span class="w">    </span><span class="nt">scopes</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;messages:read&quot;</span>
-<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Read</span><span class="nv"> </span><span class="s">messages&quot;</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;messages:write&quot;</span>
-<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Send</span><span class="nv"> </span><span class="s">messages&quot;</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;files:read&quot;</span>
-<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Access</span><span class="nv"> </span><span class="s">files&quot;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"messages:read"</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Read</span><span class="nv"> </span><span class="s">messages"</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"messages:write"</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Send</span><span class="nv"> </span><span class="s">messages"</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"files:read"</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Access</span><span class="nv"> </span><span class="s">files"</span>
 
 <span class="c1"># Tool definitions</span>
 <span class="nt">tools</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;send-message&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">"send-message"</span>
 <span class="w">    </span><span class="nt">route</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">POST</span>
 <span class="w">      </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/message</span>
 <span class="w">      </span><span class="nt">types</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">text</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">html</span><span class="p p-Indicator">]</span>
 
 <span class="w">    </span><span class="nt">semantics</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">canonical</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;send</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">message</span><span class="nv"> </span><span class="s">via</span><span class="nv"> </span><span class="s">Acme&quot;</span>
+<span class="w">      </span><span class="nt">canonical</span><span class="p">:</span><span class="w"> </span><span class="s">"send</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">message</span><span class="nv"> </span><span class="s">via</span><span class="nv"> </span><span class="s">Acme"</span>
 <span class="w">      </span><span class="nt">predicates</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">send</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">post</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">message</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">notify</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">ping</span><span class="p p-Indicator">]</span>
 <span class="w">      </span><span class="nt">objects</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">message</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">note</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">notification</span><span class="p p-Indicator">]</span>
 
@@ -2213,22 +2213,22 @@
 <span class="w">      </span><span class="nt">channel</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">        </span><span class="nt">required</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Channel</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">user</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">message&quot;</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Channel</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">user</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">message"</span>
 <span class="w">      </span><span class="nt">body</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">        </span><span class="nt">required</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Message</span><span class="nv"> </span><span class="s">content&quot;</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Message</span><span class="nv"> </span><span class="s">content"</span>
 
-<span class="w">    </span><span class="nt">oauth_scopes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;messages:write&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">oauth_scopes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"messages:write"</span><span class="p p-Indicator">]</span>
 
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;read-messages&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">"read-messages"</span>
 <span class="w">    </span><span class="nt">route</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">GET</span>
 <span class="w">      </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/message</span>
 <span class="w">      </span><span class="nt">types</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">text</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">html</span><span class="p p-Indicator">]</span>
 
 <span class="w">    </span><span class="nt">semantics</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">canonical</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;read</span><span class="nv"> </span><span class="s">messages</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">Acme&quot;</span>
+<span class="w">      </span><span class="nt">canonical</span><span class="p">:</span><span class="w"> </span><span class="s">"read</span><span class="nv"> </span><span class="s">messages</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">Acme"</span>
 <span class="w">      </span><span class="nt">predicates</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">read</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">get</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">fetch</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">check</span><span class="p p-Indicator">]</span>
 <span class="w">      </span><span class="nt">objects</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">message</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">messages</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">inbox</span><span class="p p-Indicator">]</span>
 
@@ -2243,19 +2243,19 @@
 <span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">datetime</span>
 <span class="w">        </span><span class="nt">required</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 
-<span class="w">    </span><span class="nt">oauth_scopes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;messages:read&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">oauth_scopes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"messages:read"</span><span class="p p-Indicator">]</span>
 
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;delete-message&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">"delete-message"</span>
 <span class="w">    </span><span class="nt">route</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DELETE</span>
 <span class="w">      </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/message/{id}</span>
 
 <span class="w">    </span><span class="nt">semantics</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">canonical</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;delete</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">message&quot;</span>
+<span class="w">      </span><span class="nt">canonical</span><span class="p">:</span><span class="w"> </span><span class="s">"delete</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">message"</span>
 <span class="w">      </span><span class="nt">predicates</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">delete</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">remove</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">trash</span><span class="p p-Indicator">]</span>
 <span class="w">      </span><span class="nt">objects</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">message</span><span class="p p-Indicator">]</span>
 
-<span class="w">    </span><span class="nt">oauth_scopes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;messages:write&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">oauth_scopes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"messages:write"</span><span class="p p-Indicator">]</span>
 </code></pre></div>
 <hr />
 <h2 id="registration-api">Registration API<a class="headerlink" href="#registration-api" title="Permanent link">&para;</a></h2>
@@ -2265,22 +2265,22 @@ Authorization:<span class="w"> </span>Bearer<span class="w"> </span><span class=
 Content-Type:<span class="w"> </span>application/json
 
 <span class="o">{</span>
-<span class="w">  </span><span class="s2">&quot;manifest_url&quot;</span>:<span class="w"> </span><span class="s2">&quot;https://acme.com/.well-known/gimme-tools.yaml&quot;</span>,
-<span class="w">  </span><span class="s2">&quot;contact_email&quot;</span>:<span class="w"> </span><span class="s2">&quot;integrations@acme.com&quot;</span>
+<span class="w">  </span><span class="s2">"manifest_url"</span>:<span class="w"> </span><span class="s2">"https://acme.com/.well-known/gimme-tools.yaml"</span>,
+<span class="w">  </span><span class="s2">"contact_email"</span>:<span class="w"> </span><span class="s2">"integrations@acme.com"</span>
 <span class="o">}</span>
 </code></pre></div>
 <h3 id="response">Response<a class="headerlink" href="#response" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pending_verification&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;service_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;acme&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;verification&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;method&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dns&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;record&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;_gimme-verify.acme.com&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gimme-tools-verify=abc123&quot;</span>
+<span class="w">  </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pending_verification"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"service_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"acme"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"verification"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"method"</span><span class="p">:</span><span class="w"> </span><span class="s2">"dns"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"record"</span><span class="p">:</span><span class="w"> </span><span class="s2">"_gimme-verify.acme.com"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"gimme-tools-verify=abc123"</span>
 <span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;next_steps&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">    </span><span class="s2">&quot;Add DNS TXT record for verification&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s2">&quot;Call /services/verify when ready&quot;</span>
+<span class="w">  </span><span class="nt">"next_steps"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">"Add DNS TXT record for verification"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"Call /services/verify when ready"</span>
 <span class="w">  </span><span class="p">]</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -2289,16 +2289,16 @@ Content-Type:<span class="w"> </span>application/json
 Authorization:<span class="w"> </span>Bearer<span class="w"> </span><span class="o">{</span>admin_token<span class="o">}</span>
 
 <span class="o">{</span>
-<span class="w">  </span><span class="s2">&quot;service_id&quot;</span>:<span class="w"> </span><span class="s2">&quot;acme&quot;</span>
+<span class="w">  </span><span class="s2">"service_id"</span>:<span class="w"> </span><span class="s2">"acme"</span>
 <span class="o">}</span>
 </code></pre></div>
 <h3 id="successful-verification">Successful Verification<a class="headerlink" href="#successful-verification" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;active&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;service_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;acme&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;subdomain&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;acme.gimme.tools&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;tools_registered&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;embeddings_generated&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"active"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"service_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"acme"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"subdomain"</span><span class="p">:</span><span class="w"> </span><span class="s2">"acme.gimme.tools"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"tools_registered"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"embeddings_generated"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
 <span class="p">}</span>
 </code></pre></div>
 <hr />
@@ -2345,7 +2345,7 @@ Authorization:<span class="w"> </span>Bearer<span class="w"> </span><span class=
 <h3 id="semantics-definition">Semantics Definition<a class="headerlink" href="#semantics-definition" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="nt">semantics</span><span class="p">:</span>
 <span class="w">  </span><span class="c1"># Required: Primary description for embedding</span>
-<span class="w">  </span><span class="nt">canonical</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;human-readable</span><span class="nv"> </span><span class="s">description</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">what</span><span class="nv"> </span><span class="s">this</span><span class="nv"> </span><span class="s">does&quot;</span>
+<span class="w">  </span><span class="nt">canonical</span><span class="p">:</span><span class="w"> </span><span class="s">"human-readable</span><span class="nv"> </span><span class="s">description</span><span class="nv"> </span><span class="s">of</span><span class="nv"> </span><span class="s">what</span><span class="nv"> </span><span class="s">this</span><span class="nv"> </span><span class="s">does"</span>
 
 <span class="w">  </span><span class="c1"># Required: Verbs that map to this tool</span>
 <span class="w">  </span><span class="nt">predicates</span><span class="p">:</span>
@@ -2360,13 +2360,13 @@ Authorization:<span class="w"> </span>Bearer<span class="w"> </span><span class=
 
 <span class="w">  </span><span class="c1"># Optional: Context hints for disambiguation</span>
 <span class="w">  </span><span class="nt">contexts</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;workplace&quot;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;team</span><span class="nv"> </span><span class="s">communication&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"workplace"</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"team</span><span class="nv"> </span><span class="s">communication"</span>
 
 <span class="w">  </span><span class="c1"># Optional: What this tool is NOT (negative examples)</span>
 <span class="w">  </span><span class="nt">not</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;send</span><span class="nv"> </span><span class="s">email&quot;</span><span class="w">  </span><span class="c1"># Different tool</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;schedule</span><span class="nv"> </span><span class="s">message&quot;</span><span class="w">  </span><span class="c1"># Different capability</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"send</span><span class="nv"> </span><span class="s">email"</span><span class="w">  </span><span class="c1"># Different tool</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"schedule</span><span class="nv"> </span><span class="s">message"</span><span class="w">  </span><span class="c1"># Different capability</span>
 </code></pre></div>
 <h3 id="parameter-definition">Parameter Definition<a class="headerlink" href="#parameter-definition" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="nt">params</span><span class="p">:</span>
@@ -2374,9 +2374,9 @@ Authorization:<span class="w"> </span>Bearer<span class="w"> </span><span class=
 <span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string | integer | boolean | datetime | file</span>
 <span class="w">    </span><span class="nt">required</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true | false</span>
 <span class="w">    </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;value&gt;</span><span class="w">  </span><span class="c1"># Optional default</span>
-<span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Human</span><span class="nv"> </span><span class="s">readable</span><span class="nv"> </span><span class="s">description&quot;</span>
+<span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Human</span><span class="nv"> </span><span class="s">readable</span><span class="nv"> </span><span class="s">description"</span>
 <span class="w">    </span><span class="nt">enum</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">value1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">value2</span><span class="p p-Indicator">]</span><span class="w">  </span><span class="c1"># Optional allowed values</span>
-<span class="w">    </span><span class="nt">pattern</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;regex&quot;</span><span class="w">  </span><span class="c1"># Optional validation pattern</span>
+<span class="w">    </span><span class="nt">pattern</span><span class="p">:</span><span class="w"> </span><span class="s">"regex"</span><span class="w">  </span><span class="c1"># Optional validation pattern</span>
 </code></pre></div>
 <hr />
 <h2 id="update-flow">Update Flow<a class="headerlink" href="#update-flow" title="Permanent link">&para;</a></h2>
@@ -2396,16 +2396,16 @@ Authorization:<span class="w"> </span>Bearer<span class="w"> </span><span class=
 <p>Services can register webhooks for events:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">webhooks</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">user_connected</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://acme.com/webhooks/gimme/connected&quot;</span>
-<span class="w">    </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;whsec_xxx&quot;</span>
+<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://acme.com/webhooks/gimme/connected"</span>
+<span class="w">    </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="s">"whsec_xxx"</span>
 
 <span class="w">  </span><span class="nt">user_disconnected</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://acme.com/webhooks/gimme/disconnected&quot;</span>
-<span class="w">    </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;whsec_xxx&quot;</span>
+<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://acme.com/webhooks/gimme/disconnected"</span>
+<span class="w">    </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="s">"whsec_xxx"</span>
 
 <span class="w">  </span><span class="nt">tool_invoked</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://acme.com/webhooks/gimme/invoked&quot;</span>
-<span class="w">    </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;whsec_xxx&quot;</span>
+<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">"https://acme.com/webhooks/gimme/invoked"</span>
+<span class="w">    </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="s">"whsec_xxx"</span>
 </code></pre></div>
 <hr />
 <h2 id="rate-limits">Rate Limits<a class="headerlink" href="#rate-limits" title="Permanent link">&para;</a></h2>
@@ -2493,7 +2493,7 @@ Authorization:<span class="w"> </span>Bearer<span class="w"> </span><span class=
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2104,6 +2104,10 @@
 <p>The <code>local.gimme.tools</code> subdomain bridges to <code>localhost:7001</code> on the user's machine, enabling local tool execution with full WebSpec security.</p>
 <blockquote>
 <p><strong>Why 7001?</strong> Because it looks like "TOOL" in leet speak. Also, it's outside common port ranges, reducing conflicts.</p>
+<p><strong>Deployment note.</strong> Don't confuse this proposed local-daemon port with the live reference
+gateway's deployment: there, Caddy listens on <code>:7001</code> (fronting the Cloudflare tunnel) and
+reverse-proxies to the actual gateway process on <code>:7002</code>. See <a href="../../#domains-ports">Domains &amp;
+Ports</a>.</p>
 </blockquote>
 <h2 id="the-problem">The Problem<a class="headerlink" href="#the-problem" title="Permanent link">&para;</a></h2>
 <p>Some tools need local execution:</p>
@@ -2124,7 +2128,7 @@
 <p><code>local.gimme.tools</code> acts as a secure bridge:</p>
 <div class="highlight"><pre><span></span><code>Browser ---HTTPS---&gt; local.gimme.tools ---tunnel---&gt; localhost:7001
              |                              |
-        Valid cert                     User&#39;s machine
+        Valid cert                     User's machine
         Same auth model                Local tool daemon
         Auditable                      Actual execution
 </code></pre></div>
@@ -2145,10 +2149,10 @@
 +--------------------------------------+-------------------------+
                                        |
                               WebSocket tunnel
-                          (outbound from user&#39;s machine)
+                          (outbound from user's machine)
                                        |
 +--------------------------------------+-------------------------+
-|                      USER&#39;S MACHINE                            |
+|                      USER'S MACHINE                            |
 |                                                                |
 |   +-------------------------------------------------------+   |
 |   |                     localhost:7001                      |   |
@@ -2179,35 +2183,35 @@ Ready<span class="w"> </span><span class="k">for</span><span class="w"> </span>r
 <h3 id="2-device-registration">2. Device Registration<a class="headerlink" href="#2-device-registration" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1">// Daemon -&gt; local.gimme.tools/register</span>
 <span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;device_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;device-abc123&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;device_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Preston&#39;s MacBook&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;capabilities&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;file&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;code&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;shell&quot;</span><span class="p">]</span>
+<span class="w">  </span><span class="nt">"device_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"device-abc123"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"device_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Preston's MacBook"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"capabilities"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"file"</span><span class="p">,</span><span class="w"> </span><span class="s2">"code"</span><span class="p">,</span><span class="w"> </span><span class="s2">"shell"</span><span class="p">]</span>
 <span class="p">}</span>
 
 <span class="c1">// Server response</span>
 <span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;tunnel_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;wss://local.gimme.tools/tunnel/device-abc123&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;session_key&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sk-xxx&quot;</span>
+<span class="w">  </span><span class="nt">"tunnel_url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"wss://local.gimme.tools/tunnel/device-abc123"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"session_key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sk-xxx"</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="3-token-with-device-binding">3. Token with Device Binding<a class="headerlink" href="#3-token-with-device-binding" title="Permanent link">&para;</a></h3>
 <p>When user requests a local token:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;sub&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user-123&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;aud&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local.gimme.tools&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;device_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;device-abc123&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;scope&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">    </span><span class="s2">&quot;GET:local.gimme.tools/file.*&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s2">&quot;POST:local.gimme.tools/code.*&quot;</span>
+<span class="w">  </span><span class="nt">"sub"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user-123"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"aud"</span><span class="p">:</span><span class="w"> </span><span class="s2">"local.gimme.tools"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"device_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"device-abc123"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"scope"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">"GET:local.gimme.tools/file.*"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"POST:local.gimme.tools/code.*"</span>
 <span class="w">  </span><span class="p">],</span>
-<span class="w">  </span><span class="nt">&quot;exp&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1702603600</span>
+<span class="w">  </span><span class="nt">"exp"</span><span class="p">:</span><span class="w"> </span><span class="mi">1702603600</span>
 <span class="p">}</span>
 </code></pre></div>
 <p>The <code>device_id</code> claim binds the token to a specific machine.</p>
 <h3 id="4-request-flow">4. Request Flow<a class="headerlink" href="#4-request-flow" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>1. Client: POST local.gimme.tools/code.python
    Authorization: Bearer {token with device_id}
-   Body: {&quot;script&quot;: &quot;print(&#39;hello&#39;)&quot;}
+   Body: {"script": "print('hello')"}
 
 2. local.gimme.tools:
    - Validates token
@@ -2265,7 +2269,7 @@ Ready<span class="w"> </span><span class="k">for</span><span class="w"> </span>r
 <h3 id="device-binding">Device Binding<a class="headerlink" href="#device-binding" title="Permanent link">&para;</a></h3>
 <p>Tokens are bound to specific devices:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">Token claims</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">device_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;device-abc123&quot;</span>
+<span class="w">  </span><span class="nt">device_id</span><span class="p">:</span><span class="w"> </span><span class="s">"device-abc123"</span>
 
 <span class="nt">Validation</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Token presented to local.gimme.tools</span>
@@ -2318,15 +2322,15 @@ GET<span class="w"> </span>https://local.gimme.tools/file/~/Documents/report.pdf
 
 <span class="c1"># Run a Python script</span>
 POST<span class="w"> </span>https://local.gimme.tools/code.python
-Body:<span class="w"> </span><span class="o">{</span><span class="s2">&quot;script&quot;</span>:<span class="w"> </span><span class="s2">&quot;import pandas; print(pandas.__version__)&quot;</span><span class="o">}</span>
+Body:<span class="w"> </span><span class="o">{</span><span class="s2">"script"</span>:<span class="w"> </span><span class="s2">"import pandas; print(pandas.__version__)"</span><span class="o">}</span>
 
 <span class="c1"># Execute shell command</span>
 POST<span class="w"> </span>https://local.gimme.tools/shell
-Body:<span class="w"> </span><span class="o">{</span><span class="s2">&quot;command&quot;</span>:<span class="w"> </span><span class="s2">&quot;ls -la ~/Projects&quot;</span><span class="o">}</span>
+Body:<span class="w"> </span><span class="o">{</span><span class="s2">"command"</span>:<span class="w"> </span><span class="s2">"ls -la ~/Projects"</span><span class="o">}</span>
 
 <span class="c1"># Open an application</span>
 POST<span class="w"> </span>https://local.gimme.tools/app/open
-Body:<span class="w"> </span><span class="o">{</span><span class="s2">&quot;app&quot;</span>:<span class="w"> </span><span class="s2">&quot;Visual Studio Code&quot;</span>,<span class="w"> </span><span class="s2">&quot;file&quot;</span>:<span class="w"> </span><span class="s2">&quot;~/project/main.py&quot;</span><span class="o">}</span>
+Body:<span class="w"> </span><span class="o">{</span><span class="s2">"app"</span>:<span class="w"> </span><span class="s2">"Visual Studio Code"</span>,<span class="w"> </span><span class="s2">"file"</span>:<span class="w"> </span><span class="s2">"~/project/main.py"</span><span class="o">}</span>
 </code></pre></div>
 <p>All with the same auth model, same permission scoping, same audit trail as cloud services.</p>
 
@@ -2387,7 +2391,7 @@ Body:<span class="w"> </span><span class="o">{</span><span class="s2">&quot;app&
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

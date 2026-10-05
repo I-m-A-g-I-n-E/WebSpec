@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2114,19 +2114,26 @@
 
 <h1 id="nlp-driven-resolution">NLP-Driven Resolution<a class="headerlink" href="#nlp-driven-resolution" title="Permanent link">&para;</a></h1>
 <p>Natural language requests are resolved to WebSpec routes through semantic understanding, not keyword matching.</p>
+<blockquote>
+<p><strong>Status: Proposed (C).</strong> This resolution pipeline is not implemented — the gateway currently
+routes deterministically by subdomain and literal path. In the current implementation the path
+segment <em>is</em> the MCP tool name (e.g. <code>send_message</code>, <code>send_email</code>); there is no NLP extraction,
+embedding search, or ranking step. The <code>/collection/id</code> REST-hierarchy form shown below is itself
+Proposed (C) — see <a href="../../url-grammar/complete-grammar-ebnf/">Complete Grammar (EBNF)</a>.</p>
+</blockquote>
 <h2 id="the-flow">The Flow<a class="headerlink" href="#the-flow" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>+-------------------------------------------------------------+
-|   &quot;I need to fire off a quick note to Sarah about tomorrow&quot;   |
+|   "I need to fire off a quick note to Sarah about tomorrow"   |
 +-----------------------------+-------------------------------+
                               |
                      1. NLP Extraction
                               |
                               v
                   +-----------------------+
-                  | predicate: &quot;send&quot;     |
-                  | object: &quot;message&quot;     |
-                  | recipient: &quot;Sarah&quot;    |
-                  | topic: &quot;tomorrow&quot;     |
+                  | predicate: "send"     |
+                  | object: "message"     |
+                  | recipient: "Sarah"    |
+                  | topic: "tomorrow"     |
                   +-----------+-----------+
                               |
                      2. Embedding Generation
@@ -2149,16 +2156,16 @@
                               |
                               v
                   +-----------------------+
-                  | 1. POST /message.slack|
-                  | 2. POST /message.email|
-                  | 3. POST /message.sms  |
+                  | 1. POST /send_message |
+                  | 2. POST /send_email   |
+                  | 3. POST /send_sms     |
                   +-----------+-----------+
                               |
                      5. User Confirmation
                               |
                               v
                   +-----------------------+
-                  | &quot;Send via Slack?&quot;     |
+                  | "Send via Slack?"     |
                   |      [Confirm]        |
                   +-----------------------+
 </code></pre></div>
@@ -2166,27 +2173,27 @@
 <h2 id="nlp-extraction">NLP Extraction<a class="headerlink" href="#nlp-extraction" title="Permanent link">&para;</a></h2>
 <p>The first step extracts semantic structure from natural language:</p>
 <div class="highlight"><pre><span></span><code><span class="c1">// Input</span>
-<span class="s2">&quot;fire off a quick note to Sarah about the meeting&quot;</span>
+<span class="s2">"fire off a quick note to Sarah about the meeting"</span>
 
 <span class="c1">// Extraction (via LLM or specialized NLP)</span>
 <span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;predicate&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;raw&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fire off&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;canonical&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;send&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;confidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.95</span>
+<span class="w">  </span><span class="nt">"predicate"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"raw"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fire off"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"canonical"</span><span class="p">:</span><span class="w"> </span><span class="s2">"send"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"confidence"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.95</span>
 <span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;object&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;raw&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;note&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;canonical&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;message&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;confidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.90</span>
+<span class="w">  </span><span class="nt">"object"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"raw"</span><span class="p">:</span><span class="w"> </span><span class="s2">"note"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"canonical"</span><span class="p">:</span><span class="w"> </span><span class="s2">"message"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"confidence"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.90</span>
 <span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;arguments&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;recipient&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Sarah&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;topic&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;the meeting&quot;</span>
+<span class="w">  </span><span class="nt">"arguments"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"recipient"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Sarah"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"topic"</span><span class="p">:</span><span class="w"> </span><span class="s2">"the meeting"</span>
 <span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;hints&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;urgency&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;quick&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;formality&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;casual&quot;</span>
+<span class="w">  </span><span class="nt">"hints"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"urgency"</span><span class="p">:</span><span class="w"> </span><span class="s2">"quick"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"formality"</span><span class="p">:</span><span class="w"> </span><span class="s2">"casual"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -2254,15 +2261,15 @@
 <p>Canonicalized predicates and objects are converted to embeddings:</p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">generate_embeddings</span><span class="p">(</span><span class="n">extraction</span><span class="p">):</span>
     <span class="c1"># Combine predicate + object for action embedding</span>
-    <span class="n">action_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">extraction</span><span class="p">[</span><span class="s1">&#39;predicate&#39;</span><span class="p">][</span><span class="s1">&#39;canonical&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">extraction</span><span class="p">[</span><span class="s1">&#39;object&#39;</span><span class="p">][</span><span class="s1">&#39;canonical&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="n">action_embedding</span> <span class="o">=</span> <span class="n">embed</span><span class="p">(</span><span class="n">action_text</span><span class="p">)</span>  <span class="c1"># e.g., &quot;send message&quot; -&gt; [0.2, 0.8, ...]</span>
+    <span class="n">action_text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">extraction</span><span class="p">[</span><span class="s1">'predicate'</span><span class="p">][</span><span class="s1">'canonical'</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">extraction</span><span class="p">[</span><span class="s1">'object'</span><span class="p">][</span><span class="s1">'canonical'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">action_embedding</span> <span class="o">=</span> <span class="n">embed</span><span class="p">(</span><span class="n">action_text</span><span class="p">)</span>  <span class="c1"># e.g., "send message" -&gt; [0.2, 0.8, ...]</span>
 
     <span class="c1"># Object embedding for type matching</span>
-    <span class="n">object_embedding</span> <span class="o">=</span> <span class="n">embed</span><span class="p">(</span><span class="n">extraction</span><span class="p">[</span><span class="s1">&#39;object&#39;</span><span class="p">][</span><span class="s1">&#39;canonical&#39;</span><span class="p">])</span>
+    <span class="n">object_embedding</span> <span class="o">=</span> <span class="n">embed</span><span class="p">(</span><span class="n">extraction</span><span class="p">[</span><span class="s1">'object'</span><span class="p">][</span><span class="s1">'canonical'</span><span class="p">])</span>
 
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="n">action_embedding</span><span class="p">,</span>
-        <span class="s2">&quot;object&quot;</span><span class="p">:</span> <span class="n">object_embedding</span>
+        <span class="s2">"action"</span><span class="p">:</span> <span class="n">action_embedding</span><span class="p">,</span>
+        <span class="s2">"object"</span><span class="p">:</span> <span class="n">object_embedding</span>
     <span class="p">}</span>
 </code></pre></div>
 <hr />
@@ -2271,12 +2278,12 @@
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">find_matching_tools</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
     <span class="c1"># Search vector database</span>
     <span class="n">candidates</span> <span class="o">=</span> <span class="n">vector_db</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
-        <span class="n">embedding</span><span class="o">=</span><span class="n">embeddings</span><span class="p">[</span><span class="s2">&quot;action&quot;</span><span class="p">],</span>
+        <span class="n">embedding</span><span class="o">=</span><span class="n">embeddings</span><span class="p">[</span><span class="s2">"action"</span><span class="p">],</span>
         <span class="n">top_k</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
         <span class="n">threshold</span><span class="o">=</span><span class="mf">0.7</span>
     <span class="p">)</span>
 
-    <span class="c1"># Filter by user&#39;s authorized services</span>
+    <span class="c1"># Filter by user's authorized services</span>
     <span class="n">authorized</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span>
         <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">service</span> <span class="ow">in</span> <span class="n">user</span><span class="o">.</span><span class="n">connected_services</span>
@@ -2323,19 +2330,19 @@
 </tbody>
 </table>
 <h3 id="context-hints-example">Context Hints Example<a class="headerlink" href="#context-hints-example" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// &quot;email Sarah@company.com about the report&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="c1">// "email Sarah@company.com about the report"</span>
 <span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;hints&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;recipient_domain&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;company.com&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;suggests&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;email&quot;</span><span class="w">  </span><span class="c1">// @domain syntax suggests email</span>
+<span class="w">  </span><span class="nt">"hints"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"recipient_domain"</span><span class="p">:</span><span class="w"> </span><span class="s2">"company.com"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"suggests"</span><span class="p">:</span><span class="w"> </span><span class="s2">"email"</span><span class="w">  </span><span class="c1">// @domain syntax suggests email</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="c1">// &quot;DM the team&quot;</span>
+<span class="c1">// "DM the team"</span>
 <span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;hints&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;recipient_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;group&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;suggests&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;slack&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;teams&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;discord&quot;</span><span class="p">]</span>
+<span class="w">  </span><span class="nt">"hints"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"recipient_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"group"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"suggests"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"slack"</span><span class="p">,</span><span class="w"> </span><span class="s2">"teams"</span><span class="p">,</span><span class="w"> </span><span class="s2">"discord"</span><span class="p">]</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -2344,7 +2351,7 @@
 <h3 id="confident-match">Confident Match<a class="headerlink" href="#confident-match" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>Semantic similarity &gt; 0.9
 Single authorized service matches
--&gt; &quot;Send via Slack?&quot; [Confirm] [Change]
+-&gt; "Send via Slack?" [Confirm] [Change]
 </code></pre></div>
 <h3 id="multiple-matches">Multiple Matches<a class="headerlink" href="#multiple-matches" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>Semantic similarity &gt; 0.7
@@ -2354,11 +2361,11 @@ Multiple authorized services match
 <h3 id="low-confidence">Low Confidence<a class="headerlink" href="#low-confidence" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>Semantic similarity &lt; 0.7
 Or no authorized services
--&gt; &quot;I&#39;m not sure what you want. Did you mean...?&quot;
+-&gt; "I'm not sure what you want. Did you mean...?"
 </code></pre></div>
 <h3 id="no-match">No Match<a class="headerlink" href="#no-match" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>No services in registry match
--&gt; &quot;I don&#39;t have a tool for that yet.&quot;
+-&gt; "I don't have a tool for that yet."
 </code></pre></div>
 <hr />
 <h2 id="confirmation-ux">Confirmation UX<a class="headerlink" href="#confirmation-ux" title="Permanent link">&para;</a></h2>
@@ -2390,9 +2397,9 @@ Or no authorized services
 </tbody>
 </table>
 <div class="highlight"><pre><span></span><code><span class="nt">user_preferences</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">confirmation_mode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;trust_threshold&quot;</span>
+<span class="w">  </span><span class="nt">confirmation_mode</span><span class="p">:</span><span class="w"> </span><span class="s">"trust_threshold"</span>
 <span class="w">  </span><span class="nt">trust_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.92</span>
-<span class="w">  </span><span class="nt">always_confirm_services</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;local.gimme.tools&quot;</span><span class="p p-Indicator">]</span><span class="w">  </span><span class="c1"># Always confirm local</span>
+<span class="w">  </span><span class="nt">always_confirm_services</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"local.gimme.tools"</span><span class="p p-Indicator">]</span><span class="w">  </span><span class="c1"># Always confirm local</span>
 </code></pre></div>
 
 
@@ -2452,7 +2459,7 @@ Or no authorized services
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

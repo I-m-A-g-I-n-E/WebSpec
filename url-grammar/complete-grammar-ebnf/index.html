@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2091,52 +2091,62 @@
 
 
 <h1 id="complete-grammar-ebnf">Complete Grammar (EBNF)<a class="headerlink" href="#complete-grammar-ebnf" title="Permanent link">&para;</a></h1>
-<p>The complete formal grammar for WebSpec URLs in Extended Backus-Naur Form.</p>
+<p>The complete formal grammar for WebSpec URLs in Extended Backus-Naur Form. This is the single
+normative grammar page for the URL Grammar section — <a href="../core-syntax/">Core Syntax</a> is a short
+overview that links here, and <a href="../object-type-system/">Object Type System</a> holds the
+provider-by-provider collection examples.</p>
+<blockquote>
+<p><strong>Status: Proposed (C).</strong> This REST-hierarchy grammar (<code>/collection/id/collection/id...</code>, format
+suffixes, <code>DELETE</code>) is the multi-tenant vision, not the current gateway. The implementation
+shipping today (<strong>Implemented (B)</strong>) routes by subdomain + a literal path that <em>is</em> the MCP tool
+name — see the <a href="../../#status">status matrix</a> and <a href="../../ROADMAP-C/">ROADMAP-C.md</a> for what's
+built versus proposed.</p>
+</blockquote>
 <h2 id="url-grammar">URL Grammar<a class="headerlink" href="#url-grammar" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="cm">(* WebSpec URL Grammar *)</span>
 <span class="cm">(* Clean REST-style URLs: subdomain = provider, path = hierarchy, suffix = format *)</span>
 
 <span class="k">request        </span><span class="o">=</span> <span class="k">method </span><span class="p">,</span> <span class="k">SP </span><span class="p">,</span> <span class="k">url </span><span class="p">;</span>
-<span class="k">url            </span><span class="o">=</span> <span class="s2">&quot;https://&quot;</span> <span class="p">,</span> <span class="k">subdomain </span><span class="p">,</span> <span class="s2">&quot;.gimme.tools&quot;</span> <span class="p">,</span> <span class="k">path </span><span class="p">,</span> <span class="p">[</span> <span class="k">format </span><span class="p">]</span> <span class="p">,</span> <span class="p">[</span> <span class="k">query </span><span class="p">]</span> <span class="p">;</span>
+<span class="k">url            </span><span class="o">=</span> <span class="s2">"https://"</span> <span class="p">,</span> <span class="k">subdomain </span><span class="p">,</span> <span class="s2">".gimme.tools"</span> <span class="p">,</span> <span class="k">path </span><span class="p">,</span> <span class="p">[</span> <span class="k">format </span><span class="p">]</span> <span class="p">,</span> <span class="p">[</span> <span class="k">query </span><span class="p">]</span> <span class="p">;</span>
 
 <span class="cm">(* Subdomain identifies the provider - no redundancy in path *)</span>
-<span class="k">subdomain      </span><span class="o">=</span> <span class="k">provider </span><span class="p">|</span> <span class="s2">&quot;api&quot;</span> <span class="p">|</span> <span class="s2">&quot;local&quot;</span> <span class="p">;</span>
+<span class="k">subdomain      </span><span class="o">=</span> <span class="k">provider </span><span class="p">|</span> <span class="s2">"api"</span> <span class="p">|</span> <span class="s2">"local"</span> <span class="p">;</span>
 <span class="k">provider       </span><span class="o">=</span> <span class="k">identifier </span><span class="p">;</span>   <span class="cm">(* slack, notion, gdrive, linear, github, etc. *)</span>
 
 <span class="cm">(* Path follows REST hierarchy: /collection/id/collection/id... *)</span>
-<span class="k">path           </span><span class="o">=</span> <span class="p">{</span> <span class="s2">&quot;/&quot;</span> <span class="p">,</span> <span class="k">segment </span><span class="p">}</span> <span class="p">;</span>
+<span class="k">path           </span><span class="o">=</span> <span class="p">{</span> <span class="s2">"/"</span> <span class="p">,</span> <span class="k">segment </span><span class="p">}</span> <span class="p">;</span>
 <span class="k">segment        </span><span class="o">=</span> <span class="k">collection </span><span class="p">|</span> <span class="k">id </span><span class="p">;</span>
 <span class="k">collection     </span><span class="o">=</span> <span class="k">identifier </span><span class="p">;</span>   <span class="cm">(* channels, messages, files, pages, issues, etc. *)</span>
 <span class="k">id             </span><span class="o">=</span> <span class="k">identifier </span><span class="p">|</span> <span class="k">uuid </span><span class="p">|</span> <span class="k">slug </span><span class="p">;</span>
 
 <span class="cm">(* Format suffix for content negotiation *)</span>
-<span class="k">format         </span><span class="o">=</span> <span class="s2">&quot;.&quot;</span> <span class="p">,</span> <span class="k">format_type </span><span class="p">;</span>
-<span class="k">format_type    </span><span class="o">=</span> <span class="s2">&quot;json&quot;</span> <span class="p">|</span> <span class="s2">&quot;md&quot;</span> <span class="p">|</span> <span class="s2">&quot;pdf&quot;</span> <span class="p">|</span> <span class="s2">&quot;html&quot;</span> <span class="p">|</span> <span class="s2">&quot;txt&quot;</span> <span class="p">|</span> <span class="s2">&quot;csv&quot;</span> <span class="p">|</span> <span class="s2">&quot;xml&quot;</span> <span class="p">;</span>
+<span class="k">format         </span><span class="o">=</span> <span class="s2">"."</span> <span class="p">,</span> <span class="k">format_type </span><span class="p">;</span>
+<span class="k">format_type    </span><span class="o">=</span> <span class="s2">"json"</span> <span class="p">|</span> <span class="s2">"md"</span> <span class="p">|</span> <span class="s2">"pdf"</span> <span class="p">|</span> <span class="s2">"html"</span> <span class="p">|</span> <span class="s2">"txt"</span> <span class="p">|</span> <span class="s2">"csv"</span> <span class="p">|</span> <span class="s2">"xml"</span> <span class="p">;</span>
 
 <span class="cm">(* Query params for filtering/pagination only - never hierarchy *)</span>
-<span class="k">query          </span><span class="o">=</span> <span class="s2">&quot;?&quot;</span> <span class="p">,</span> <span class="k">param </span><span class="p">,</span> <span class="p">{</span> <span class="s2">&quot;&amp;&quot;</span> <span class="p">,</span> <span class="k">param </span><span class="p">}</span> <span class="p">;</span>
-<span class="k">param          </span><span class="o">=</span> <span class="k">key </span><span class="p">,</span> <span class="s2">&quot;=&quot;</span> <span class="p">,</span> <span class="k">value </span><span class="p">;</span>
+<span class="k">query          </span><span class="o">=</span> <span class="s2">"?"</span> <span class="p">,</span> <span class="k">param </span><span class="p">,</span> <span class="p">{</span> <span class="s2">"&amp;"</span> <span class="p">,</span> <span class="k">param </span><span class="p">}</span> <span class="p">;</span>
+<span class="k">param          </span><span class="o">=</span> <span class="k">key </span><span class="p">,</span> <span class="s2">"="</span> <span class="p">,</span> <span class="k">value </span><span class="p">;</span>
 <span class="k">key            </span><span class="o">=</span> <span class="k">identifier </span><span class="p">;</span>
 <span class="k">value          </span><span class="o">=</span> <span class="p">{</span> <span class="k">urlchar </span><span class="p">}</span> <span class="p">;</span>
 
 <span class="cm">(* HTTP Methods *)</span>
-<span class="k">method         </span><span class="o">=</span> <span class="s2">&quot;GET&quot;</span> <span class="p">|</span> <span class="s2">&quot;POST&quot;</span> <span class="p">|</span> <span class="s2">&quot;PUT&quot;</span> <span class="p">|</span> <span class="s2">&quot;PATCH&quot;</span> <span class="p">|</span> <span class="s2">&quot;DELETE&quot;</span> <span class="p">|</span> <span class="s2">&quot;HEAD&quot;</span> <span class="p">|</span> <span class="s2">&quot;OPTIONS&quot;</span> <span class="p">;</span>
+<span class="k">method         </span><span class="o">=</span> <span class="s2">"GET"</span> <span class="p">|</span> <span class="s2">"POST"</span> <span class="p">|</span> <span class="s2">"PUT"</span> <span class="p">|</span> <span class="s2">"PATCH"</span> <span class="p">|</span> <span class="s2">"DELETE"</span> <span class="p">|</span> <span class="s2">"HEAD"</span> <span class="p">|</span> <span class="s2">"OPTIONS"</span> <span class="p">;</span>
 
 <span class="cm">(* Terminals *)</span>
-<span class="k">identifier     </span><span class="o">=</span> <span class="k">letter </span><span class="p">,</span> <span class="p">{</span> <span class="k">letter </span><span class="p">|</span> <span class="k">digit </span><span class="p">|</span> <span class="s2">&quot;_&quot;</span> <span class="p">|</span> <span class="s2">&quot;-&quot;</span> <span class="p">}</span> <span class="p">;</span>
-<span class="k">uuid           </span><span class="o">=</span> <span class="err">8*</span><span class="k">hexdig </span><span class="p">,</span> <span class="s2">&quot;-&quot;</span> <span class="p">,</span> <span class="err">4*</span><span class="k">hexdig </span><span class="p">,</span> <span class="s2">&quot;-&quot;</span> <span class="p">,</span> <span class="err">4*</span><span class="k">hexdig </span><span class="p">,</span> <span class="s2">&quot;-&quot;</span> <span class="p">,</span> <span class="err">4*</span><span class="k">hexdig </span><span class="p">,</span> <span class="s2">&quot;-&quot;</span> <span class="p">,</span> <span class="err">12*</span><span class="k">hexdig </span><span class="p">;</span>
-<span class="k">slug           </span><span class="o">=</span> <span class="p">{</span> <span class="k">letter </span><span class="p">|</span> <span class="k">digit </span><span class="p">|</span> <span class="s2">&quot;-&quot;</span> <span class="p">}</span> <span class="p">;</span>
-<span class="k">letter         </span><span class="o">=</span> <span class="s2">&quot;a&quot;</span> <span class="p">|</span> <span class="p">.</span><span class="err">..</span> <span class="err">|</span> <span class="err">&quot;</span><span class="k">z</span><span class="err">&quot;</span> <span class="err">|</span> <span class="err">&quot;</span><span class="k">A</span><span class="err">&quot;</span> <span class="err">|</span> <span class="err">...</span> <span class="err">|</span> <span class="err">&quot;</span><span class="k">Z</span><span class="err">&quot;</span> <span class="err">;</span>
-<span class="k">digit          </span><span class="o">=</span> <span class="s2">&quot;0&quot;</span> <span class="p">|</span> <span class="p">.</span><span class="err">..</span> <span class="err">|</span> <span class="err">&quot;9&quot;</span> <span class="err">;</span>
-<span class="k">hexdig         </span><span class="o">=</span> <span class="k">digit </span><span class="p">|</span> <span class="s2">&quot;a&quot;</span> <span class="p">|</span> <span class="p">.</span><span class="err">..</span> <span class="err">|</span> <span class="err">&quot;</span><span class="k">f</span><span class="err">&quot;</span> <span class="err">|</span> <span class="err">&quot;</span><span class="k">A</span><span class="err">&quot;</span> <span class="err">|</span> <span class="err">...</span> <span class="err">|</span> <span class="err">&quot;</span><span class="k">F</span><span class="err">&quot;</span> <span class="err">;</span>
-<span class="k">urlchar        </span><span class="o">=</span> <span class="k">letter </span><span class="p">|</span> <span class="k">digit </span><span class="p">|</span> <span class="s2">&quot;-&quot;</span> <span class="p">|</span> <span class="s2">&quot;_&quot;</span> <span class="p">|</span> <span class="s2">&quot;.&quot;</span> <span class="p">|</span> <span class="s2">&quot;~&quot;</span> <span class="p">|</span> <span class="s2">&quot;%&quot;</span> <span class="p">,</span> <span class="k">hexdig </span><span class="p">,</span> <span class="k">hexdig </span><span class="p">;</span>
-<span class="k">SP             </span><span class="o">=</span> <span class="s2">&quot; &quot;</span> <span class="p">;</span>
+<span class="k">identifier     </span><span class="o">=</span> <span class="k">letter </span><span class="p">,</span> <span class="p">{</span> <span class="k">letter </span><span class="p">|</span> <span class="k">digit </span><span class="p">|</span> <span class="s2">"_"</span> <span class="p">|</span> <span class="s2">"-"</span> <span class="p">}</span> <span class="p">;</span>
+<span class="k">uuid           </span><span class="o">=</span> <span class="err">8*</span><span class="k">hexdig </span><span class="p">,</span> <span class="s2">"-"</span> <span class="p">,</span> <span class="err">4*</span><span class="k">hexdig </span><span class="p">,</span> <span class="s2">"-"</span> <span class="p">,</span> <span class="err">4*</span><span class="k">hexdig </span><span class="p">,</span> <span class="s2">"-"</span> <span class="p">,</span> <span class="err">4*</span><span class="k">hexdig </span><span class="p">,</span> <span class="s2">"-"</span> <span class="p">,</span> <span class="err">12*</span><span class="k">hexdig </span><span class="p">;</span>
+<span class="k">slug           </span><span class="o">=</span> <span class="p">{</span> <span class="k">letter </span><span class="p">|</span> <span class="k">digit </span><span class="p">|</span> <span class="s2">"-"</span> <span class="p">}</span> <span class="p">;</span>
+<span class="k">letter         </span><span class="o">=</span> <span class="s2">"a"</span> <span class="p">|</span> <span class="p">.</span><span class="err">..</span> <span class="err">|</span> <span class="err">"</span><span class="k">z</span><span class="err">"</span> <span class="err">|</span> <span class="err">"</span><span class="k">A</span><span class="err">"</span> <span class="err">|</span> <span class="err">...</span> <span class="err">|</span> <span class="err">"</span><span class="k">Z</span><span class="err">"</span> <span class="err">;</span>
+<span class="k">digit          </span><span class="o">=</span> <span class="s2">"0"</span> <span class="p">|</span> <span class="p">.</span><span class="err">..</span> <span class="err">|</span> <span class="err">"9"</span> <span class="err">;</span>
+<span class="k">hexdig         </span><span class="o">=</span> <span class="k">digit </span><span class="p">|</span> <span class="s2">"a"</span> <span class="p">|</span> <span class="p">.</span><span class="err">..</span> <span class="err">|</span> <span class="err">"</span><span class="k">f</span><span class="err">"</span> <span class="err">|</span> <span class="err">"</span><span class="k">A</span><span class="err">"</span> <span class="err">|</span> <span class="err">...</span> <span class="err">|</span> <span class="err">"</span><span class="k">F</span><span class="err">"</span> <span class="err">;</span>
+<span class="k">urlchar        </span><span class="o">=</span> <span class="k">letter </span><span class="p">|</span> <span class="k">digit </span><span class="p">|</span> <span class="s2">"-"</span> <span class="p">|</span> <span class="s2">"_"</span> <span class="p">|</span> <span class="s2">"."</span> <span class="p">|</span> <span class="s2">"~"</span> <span class="p">|</span> <span class="s2">"%"</span> <span class="p">,</span> <span class="k">hexdig </span><span class="p">,</span> <span class="k">hexdig </span><span class="p">;</span>
+<span class="k">SP             </span><span class="o">=</span> <span class="s2">" "</span> <span class="p">;</span>
 </code></pre></div>
 <hr />
 <h2 id="production-rules-explained">Production Rules Explained<a class="headerlink" href="#production-rules-explained" title="Permanent link">&para;</a></h2>
 <h3 id="subdomain-provider">Subdomain (Provider)<a class="headerlink" href="#subdomain-provider" title="Permanent link">&para;</a></h3>
 <p>The subdomain identifies <strong>which service</strong> handles the request. This is the <strong>only</strong> place the provider appears.</p>
-<div class="highlight"><pre><span></span><code><span class="k">subdomain </span><span class="o">=</span> <span class="k">provider </span><span class="p">|</span> <span class="s2">&quot;api&quot;</span> <span class="p">|</span> <span class="s2">&quot;local&quot;</span> <span class="p">;</span>
+<div class="highlight"><pre><span></span><code><span class="k">subdomain </span><span class="o">=</span> <span class="k">provider </span><span class="p">|</span> <span class="s2">"api"</span> <span class="p">|</span> <span class="s2">"local"</span> <span class="p">;</span>
 </code></pre></div>
 <table>
 <thead>
@@ -2178,7 +2188,7 @@
 </table>
 <h3 id="path-rest-hierarchy">Path (REST Hierarchy)<a class="headerlink" href="#path-rest-hierarchy" title="Permanent link">&para;</a></h3>
 <p>The path follows standard REST conventions with alternating collections and IDs:</p>
-<div class="highlight"><pre><span></span><code><span class="k">path </span><span class="o">=</span> <span class="p">{</span> <span class="s2">&quot;/&quot;</span> <span class="p">,</span> <span class="k">segment </span><span class="p">}</span> <span class="p">;</span>
+<div class="highlight"><pre><span></span><code><span class="k">path </span><span class="o">=</span> <span class="p">{</span> <span class="s2">"/"</span> <span class="p">,</span> <span class="k">segment </span><span class="p">}</span> <span class="p">;</span>
 <span class="k">segment </span><span class="o">=</span> <span class="k">collection </span><span class="p">|</span> <span class="k">id </span><span class="p">;</span>
 </code></pre></div>
 <p><strong>Pattern:</strong> <code>/collection/id/collection/id...</code></p>
@@ -2188,8 +2198,8 @@
 </code></pre></div>
 <h3 id="format-suffix-content-negotiation">Format Suffix (Content Negotiation)<a class="headerlink" href="#format-suffix-content-negotiation" title="Permanent link">&para;</a></h3>
 <p>Optional suffix specifying <strong>how</strong> to return content:</p>
-<div class="highlight"><pre><span></span><code><span class="k">format </span><span class="o">=</span> <span class="s2">&quot;.&quot;</span> <span class="p">,</span> <span class="k">format_type </span><span class="p">;</span>
-<span class="k">format_type </span><span class="o">=</span> <span class="s2">&quot;json&quot;</span> <span class="p">|</span> <span class="s2">&quot;md&quot;</span> <span class="p">|</span> <span class="s2">&quot;pdf&quot;</span> <span class="p">|</span> <span class="s2">&quot;html&quot;</span> <span class="p">|</span> <span class="s2">&quot;txt&quot;</span> <span class="p">|</span> <span class="s2">&quot;csv&quot;</span> <span class="p">|</span> <span class="s2">&quot;xml&quot;</span> <span class="p">;</span>
+<div class="highlight"><pre><span></span><code><span class="k">format </span><span class="o">=</span> <span class="s2">"."</span> <span class="p">,</span> <span class="k">format_type </span><span class="p">;</span>
+<span class="k">format_type </span><span class="o">=</span> <span class="s2">"json"</span> <span class="p">|</span> <span class="s2">"md"</span> <span class="p">|</span> <span class="s2">"pdf"</span> <span class="p">|</span> <span class="s2">"html"</span> <span class="p">|</span> <span class="s2">"txt"</span> <span class="p">|</span> <span class="s2">"csv"</span> <span class="p">|</span> <span class="s2">"xml"</span> <span class="p">;</span>
 </code></pre></div>
 <table>
 <thead>
@@ -2235,7 +2245,7 @@
 </table>
 <h3 id="query-parameters-filtering-only">Query Parameters (Filtering Only)<a class="headerlink" href="#query-parameters-filtering-only" title="Permanent link">&para;</a></h3>
 <p>Query params handle <strong>filtering and pagination</strong>, never hierarchy:</p>
-<div class="highlight"><pre><span></span><code><span class="k">query </span><span class="o">=</span> <span class="s2">&quot;?&quot;</span> <span class="p">,</span> <span class="k">param </span><span class="p">,</span> <span class="p">{</span> <span class="s2">&quot;&amp;&quot;</span> <span class="p">,</span> <span class="k">param </span><span class="p">}</span> <span class="p">;</span>
+<div class="highlight"><pre><span></span><code><span class="k">query </span><span class="o">=</span> <span class="s2">"?"</span> <span class="p">,</span> <span class="k">param </span><span class="p">,</span> <span class="p">{</span> <span class="s2">"&amp;"</span> <span class="p">,</span> <span class="k">param </span><span class="p">}</span> <span class="p">;</span>
 </code></pre></div>
 <p><strong>Allowed uses:</strong></p>
 <ul>
@@ -2320,21 +2330,21 @@ POST<span class="w"> </span>slack.gimme.tools/channels/general/messages
 <span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">parsed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">URL</span><span class="p">(</span><span class="nx">url</span><span class="p">);</span>
 
 <span class="w">  </span><span class="c1">// Check domain</span>
-<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">parsed</span><span class="p">.</span><span class="nx">hostname</span><span class="p">.</span><span class="nx">endsWith</span><span class="p">(</span><span class="s1">&#39;.gimme.tools&#39;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">valid</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Must use .gimme.tools domain&#39;</span><span class="w"> </span><span class="p">};</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">parsed</span><span class="p">.</span><span class="nx">hostname</span><span class="p">.</span><span class="nx">endsWith</span><span class="p">(</span><span class="s1">'.gimme.tools'</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">valid</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="s1">'Must use .gimme.tools domain'</span><span class="w"> </span><span class="p">};</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="w">  </span><span class="c1">// Check subdomain is provider</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">subdomain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">parsed</span><span class="p">.</span><span class="nx">hostname</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mf">0</span><span class="p">];</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">subdomain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">parsed</span><span class="p">.</span><span class="nx">hostname</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s1">'.'</span><span class="p">)[</span><span class="mf">0</span><span class="p">];</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">SUBDOMAIN_PATTERN</span><span class="p">.</span><span class="nx">test</span><span class="p">(</span><span class="nx">subdomain</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">valid</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Invalid subdomain&#39;</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">valid</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="s1">'Invalid subdomain'</span><span class="w"> </span><span class="p">};</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="w">  </span><span class="c1">// Check path segments</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">segments</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">parsed</span><span class="p">.</span><span class="nx">pathname</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">).</span><span class="nx">filter</span><span class="p">(</span><span class="nb">Boolean</span><span class="p">);</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">segments</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">parsed</span><span class="p">.</span><span class="nx">pathname</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s1">'/'</span><span class="p">).</span><span class="nx">filter</span><span class="p">(</span><span class="nb">Boolean</span><span class="p">);</span>
 <span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">seg</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">segments</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="c1">// Strip format suffix from last segment</span>
-<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">cleanSeg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">seg</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="nx">FORMAT_PATTERN</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">cleanSeg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">seg</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="nx">FORMAT_PATTERN</span><span class="p">,</span><span class="w"> </span><span class="s1">''</span><span class="p">);</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">SEGMENT_PATTERN</span><span class="p">.</span><span class="nx">test</span><span class="p">(</span><span class="nx">cleanSeg</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
 <span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">valid</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="sb">`Invalid path segment: </span><span class="si">${</span><span class="nx">seg</span><span class="si">}</span><span class="sb">`</span><span class="w"> </span><span class="p">};</span>
 <span class="w">    </span><span class="p">}</span>
@@ -2408,7 +2418,7 @@ POST<span class="w"> </span>slack.gimme.tools/channels/general/messages
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

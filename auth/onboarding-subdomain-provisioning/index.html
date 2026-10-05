@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2254,17 +2254,17 @@ POST user-123.gimme.tools/messages         -- Allowed (per user config)
 <h2 id="gateway-enforcement">Gateway Enforcement<a class="headerlink" href="#gateway-enforcement" title="Permanent link">&para;</a></h2>
 <p>The gateway performs an atomic check on every path-based request:</p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">handle_path_based_request</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-    <span class="c1"># Check if user&#39;s subdomain is live</span>
-    <span class="k">if</span> <span class="n">subdomain_is_active</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">.gimme.tools&quot;</span><span class="p">):</span>
+    <span class="c1"># Check if user's subdomain is live</span>
+    <span class="k">if</span> <span class="n">subdomain_is_active</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">.gimme.tools"</span><span class="p">):</span>
         <span class="c1"># Subdomain exists - permanent redirect, no exceptions</span>
         <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;https://</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">.gimme.tools</span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"https://</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">.gimme.tools</span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">status</span><span class="o">=</span><span class="mi">301</span>  <span class="c1"># Permanent redirect</span>
         <span class="p">)</span>
 
     <span class="c1"># Subdomain not yet active - allow full access</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">user_authenticated</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">error</span><span class="p">(</span><span class="mi">401</span><span class="p">,</span> <span class="s2">&quot;Authentication required&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">error</span><span class="p">(</span><span class="mi">401</span><span class="p">,</span> <span class="s2">"Authentication required"</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">process_request</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
 </code></pre></div>
@@ -2298,11 +2298,11 @@ POST user-123.gimme.tools/messages         -- Allowed (per user config)
 <div class="highlight"><pre><span></span><code><span class="c1"># What can third-party apps do on your behalf?</span>
 <span class="nt">oauth_apps</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">default_grants</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;GET:/profile&quot;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;GET:/messages/*&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"GET:/profile"</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"GET:/messages/*"</span>
 <span class="w">  </span><span class="nt">require_approval</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;POST:*&quot;</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;DELETE:*&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"POST:*"</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"DELETE:*"</span>
 <span class="w">  </span><span class="nt">notify_on_request</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 </code></pre></div>
 <p>This becomes a <strong>universal, user-owned permission schema</strong>:</p>
@@ -2362,12 +2362,12 @@ POST user-123.gimme.tools/messages         -- Allowed (per user config)
 <span class="w">    </span><span class="c1">// Try path-based URL (works during provisioning)</span>
 <span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetch</span><span class="p">(</span>
 <span class="w">        </span><span class="sb">`https://api.gimme.tools/</span><span class="si">${</span><span class="nx">userId</span><span class="si">}${</span><span class="nx">path</span><span class="si">}</span><span class="sb">`</span><span class="p">,</span>
-<span class="w">        </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="nx">options</span><span class="p">,</span><span class="w"> </span><span class="nx">redirect</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;manual&#39;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="nx">options</span><span class="p">,</span><span class="w"> </span><span class="nx">redirect</span><span class="o">:</span><span class="w"> </span><span class="s1">'manual'</span><span class="w"> </span><span class="p">}</span>
 <span class="w">    </span><span class="p">);</span>
 
 <span class="w">    </span><span class="c1">// If 301, subdomain is now active - cache and follow</span>
 <span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">status</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">301</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">location</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">headers</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;Location&#39;</span><span class="p">);</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">location</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">headers</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'Location'</span><span class="p">);</span>
 <span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">subdomain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">URL</span><span class="p">(</span><span class="nx">location</span><span class="p">).</span><span class="nx">host</span><span class="p">;</span>
 <span class="w">        </span><span class="nx">setSubdomainCache</span><span class="p">(</span><span class="nx">userId</span><span class="p">,</span><span class="w"> </span><span class="nx">subdomain</span><span class="p">);</span>
 <span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">fetch</span><span class="p">(</span><span class="nx">location</span><span class="p">,</span><span class="w"> </span><span class="nx">options</span><span class="p">);</span>
@@ -2382,31 +2382,31 @@ POST user-123.gimme.tools/messages         -- Allowed (per user config)
 <div class="highlight"><pre><span></span><code>GET<span class="w"> </span>api.gimme.tools/user-123/.well-known/subdomain-status
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;user_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user-123&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;subdomain&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user-123.gimme.tools&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;provisioning&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;certificate&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pending&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;estimated_ready&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-15T10:30:00Z&quot;</span>
+<span class="w">  </span><span class="nt">"user_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user-123"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"subdomain"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user-123.gimme.tools"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"provisioning"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"certificate"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pending"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"estimated_ready"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025-01-15T10:30:00Z"</span>
 <span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;current_access&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;endpoint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;api.gimme.tools/user-123/&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;methods&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;POST&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;PUT&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;PATCH&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;DELETE&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;HEAD&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;OPTIONS&quot;</span><span class="p">]</span>
+<span class="w">  </span><span class="nt">"current_access"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"endpoint"</span><span class="p">:</span><span class="w"> </span><span class="s2">"api.gimme.tools/user-123/"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"methods"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"GET"</span><span class="p">,</span><span class="w"> </span><span class="s2">"POST"</span><span class="p">,</span><span class="w"> </span><span class="s2">"PUT"</span><span class="p">,</span><span class="w"> </span><span class="s2">"PATCH"</span><span class="p">,</span><span class="w"> </span><span class="s2">"DELETE"</span><span class="p">,</span><span class="w"> </span><span class="s2">"HEAD"</span><span class="p">,</span><span class="w"> </span><span class="s2">"OPTIONS"</span><span class="p">]</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
 <p>Once active:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;user_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user-123&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;subdomain&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user-123.gimme.tools&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;active&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;certificate&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;issued&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;expires&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-01-15T10:30:00Z&quot;</span>
+<span class="w">  </span><span class="nt">"user_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user-123"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"subdomain"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user-123.gimme.tools"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"active"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"certificate"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"issued"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"expires"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-15T10:30:00Z"</span>
 <span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;current_access&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;endpoint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user-123.gimme.tools/&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;methods&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;per user configuration&quot;</span>
+<span class="w">  </span><span class="nt">"current_access"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"endpoint"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user-123.gimme.tools/"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"methods"</span><span class="p">:</span><span class="w"> </span><span class="s2">"per user configuration"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -2479,7 +2479,7 @@ POST user-123.gimme.tools/messages         -- Allowed (per user config)
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

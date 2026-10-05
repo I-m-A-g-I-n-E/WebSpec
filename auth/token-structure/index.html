@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2114,27 +2114,27 @@
 <hr />
 <h2 id="service-token-structure">Service Token Structure<a class="headerlink" href="#service-token-structure" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;header&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;alg&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ES256&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;typ&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;JWT&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;kid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;key-2024-01&quot;</span>
+<span class="w">  </span><span class="nt">"header"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"alg"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ES256"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"typ"</span><span class="p">:</span><span class="w"> </span><span class="s2">"JWT"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"kid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"key-2024-01"</span>
 <span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;payload&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;iss&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;auth.gimme.tools&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;sub&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user-123&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;aud&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slack.gimme.tools&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;iat&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1702600000</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;exp&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1702603600</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;jti&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;token-abc123&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"payload"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"iss"</span><span class="p">:</span><span class="w"> </span><span class="s2">"auth.gimme.tools"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"sub"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user-123"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"aud"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slack.gimme.tools"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"iat"</span><span class="p">:</span><span class="w"> </span><span class="mi">1702600000</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"exp"</span><span class="p">:</span><span class="w"> </span><span class="mi">1702603600</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"jti"</span><span class="p">:</span><span class="w"> </span><span class="s2">"token-abc123"</span><span class="p">,</span>
 
-<span class="w">    </span><span class="nt">&quot;scope&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">      </span><span class="s2">&quot;GET:slack.gimme.tools/message.*&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="s2">&quot;POST:slack.gimme.tools/message.*&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="s2">&quot;GET:slack.gimme.tools/file.*&quot;</span>
+<span class="w">    </span><span class="nt">"scope"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">"GET:slack.gimme.tools/message.*"</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">"POST:slack.gimme.tools/message.*"</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">"GET:slack.gimme.tools/file.*"</span>
 <span class="w">    </span><span class="p">],</span>
 
-<span class="w">    </span><span class="nt">&quot;session_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sess-xyz789&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;device_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;device-abc123&quot;</span>
+<span class="w">    </span><span class="nt">"session_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sess-xyz789"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"device_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"device-abc123"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -2228,25 +2228,25 @@
 </table>
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Read any message type</span>
-<span class="s">&quot;GET:slack.gimme.tools/message.*&quot;</span>
+<span class="s">"GET:slack.gimme.tools/message.*"</span>
 
 <span class="c1"># Send only text messages</span>
-<span class="s">&quot;POST:slack.gimme.tools/message.text&quot;</span>
+<span class="s">"POST:slack.gimme.tools/message.text"</span>
 
 <span class="c1"># All operations on files</span>
-<span class="s">&quot;*:gdrive.gimme.tools/file.**&quot;</span>
+<span class="s">"*:gdrive.gimme.tools/file.**"</span>
 
 <span class="c1"># Read specific message</span>
-<span class="s">&quot;GET:slack.gimme.tools/message/abc123&quot;</span>
+<span class="s">"GET:slack.gimme.tools/message/abc123"</span>
 
 <span class="c1"># Linear tasks with specific prefix</span>
-<span class="s">&quot;*:linear.gimme.tools/task/LIN-*&quot;</span>
+<span class="s">"*:linear.gimme.tools/task/LIN-*"</span>
 </code></pre></div>
 <hr />
 <h2 id="audience-binding">Audience Binding<a class="headerlink" href="#audience-binding" title="Permanent link">&para;</a></h2>
 <p>The <code>aud</code> claim is the security linchpin:</p>
 <div class="highlight"><pre><span></span><code>Token issued for: slack.gimme.tools
-Token aud claim:  &quot;slack.gimme.tools&quot;
+Token aud claim:  "slack.gimme.tools"
 
 Presented to slack.gimme.tools:
   -&gt; aud === host
@@ -2267,54 +2267,54 @@ Intercepted and replayed:
     <span class="n">claims</span> <span class="o">=</span> <span class="n">jwt</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span>
         <span class="n">token</span><span class="p">,</span>
         <span class="n">public_key</span><span class="p">,</span>
-        <span class="n">algorithms</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;ES256&quot;</span><span class="p">],</span>
-        <span class="n">issuer</span><span class="o">=</span><span class="s2">&quot;auth.gimme.tools&quot;</span>
+        <span class="n">algorithms</span><span class="o">=</span><span class="p">[</span><span class="s2">"ES256"</span><span class="p">],</span>
+        <span class="n">issuer</span><span class="o">=</span><span class="s2">"auth.gimme.tools"</span>
     <span class="p">)</span>
 
     <span class="c1"># 2. Check audience matches request host</span>
-    <span class="k">if</span> <span class="n">claims</span><span class="p">[</span><span class="s2">&quot;aud&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">request</span><span class="o">.</span><span class="n">host</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">claims</span><span class="p">[</span><span class="s2">"aud"</span><span class="p">]</span> <span class="o">!=</span> <span class="n">request</span><span class="o">.</span><span class="n">host</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">InvalidAudience</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Token for </span><span class="si">{</span><span class="n">claims</span><span class="p">[</span><span class="s1">&#39;aud&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">host</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"Token for </span><span class="si">{</span><span class="n">claims</span><span class="p">[</span><span class="s1">'aud'</span><span class="p">]</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">host</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
 
     <span class="c1"># 3. Check expiration</span>
-    <span class="k">if</span> <span class="n">claims</span><span class="p">[</span><span class="s2">&quot;exp&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">time</span><span class="o">.</span><span class="n">now</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">claims</span><span class="p">[</span><span class="s2">"exp"</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">time</span><span class="o">.</span><span class="n">now</span><span class="p">():</span>
         <span class="k">raise</span> <span class="n">TokenExpired</span><span class="p">()</span>
 
     <span class="c1"># 4. Check scope covers this request</span>
-    <span class="n">request_pattern</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">host</span><span class="si">}{</span><span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">request_pattern</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">host</span><span class="si">}{</span><span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">matches</span><span class="p">(</span><span class="n">request_pattern</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">claims</span><span class="p">[</span><span class="s2">&quot;scope&quot;</span><span class="p">]):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">matches</span><span class="p">(</span><span class="n">request_pattern</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">claims</span><span class="p">[</span><span class="s2">"scope"</span><span class="p">]):</span>
         <span class="k">raise</span> <span class="n">InsufficientScope</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">request_pattern</span><span class="si">}</span><span class="s2"> not in </span><span class="si">{</span><span class="n">claims</span><span class="p">[</span><span class="s1">&#39;scope&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">request_pattern</span><span class="si">}</span><span class="s2"> not in </span><span class="si">{</span><span class="n">claims</span><span class="p">[</span><span class="s1">'scope'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
 
     <span class="c1"># 5. Optional: Check token not revoked</span>
-    <span class="k">if</span> <span class="n">is_revoked</span><span class="p">(</span><span class="n">claims</span><span class="p">[</span><span class="s2">&quot;jti&quot;</span><span class="p">]):</span>
+    <span class="k">if</span> <span class="n">is_revoked</span><span class="p">(</span><span class="n">claims</span><span class="p">[</span><span class="s2">"jti"</span><span class="p">]):</span>
         <span class="k">raise</span> <span class="n">TokenRevoked</span><span class="p">()</span>
 
-    <span class="k">return</span> <span class="n">User</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">claims</span><span class="p">[</span><span class="s2">&quot;sub&quot;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">User</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">claims</span><span class="p">[</span><span class="s2">"sub"</span><span class="p">])</span>
 </code></pre></div>
 <hr />
 <h2 id="local-bridge-token">Local Bridge Token<a class="headerlink" href="#local-bridge-token" title="Permanent link">&para;</a></h2>
 <p>Tokens for <code>local.gimme.tools</code> include device binding:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;aud&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local.gimme.tools&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;scope&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">    </span><span class="s2">&quot;GET:local.gimme.tools/file.*&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s2">&quot;POST:local.gimme.tools/code.*&quot;</span>
+<span class="w">  </span><span class="nt">"aud"</span><span class="p">:</span><span class="w"> </span><span class="s2">"local.gimme.tools"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"scope"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">"GET:local.gimme.tools/file.*"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"POST:local.gimme.tools/code.*"</span>
 <span class="w">  </span><span class="p">],</span>
-<span class="w">  </span><span class="nt">&quot;device_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;device-abc123&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;device_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Preston&#39;s MacBook&quot;</span>
+<span class="w">  </span><span class="nt">"device_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"device-abc123"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"device_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Preston's MacBook"</span>
 <span class="p">}</span>
 </code></pre></div>
 <p>Validation adds:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Check device is connected</span>
-<span class="k">if</span> <span class="n">claims</span><span class="p">[</span><span class="s2">&quot;device_id&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">active_tunnels</span><span class="p">:</span>
+<span class="k">if</span> <span class="n">claims</span><span class="p">[</span><span class="s2">"device_id"</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">active_tunnels</span><span class="p">:</span>
     <span class="k">raise</span> <span class="n">DeviceNotConnected</span><span class="p">()</span>
 
 <span class="c1"># Check user owns device</span>
-<span class="k">if</span> <span class="ow">not</span> <span class="n">user_owns_device</span><span class="p">(</span><span class="n">claims</span><span class="p">[</span><span class="s2">&quot;sub&quot;</span><span class="p">],</span> <span class="n">claims</span><span class="p">[</span><span class="s2">&quot;device_id&quot;</span><span class="p">]):</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">user_owns_device</span><span class="p">(</span><span class="n">claims</span><span class="p">[</span><span class="s2">"sub"</span><span class="p">],</span> <span class="n">claims</span><span class="p">[</span><span class="s2">"device_id"</span><span class="p">]):</span>
     <span class="k">raise</span> <span class="n">DeviceNotOwned</span><span class="p">()</span>
 </code></pre></div>
 <hr />
@@ -2434,7 +2434,7 @@ Intercepted and replayed:
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

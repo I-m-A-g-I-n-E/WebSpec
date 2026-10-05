@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2102,10 +2102,17 @@
 
 <h1 id="the-three-way-join">The Three-Way Join<a class="headerlink" href="#the-three-way-join" title="Permanent link">&para;</a></h1>
 <p>The Three-Way Join is the core discovery algorithm that matches user intent with available tools.</p>
+<blockquote>
+<p><strong>Status: Proposed (C).</strong> No resolver, registry, or ranking exists in the implemented gateway
+today. In the current implementation the path segment is the MCP tool name (e.g. <code>send_message</code>);
+the tool names below (<code>send_message</code>, <code>upload_file</code>, <code>share_spreadsheet</code>, …) illustrate that form.
+The <code>/collection/id</code> REST-hierarchy shown in some examples elsewhere in these docs is itself
+Proposed (C) — see <a href="../../url-grammar/complete-grammar-ebnf/">Complete Grammar (EBNF)</a>.</p>
+</blockquote>
 <h2 id="the-three-data-sources">The Three Data Sources<a class="headerlink" href="#the-three-data-sources" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>+-------------------------------------------------------------+
 |                       USER REQUEST                           |
-|    &quot;post the quarterly numbers to the finance channel&quot;       |
+|    "post the quarterly numbers to the finance channel"       |
 +------------------------------+------------------------------+
                                |
               +----------------+----------------+
@@ -2137,22 +2144,22 @@
     <span class="c1"># 2. Semantic search against registry</span>
     <span class="n">registry_matches</span> <span class="o">=</span> <span class="n">vector_search</span><span class="p">(</span>
         <span class="n">embedding</span><span class="o">=</span><span class="n">query_embedding</span><span class="p">,</span>
-        <span class="n">index</span><span class="o">=</span><span class="s2">&quot;tools&quot;</span><span class="p">,</span>
+        <span class="n">index</span><span class="o">=</span><span class="s2">"tools"</span><span class="p">,</span>
         <span class="n">top_k</span><span class="o">=</span><span class="mi">20</span>
     <span class="p">)</span>
 
-    <span class="c1"># 3. Classify each match by user&#39;s relationship</span>
+    <span class="c1"># 3. Classify each match by user's relationship</span>
     <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">tool</span> <span class="ow">in</span> <span class="n">registry_matches</span><span class="p">:</span>
         <span class="n">status</span> <span class="o">=</span> <span class="n">classify_tool</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="n">user</span><span class="p">)</span>
         <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
-            <span class="s1">&#39;tool&#39;</span><span class="p">:</span> <span class="n">tool</span><span class="p">,</span>
-            <span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">status</span><span class="p">,</span>
-            <span class="s1">&#39;score&#39;</span><span class="p">:</span> <span class="n">tool</span><span class="o">.</span><span class="n">similarity</span> <span class="o">*</span> <span class="n">status</span><span class="o">.</span><span class="n">weight</span>
+            <span class="s1">'tool'</span><span class="p">:</span> <span class="n">tool</span><span class="p">,</span>
+            <span class="s1">'status'</span><span class="p">:</span> <span class="n">status</span><span class="p">,</span>
+            <span class="s1">'score'</span><span class="p">:</span> <span class="n">tool</span><span class="o">.</span><span class="n">similarity</span> <span class="o">*</span> <span class="n">status</span><span class="o">.</span><span class="n">weight</span>
         <span class="p">})</span>
 
     <span class="c1"># 4. Sort by weighted score</span>
-    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s1">'score'</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">classify_tool</span><span class="p">(</span><span class="n">tool</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
     <span class="n">service</span> <span class="o">=</span> <span class="n">tool</span><span class="o">.</span><span class="n">service</span>
@@ -2161,7 +2168,7 @@
     <span class="k">if</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">user</span><span class="o">.</span><span class="n">connected_services</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Status</span><span class="o">.</span><span class="n">CONNECTED</span>  <span class="c1"># weight: 1.0</span>
 
-    <span class="c1"># In user&#39;s keychain?</span>
+    <span class="c1"># In user's keychain?</span>
     <span class="k">if</span> <span class="n">service</span><span class="o">.</span><span class="n">canonical_domain</span> <span class="ow">in</span> <span class="n">user</span><span class="o">.</span><span class="n">keychain_domains</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Status</span><span class="o">.</span><span class="n">KEYCHAIN</span>   <span class="c1"># weight: 0.8</span>
 
@@ -2250,12 +2257,12 @@
 <p><strong>Request:</strong> "post the quarterly numbers to finance"</p>
 <h3 id="step-1-intent-extraction">Step 1: Intent Extraction<a class="headerlink" href="#step-1-intent-extraction" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;predicate&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;post&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;object&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;numbers&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;destination&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;finance&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;hints&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;data/spreadsheet&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;channel&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;finance&quot;</span>
+<span class="w">  </span><span class="nt">"predicate"</span><span class="p">:</span><span class="w"> </span><span class="s2">"post"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"object"</span><span class="p">:</span><span class="w"> </span><span class="s2">"numbers"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"destination"</span><span class="p">:</span><span class="w"> </span><span class="s2">"finance"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"hints"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"data/spreadsheet"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"channel"</span><span class="p">:</span><span class="w"> </span><span class="s2">"finance"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -2269,33 +2276,33 @@
 </thead>
 <tbody>
 <tr>
-<td>POST /message.slack</td>
+<td>POST slack.gimme.tools/send_message</td>
 <td>0.85</td>
 </tr>
 <tr>
-<td>POST /file.slack</td>
+<td>POST slack.gimme.tools/upload_file</td>
 <td>0.82</td>
 </tr>
 <tr>
-<td>POST /message.teams</td>
+<td>POST teams.gimme.tools/send_message</td>
 <td>0.78</td>
 </tr>
 <tr>
-<td>POST /file.gdrive</td>
+<td>POST gdrive.gimme.tools/upload_file</td>
 <td>0.65</td>
 </tr>
 <tr>
-<td>POST /spreadsheet.gsheets</td>
+<td>POST gsheets.gimme.tools/share_spreadsheet</td>
 <td>0.60</td>
 </tr>
 </tbody>
 </table>
 <h3 id="step-3-user-classification">Step 3: User Classification<a class="headerlink" href="#step-3-user-classification" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><span class="l l-Scalar l-Scalar-Plain">User&#39;s connected services</span><span class="p p-Indicator">:</span>
+<div class="highlight"><pre><span></span><code><span class="l l-Scalar l-Scalar-Plain">User's connected services</span><span class="p p-Indicator">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">slack.gimme.tools</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gdrive.gimme.tools</span>
 
-<span class="l l-Scalar l-Scalar-Plain">User&#39;s keychain hints</span><span class="p p-Indicator">:</span>
+<span class="l l-Scalar l-Scalar-Plain">User's keychain hints</span><span class="p p-Indicator">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">teams.microsoft.com</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">notion.so</span>
 </code></pre></div>
@@ -2311,35 +2318,35 @@
 </thead>
 <tbody>
 <tr>
-<td>POST /message.slack</td>
+<td>POST slack.gimme.tools/send_message</td>
 <td>0.85</td>
 <td>CONNECTED</td>
 <td>1.0</td>
 <td><strong>0.85</strong></td>
 </tr>
 <tr>
-<td>POST /file.slack</td>
+<td>POST slack.gimme.tools/upload_file</td>
 <td>0.82</td>
 <td>CONNECTED</td>
 <td>1.0</td>
 <td><strong>0.82</strong></td>
 </tr>
 <tr>
-<td>POST /message.teams</td>
+<td>POST teams.gimme.tools/send_message</td>
 <td>0.78</td>
 <td>KEYCHAIN</td>
 <td>0.8</td>
 <td><strong>0.62</strong></td>
 </tr>
 <tr>
-<td>POST /file.gdrive</td>
+<td>POST gdrive.gimme.tools/upload_file</td>
 <td>0.65</td>
 <td>CONNECTED</td>
 <td>1.0</td>
 <td><strong>0.65</strong></td>
 </tr>
 <tr>
-<td>POST /spreadsheet.gsheets</td>
+<td>POST gsheets.gimme.tools/share_spreadsheet</td>
 <td>0.60</td>
 <td>AVAILABLE</td>
 <td>0.5</td>
@@ -2348,29 +2355,29 @@
 </tbody>
 </table>
 <h3 id="step-4-ranked-results">Step 4: Ranked Results<a class="headerlink" href="#step-4-ranked-results" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>1. POST /message.slack     (0.85) - Connected
-2. POST /file.slack        (0.82) - Connected
-3. POST /file.gdrive       (0.65) - Connected
-4. POST /message.teams     (0.62) - In keychain
-5. POST /spreadsheet       (0.30) - Available
+<div class="highlight"><pre><span></span><code>1. POST slack.gimme.tools/send_message      (0.85) - Connected
+2. POST slack.gimme.tools/upload_file       (0.82) - Connected
+3. POST gdrive.gimme.tools/upload_file      (0.65) - Connected
+4. POST teams.gimme.tools/send_message      (0.62) - In keychain
+5. POST gsheets.gimme.tools/share_spreadsheet (0.30) - Available
 </code></pre></div>
 <hr />
 <h2 id="ux-presentation">UX Presentation<a class="headerlink" href="#ux-presentation" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>+-------------------------------------------------------+
-| &quot;post the quarterly numbers to finance&quot;               |
+| "post the quarterly numbers to finance"               |
 +-------------------------------------------------------+
 |                                                       |
 | * Slack - #finance channel          [Send Message]    |
-|   POST /message.slack?channel=finance                 |
+|   POST slack.gimme.tools/send_message?channel=finance |
 |                                                       |
 | * Slack - Upload file               [Upload]          |
-|   POST /file.slack?channel=finance                    |
+|   POST slack.gimme.tools/upload_file?channel=finance  |
 |                                                       |
 | * Google Drive                      [Save]            |
-|   POST /file.gdrive                                  |
+|   POST gdrive.gimme.tools/upload_file                |
 |                                                       |
 | * Microsoft Teams (in 1Password)    [Connect - FaceID]|
-|   POST /message.teams                                 |
+|   POST teams.gimme.tools/send_message                 |
 |                                                       |
 +-------------------------------------------------------+
 </code></pre></div>
@@ -2378,19 +2385,19 @@
 <h2 id="edge-cases">Edge Cases<a class="headerlink" href="#edge-cases" title="Permanent link">&para;</a></h2>
 <h3 id="no-connected-services-match">No Connected Services Match<a class="headerlink" href="#no-connected-services-match" title="Permanent link">&para;</a></h3>
 <p>If only KEYCHAIN or AVAILABLE matches exist:</p>
-<div class="highlight"><pre><span></span><code>&quot;We found tools that could help, but you&#39;ll need to connect first:&quot;
+<div class="highlight"><pre><span></span><code>"We found tools that could help, but you'll need to connect first:"
 
   Slack (in 1Password)    [Connect with FaceID]
   Microsoft Teams         [Sign Up / Connect]
 </code></pre></div>
 <h3 id="no-matches-at-all">No Matches At All<a class="headerlink" href="#no-matches-at-all" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>&quot;I don&#39;t have a tool for that yet.&quot;
+<div class="highlight"><pre><span></span><code>"I don't have a tool for that yet."
 
 [Request Integration] -&gt; Opens integration request form
 </code></pre></div>
 <h3 id="ambiguous-intent">Ambiguous Intent<a class="headerlink" href="#ambiguous-intent" title="Permanent link">&para;</a></h3>
 <p>When semantic similarity is similar across multiple categories:</p>
-<div class="highlight"><pre><span></span><code>&quot;Did you want to:&quot;
+<div class="highlight"><pre><span></span><code>"Did you want to:"
 
   - Send a message about the numbers?
   - Upload a file containing the numbers?
@@ -2454,7 +2461,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

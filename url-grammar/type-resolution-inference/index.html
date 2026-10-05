@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -1979,9 +1979,19 @@
 
 
 <h1 id="type-resolution-inference">Type Resolution &amp; Inference<a class="headerlink" href="#type-resolution-inference" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Status: Proposed (C).</strong> No resolver exists in the implemented gateway today — routing is
+literal (Host header → service, path → MCP tool name). This page describes the aspirational
+resolution chain for the full REST-hierarchy grammar (see <a href="../../#status">status
+matrix</a> and <a href="../../ROADMAP-C/">ROADMAP-C.md</a>). Examples below use
+<code>subdomain.gimme.tools/tool_name</code> — the implementation's path form — instead of an
+<code>object.provider</code> path segment, which is banned (see <a href="../core-syntax/">Core
+Syntax</a>). <code>api.gimme.tools</code> denotes the (also Proposed C) LLM-routed gateway
+used when the provider is not yet known.</p>
+</blockquote>
 <p>When parts of the URL are omitted, WebSpec applies a resolution chain to infer the missing components.</p>
 <h2 id="resolution-priority">Resolution Priority<a class="headerlink" href="#resolution-priority" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>1. EXPLICIT      -&gt; use exactly what&#39;s specified
+<div class="highlight"><pre><span></span><code>1. EXPLICIT      -&gt; use exactly what's specified
 2. TYPE_HINT     -&gt; infer provider from type (.pdf -&gt; document providers)
 3. PROVIDER_HINT -&gt; infer object from provider (.slack -&gt; message)
 4. PAYLOAD       -&gt; analyze content to infer object + type
@@ -1999,27 +2009,27 @@
 </thead>
 <tbody>
 <tr>
-<td><code>POST /message.text.slack</code></td>
+<td><code>POST slack.gimme.tools/send_message</code></td>
 <td>Fully explicit</td>
-<td>No inference needed</td>
+<td>Host (provider) and tool (object + action) both given — no inference needed</td>
 </tr>
 <tr>
-<td><code>POST /message.slack</code></td>
-<td>Type inferred</td>
-<td>Default to .text</td>
+<td><code>POST slack.gimme.tools/</code> (no tool segment)</td>
+<td>Object inferred</td>
+<td>Slack's default tool = <code>send_message</code></td>
 </tr>
 <tr>
-<td><code>POST /message</code></td>
+<td><code>GET api.gimme.tools/get_file.pdf</code></td>
+<td>Provider inferred from type</td>
+<td><code>.pdf</code> suffix suggests document providers (see Type -&gt; Provider below)</td>
+</tr>
+<tr>
+<td><code>POST api.gimme.tools/send_message</code></td>
 <td>Provider prompted</td>
 <td>"Via Slack, Email, or SMS?"</td>
 </tr>
 <tr>
-<td><code>POST /.slack</code></td>
-<td>Object inferred</td>
-<td>Slack's default = message</td>
-</tr>
-<tr>
-<td><code>POST /</code> with file body</td>
+<td><code>POST api.gimme.tools/</code> with file body</td>
 <td>Both inferred</td>
 <td>Analyze payload MIME type</td>
 </tr>
@@ -2048,11 +2058,11 @@
 <h3 id="payload-object-type">Payload -&gt; Object + Type<a class="headerlink" href="#payload-object-type" title="Permanent link">&para;</a></h3>
 <p>Content-Type header or file analysis:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">payload_inference</span><span class="p">:</span>
-<span class="w">  </span><span class="s">&quot;application/pdf&quot;</span><span class="p p-Indicator">:</span><span class="w">     </span><span class="l l-Scalar l-Scalar-Plain">document.pdf</span>
-<span class="w">  </span><span class="s">&quot;image/png&quot;</span><span class="p p-Indicator">:</span><span class="w">           </span><span class="l l-Scalar l-Scalar-Plain">image.png</span>
-<span class="w">  </span><span class="s">&quot;text/plain&quot;</span><span class="p p-Indicator">:</span><span class="w">          </span><span class="l l-Scalar l-Scalar-Plain">document.text</span>
-<span class="w">  </span><span class="s">&quot;application/json&quot;</span><span class="p p-Indicator">:</span><span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">data.json</span>
-<span class="w">  </span><span class="s">&quot;text/csv&quot;</span><span class="p p-Indicator">:</span><span class="w">            </span><span class="l l-Scalar l-Scalar-Plain">data.csv</span>
+<span class="w">  </span><span class="s">"application/pdf"</span><span class="p p-Indicator">:</span><span class="w">     </span><span class="l l-Scalar l-Scalar-Plain">document.pdf</span>
+<span class="w">  </span><span class="s">"image/png"</span><span class="p p-Indicator">:</span><span class="w">           </span><span class="l l-Scalar l-Scalar-Plain">image.png</span>
+<span class="w">  </span><span class="s">"text/plain"</span><span class="p p-Indicator">:</span><span class="w">          </span><span class="l l-Scalar l-Scalar-Plain">document.text</span>
+<span class="w">  </span><span class="s">"application/json"</span><span class="p p-Indicator">:</span><span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">data.json</span>
+<span class="w">  </span><span class="s">"text/csv"</span><span class="p p-Indicator">:</span><span class="w">            </span><span class="l l-Scalar l-Scalar-Plain">data.csv</span>
 </code></pre></div>
 <hr />
 <h2 id="user-defaults">User Defaults<a class="headerlink" href="#user-defaults" title="Permanent link">&para;</a></h2>
@@ -2068,20 +2078,20 @@
 <h2 id="disambiguation-prompts">Disambiguation Prompts<a class="headerlink" href="#disambiguation-prompts" title="Permanent link">&para;</a></h2>
 <p>When resolution cannot determine a unique target, the user is prompted:</p>
 <div class="highlight"><pre><span></span><code>+-------------------------------------------------------+
-|  Request: POST /message                               |
-|  Body: &quot;Hello team!&quot;                                  |
+|  Request: POST api.gimme.tools/send_message            |
+|  Body: "Hello team!"                                  |
 +-------------------------------------------------------+
 |                                                       |
 |  Send via:                                            |
 |                                                       |
 |  * Slack (default)              [Send]                |
-|    /message.slack                                     |
+|    POST slack.gimme.tools/send_message                |
 |                                                       |
 |    Email                        [Send]                |
-|    /message.email                                     |
+|    POST email.gimme.tools/send_message                |
 |                                                       |
 |    SMS                          [Send]                |
-|    /message.sms                                       |
+|    POST sms.gimme.tools/send_message                  |
 |                                                       |
 +-------------------------------------------------------+
 </code></pre></div>
@@ -2090,11 +2100,11 @@
 <h2 id="resolution-api">Resolution API<a class="headerlink" href="#resolution-api" title="Permanent link">&para;</a></h2>
 <p>Clients can preview resolution without executing:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># What would this resolve to?</span>
-OPTIONS<span class="w"> </span>/message?body<span class="o">=</span>hello
+OPTIONS<span class="w"> </span>api.gimme.tools/send_message?body<span class="o">=</span>hello
 
 <span class="c1"># Response:</span>
-X-Gimme-Resolved:<span class="w"> </span>/message.text.slack
-X-Gimme-Alternatives:<span class="w"> </span>/message.text.email,<span class="w"> </span>/message.text.sms
+X-Gimme-Resolved:<span class="w"> </span>slack.gimme.tools/send_message
+X-Gimme-Alternatives:<span class="w"> </span>email.gimme.tools/send_message,<span class="w"> </span>sms.gimme.tools/send_message
 X-Gimme-Confidence:<span class="w"> </span><span class="m">0</span>.85
 </code></pre></div>
 <p>This enables UI to show resolution previews before confirmation.</p>
@@ -2156,7 +2166,7 @@ X-Gimme-Confidence:<span class="w"> </span><span class="m">0</span>.85
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

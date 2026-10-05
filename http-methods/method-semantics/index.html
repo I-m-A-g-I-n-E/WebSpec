@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2045,6 +2045,16 @@
 
 
 <h1 id="method-semantics">Method Semantics<a class="headerlink" href="#method-semantics" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Status: Mixed.</strong> GET/POST/PUT/PATCH routing to MCP tools and the definer-verb tamper check are
+<strong>Implemented (B)</strong>. The concrete path examples below use the implementation's path form — the
+path <em>is</em> the MCP tool name (e.g. <code>send_message</code>, <code>create_task</code>) served under the provider's
+subdomain, not an <code>object.provider</code> path segment (banned — see
+<a href="../../url-grammar/core-syntax/">Core Syntax</a>). Examples with a bare object-type path (e.g.
+<code>/message</code>) or an <code>id</code>-style segment (e.g. <code>/task/LIN-42</code>) illustrate the <code>/collection/id</code> REST
+hierarchy, which is <strong>Proposed (C)</strong> — see <a href="../../#status">status matrix</a> and
+<a href="../../ROADMAP-C/">ROADMAP-C.md</a>.</p>
+</blockquote>
 <p>HTTP methods are semantically rich but culturally underutilized. WebSpec restores their full meaning.</p>
 <h2 id="the-problem">The Problem<a class="headerlink" href="#the-problem" title="Permanent link">&para;</a></h2>
 <p>Most APIs reduce HTTP to two verbs:</p>
@@ -2111,23 +2121,23 @@ GET<span class="w">    </span>/message/123<span class="w">          </span><span
 <tbody>
 <tr>
 <td>"send this to Slack"</td>
-<td><code>POST /message.slack</code></td>
+<td><code>POST slack.gimme.tools/send_message</code></td>
 </tr>
 <tr>
 <td>"upload to Drive"</td>
-<td><code>POST /file.gdrive</code></td>
+<td><code>POST gdrive.gimme.tools/upload_file</code></td>
 </tr>
 <tr>
 <td>"create a new task"</td>
-<td><code>POST /task.linear</code></td>
+<td><code>POST linear.gimme.tools/create_task</code></td>
 </tr>
 <tr>
 <td>"schedule a meeting"</td>
-<td><code>POST /event.gcal</code></td>
+<td><code>POST gcal.gimme.tools/create_event</code></td>
 </tr>
 <tr>
 <td>"run this script"</td>
-<td><code>POST /code.local/execute</code></td>
+<td><code>POST local.gimme.tools/execute_code</code></td>
 </tr>
 </tbody>
 </table>
@@ -2332,9 +2342,9 @@ Safe = doesn't modify server state.</p>
 
 <span class="c1"># WebSpec way: method + path</span>
 <span class="nt">scopes</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;GET:/message.*&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;POST:/message.*&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;DELETE:/message.*&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"GET:/list_messages"</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"POST:/send_message"</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"DELETE:/delete_message"</span>
 </code></pre></div>
 <p>See <a href="../permission-scoping/">Permission Scoping</a> for details.</p>
 
@@ -2395,7 +2405,7 @@ Safe = doesn't modify server state.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

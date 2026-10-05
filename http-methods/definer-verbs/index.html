@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2783,17 +2783,17 @@
 <span class="na">X-Gimme-Definer</span><span class="o">:</span> <span class="l">SEND</span>
 <span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
 
-<span class="p">{</span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Hello, world&quot;</span><span class="p">}</span>
+<span class="p">{</span><span class="nt">"text"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Hello, world"</span><span class="p">}</span>
 </code></pre></div>
 <h3 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="n">DEFINER_FAMILIES</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;POST&#39;</span><span class="p">:</span>  <span class="p">{</span><span class="s1">&#39;CREATE&#39;</span><span class="p">,</span> <span class="s1">&#39;SEND&#39;</span><span class="p">,</span> <span class="s1">&#39;INVOKE&#39;</span><span class="p">,</span> <span class="s1">&#39;TRIGGER&#39;</span><span class="p">,</span> <span class="s1">&#39;UPLOAD&#39;</span><span class="p">},</span>
-    <span class="s1">&#39;PUT&#39;</span><span class="p">:</span>   <span class="p">{</span><span class="s1">&#39;REPLACE&#39;</span><span class="p">,</span> <span class="s1">&#39;OVERWRITE&#39;</span><span class="p">,</span> <span class="s1">&#39;SET&#39;</span><span class="p">},</span>
-    <span class="s1">&#39;PATCH&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;MODIFY&#39;</span><span class="p">,</span> <span class="s1">&#39;APPEND&#39;</span><span class="p">,</span> <span class="s1">&#39;AMEND&#39;</span><span class="p">,</span> <span class="s1">&#39;RENAME&#39;</span><span class="p">},</span>
+    <span class="s1">'POST'</span><span class="p">:</span>  <span class="p">{</span><span class="s1">'CREATE'</span><span class="p">,</span> <span class="s1">'SEND'</span><span class="p">,</span> <span class="s1">'INVOKE'</span><span class="p">,</span> <span class="s1">'TRIGGER'</span><span class="p">,</span> <span class="s1">'UPLOAD'</span><span class="p">},</span>
+    <span class="s1">'PUT'</span><span class="p">:</span>   <span class="p">{</span><span class="s1">'REPLACE'</span><span class="p">,</span> <span class="s1">'OVERWRITE'</span><span class="p">,</span> <span class="s1">'SET'</span><span class="p">},</span>
+    <span class="s1">'PATCH'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'MODIFY'</span><span class="p">,</span> <span class="s1">'APPEND'</span><span class="p">,</span> <span class="s1">'AMEND'</span><span class="p">,</span> <span class="s1">'RENAME'</span><span class="p">},</span>
 <span class="p">}</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">validate_definer</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">definer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tier 1: Verify definer belongs to the method&#39;s family.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Tier 1: Verify definer belongs to the method's family."""</span>
     <span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">DEFINER_FAMILIES</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>  <span class="c1"># GET, DELETE, HEAD, OPTIONS: no definer required</span>
     <span class="k">if</span> <span class="n">definer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -2854,7 +2854,7 @@
 <div class="highlight"><pre><span></span><code>BOOKEND_HASH = truncate(
     HMAC-SHA256(
         key  = session_key,
-        data = METHOD + &quot;:&quot; + DEFINER + &quot;:&quot; + head(payload, 16) + &quot;:&quot; + tail(payload, 16)
+        data = METHOD + ":" + DEFINER + ":" + head(payload, 16) + ":" + tail(payload, 16)
     ),
     bytes = 4
 )
@@ -2865,25 +2865,25 @@
 <span class="na">Host</span><span class="o">:</span> <span class="l">slack.gimme.tools</span>
 <span class="na">X-Gimme-Definer</span><span class="o">:</span> <span class="l">SEND:a7f3e91b</span>
 
-{&quot;text&quot;: &quot;Hello, world&quot;}
+{"text": "Hello, world"}
 </code></pre></div>
 <p>Derivation:</p>
-<div class="highlight"><pre><span></span><code><span class="n">payload</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;{&quot;text&quot;: &quot;Hello, world&quot;}&#39;</span>
+<div class="highlight"><pre><span></span><code><span class="n">payload</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">'{"text": "Hello, world"}'</span>
 
-<span class="n">hmac_input</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;POST:SEND:&quot;</span> <span class="o">+</span> <span class="n">payload</span><span class="p">[:</span><span class="mi">16</span><span class="p">]</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="n">payload</span><span class="p">[</span><span class="o">-</span><span class="mi">16</span><span class="p">:]</span>
-<span class="c1">#          = b&quot;POST:SEND:{\&quot;text\&quot;: \&quot;Hello:&quot; + b&quot;Hello, world\&quot;}&quot;</span>
+<span class="n">hmac_input</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">"POST:SEND:"</span> <span class="o">+</span> <span class="n">payload</span><span class="p">[:</span><span class="mi">16</span><span class="p">]</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">":"</span> <span class="o">+</span> <span class="n">payload</span><span class="p">[</span><span class="o">-</span><span class="mi">16</span><span class="p">:]</span>
+<span class="c1">#          = b"POST:SEND:{\"text\": \"Hello:" + b"Hello, world\"}"</span>
 
 <span class="n">bookend</span> <span class="o">=</span> <span class="n">HMAC_SHA256</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="n">hmac_input</span><span class="p">)[:</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
-<span class="c1"># =&gt; &quot;a7f3e91b&quot;</span>
+<span class="c1"># =&gt; "a7f3e91b"</span>
 </code></pre></div>
 <h3 id="validation_1">Validation<a class="headerlink" href="#validation_1" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">validate_bookend</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">definer</span><span class="p">,</span> <span class="n">bookend_hash</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">session_key</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tier 2: Verify payload bookend binding.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Tier 2: Verify payload bookend binding."""</span>
     <span class="n">head</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[:</span><span class="mi">16</span><span class="p">]</span>
     <span class="n">tail</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[</span><span class="o">-</span><span class="mi">16</span><span class="p">:]</span>
-    <span class="c1"># For payloads shorter than 32 bytes, head and tail may overlap — that&#39;s fine</span>
+    <span class="c1"># For payloads shorter than 32 bytes, head and tail may overlap — that's fine</span>
 
-    <span class="n">hmac_input</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">definer</span><span class="si">}</span><span class="s2">:&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span> <span class="o">+</span> <span class="n">head</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="n">tail</span>
+    <span class="n">hmac_input</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">definer</span><span class="si">}</span><span class="s2">:"</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span> <span class="o">+</span> <span class="n">head</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">":"</span> <span class="o">+</span> <span class="n">tail</span>
     <span class="n">expected</span> <span class="o">=</span> <span class="n">HMAC_SHA256</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="n">hmac_input</span><span class="p">)[:</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">constant_time_compare</span><span class="p">(</span><span class="n">bookend_hash</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span>
@@ -3044,18 +3044,18 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">rotate_definer</span><span class="p">(</span><span class="n">canonical</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">nonce</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">session_key</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
                    <span class="n">atlas</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">family</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Rotate a canonical definer verb through POS embedding space.</span>
 
 <span class="sd">    Returns a semantically-equivalent verb that changes per-request.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># 1. Get the canonical verb&#39;s embedding from the atlas</span>
+<span class="sd">    """</span>
+    <span class="c1"># 1. Get the canonical verb's embedding from the atlas</span>
     <span class="n">base_vector</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">atlas</span><span class="p">[</span><span class="n">family</span><span class="p">][</span><span class="n">canonical</span><span class="p">])</span>
 
     <span class="c1"># 2. Derive a deterministic rotation seed from nonce + session key</span>
     <span class="n">seed</span> <span class="o">=</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span>
         <span class="n">session_key</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">nonce</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">canonical</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">nonce</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">canonical</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
         <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span>
     <span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
 
@@ -3078,17 +3078,17 @@
             <span class="n">best_verb</span> <span class="o">=</span> <span class="n">verb</span>
 
     <span class="c1"># 6. Verify the rotation stayed in-family (similarity threshold)</span>
-    <span class="k">assert</span> <span class="n">best_sim</span> <span class="o">&gt;</span> <span class="mf">0.70</span><span class="p">,</span> <span class="s2">&quot;Rotation drifted out of family&quot;</span>
+    <span class="k">assert</span> <span class="n">best_sim</span> <span class="o">&gt;</span> <span class="mf">0.70</span><span class="p">,</span> <span class="s2">"Rotation drifted out of family"</span>
 
     <span class="k">return</span> <span class="n">best_verb</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">seed_to_rotation_matrix</span><span class="p">(</span><span class="n">seed</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Generate a deterministic rotation matrix from a seed.</span>
 <span class="sd">    Uses seed bytes to initialize random vectors, then</span>
 <span class="sd">    Gram-Schmidt orthogonalizes to produce a valid rotation.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PCG64</span><span class="p">(</span><span class="nb">int</span><span class="o">.</span><span class="n">from_bytes</span><span class="p">(</span><span class="n">seed</span><span class="p">[:</span><span class="mi">16</span><span class="p">])))</span>
 
     <span class="c1"># Generate random matrix</span>
@@ -3112,24 +3112,24 @@ X-Gimme-Nonce: {NONCE}
 <span class="na">X-Gimme-Definer</span><span class="o">:</span> <span class="l">DISPATCH:a7f3e91b</span>
 <span class="na">X-Gimme-Nonce</span><span class="o">:</span> <span class="l">1707148800001</span>
 
-{&quot;text&quot;: &quot;Hello, world&quot;}
+{"text": "Hello, world"}
 </code></pre></div>
 <p>The canonical definer is <code>SEND</code>, but the surface form is <code>DISPATCH</code> for this specific request. The next request (nonce <code>...002</code>) might produce <code>TRANSMIT</code>.</p>
 <h3 id="server-side-validation">Server-Side Validation<a class="headerlink" href="#server-side-validation" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">validate_tier3</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">received_verb</span><span class="p">,</span> <span class="n">bookend_hash</span><span class="p">,</span> <span class="n">nonce</span><span class="p">,</span>
                    <span class="n">payload</span><span class="p">,</span> <span class="n">session_key</span><span class="p">,</span> <span class="n">atlas</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Full Tier 3 validation: definer + bookend + rotation.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">family</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">_family&quot;</span>
+<span class="sd">    """</span>
+    <span class="n">family</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">_family"</span>
 
-    <span class="c1"># 1. Is the received verb in the atlas for this method&#39;s family?</span>
+    <span class="c1"># 1. Is the received verb in the atlas for this method's family?</span>
     <span class="k">if</span> <span class="n">received_verb</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">atlas</span><span class="p">[</span><span class="n">family</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;Verb not in family atlas&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"Verb not in family atlas"</span>
 
     <span class="c1"># 2. Has this nonce been seen before? (replay protection)</span>
     <span class="k">if</span> <span class="n">nonce_is_used</span><span class="p">(</span><span class="n">nonce</span><span class="p">):</span>
-        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;Nonce replay&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"Nonce replay"</span>
     <span class="n">mark_nonce_used</span><span class="p">(</span><span class="n">nonce</span><span class="p">)</span>
 
     <span class="c1"># 3. Determine which canonical definer this is a rotation of.</span>
@@ -3145,14 +3145,14 @@ X-Gimme-Nonce: {NONCE}
             <span class="k">break</span>
 
     <span class="k">if</span> <span class="n">matched_canonical</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;Rotation mismatch — no canonical definer produces this verb&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"Rotation mismatch — no canonical definer produces this verb"</span>
 
     <span class="c1"># 4. Validate bookend binding (Tier 2)</span>
     <span class="c1">#    Note: bookend HMAC uses the ROTATED verb, not the canonical,</span>
     <span class="c1">#    binding the specific surface form to the specific payload</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">validate_bookend</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">received_verb</span><span class="p">,</span> <span class="n">bookend_hash</span><span class="p">,</span>
                             <span class="n">payload</span><span class="p">,</span> <span class="n">session_key</span><span class="p">):</span>
-        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;Bookend mismatch&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"Bookend mismatch"</span>
 
     <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">matched_canonical</span>
 </code></pre></div>
@@ -3199,8 +3199,8 @@ X-Gimme-Nonce: {NONCE}
 <p>It is not a true OTP (the verb vocabulary is finite, the rotation is pseudo-random), but it provides the <strong>practical property</strong> of OTPs: observing any number of past rotated verbs gives no advantage in predicting the next one.</p>
 <h3 id="verb-atlas-versioning">Verb Atlas Versioning<a class="headerlink" href="#verb-atlas-versioning" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Atlas metadata</span>
-<span class="nt">atlas_version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.0.0&quot;</span>
-<span class="nt">atlas_hash</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855&quot;</span>
+<span class="nt">atlas_version</span><span class="p">:</span><span class="w"> </span><span class="s">"1.0.0"</span>
+<span class="nt">atlas_hash</span><span class="p">:</span><span class="w"> </span><span class="s">"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"</span>
 <span class="nt">embedding_dims</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">64</span>
 <span class="nt">families</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">POST_family</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">PUT_family</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">PATCH_family</span><span class="p p-Indicator">]</span>
 <span class="nt">total_verbs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">87</span>
@@ -3212,39 +3212,39 @@ X-Gimme-Nonce: {NONCE}
 <hr />
 <h2 id="complete-validation-pipeline">Complete Validation Pipeline<a class="headerlink" href="#complete-validation-pipeline" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">validate_definer_request</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">session_key</span><span class="p">,</span> <span class="n">atlas</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Complete definer validation across all tiers.</span>
 
 <span class="sd">    Returns (valid: bool, canonical_definer: str|None, tier: int, error: str|None)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">method</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span>
 
     <span class="c1"># Safe methods: no definer required</span>
-    <span class="k">if</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;DELETE&#39;</span><span class="p">,</span> <span class="s1">&#39;HEAD&#39;</span><span class="p">,</span> <span class="s1">&#39;OPTIONS&#39;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'GET'</span><span class="p">,</span> <span class="s1">'DELETE'</span><span class="p">,</span> <span class="s1">'HEAD'</span><span class="p">,</span> <span class="s1">'OPTIONS'</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span>
 
     <span class="c1"># Parse the definer header</span>
-    <span class="n">header</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;X-Gimme-Definer&#39;</span><span class="p">)</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'X-Gimme-Definer'</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">header</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Missing X-Gimme-Definer for state-mutating method&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"Missing X-Gimme-Definer for state-mutating method"</span>
 
-    <span class="n">parts</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">':'</span><span class="p">)</span>
     <span class="n">definer</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">bookend</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
-    <span class="n">nonce</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;X-Gimme-Nonce&#39;</span><span class="p">)</span>
+    <span class="n">nonce</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'X-Gimme-Nonce'</span><span class="p">)</span>
 
     <span class="c1"># ── Tier 1: Family membership ──</span>
-    <span class="k">if</span> <span class="n">definer</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">atlas</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">_family&quot;</span><span class="p">,</span> <span class="p">{}):</span>
-        <span class="c1"># Check if it&#39;s a known verb in ANY family (cross-family attack)</span>
+    <span class="k">if</span> <span class="n">definer</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">atlas</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">_family"</span><span class="p">,</span> <span class="p">{}):</span>
+        <span class="c1"># Check if it's a known verb in ANY family (cross-family attack)</span>
         <span class="k">for</span> <span class="n">fam</span> <span class="ow">in</span> <span class="n">atlas</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">definer</span> <span class="ow">in</span> <span class="n">fam</span><span class="p">:</span>
-                <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Definer &#39;</span><span class="si">{</span><span class="n">definer</span><span class="si">}</span><span class="s2">&#39; is in wrong family for </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Unknown definer verb: &#39;</span><span class="si">{</span><span class="n">definer</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+                <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Definer '</span><span class="si">{</span><span class="n">definer</span><span class="si">}</span><span class="s2">' is in wrong family for </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Unknown definer verb: '</span><span class="si">{</span><span class="n">definer</span><span class="si">}</span><span class="s2">'"</span>
 
     <span class="c1"># ── Tier 2: Bookend binding ──</span>
     <span class="k">if</span> <span class="n">bookend</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">validate_bookend</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">definer</span><span class="p">,</span> <span class="n">bookend</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="n">session_key</span><span class="p">):</span>
-            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;Bookend hash mismatch&quot;</span>
+            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"Bookend hash mismatch"</span>
 
         <span class="c1"># ── Tier 3: POS rotation ──</span>
         <span class="k">if</span> <span class="n">nonce</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -3259,42 +3259,42 @@ X-Gimme-Nonce: {NONCE}
         <span class="c1"># Tier 2 only: definer is taken at face value (must be canonical)</span>
         <span class="k">if</span> <span class="n">definer</span> <span class="ow">in</span> <span class="n">DEFINER_FAMILIES</span><span class="p">[</span><span class="n">method</span><span class="p">]:</span>
             <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">definer</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="kc">None</span>
-        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;Non-canonical definer without rotation nonce&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"Non-canonical definer without rotation nonce"</span>
 
     <span class="c1"># Tier 1 only: static definer</span>
     <span class="k">if</span> <span class="n">definer</span> <span class="ow">in</span> <span class="n">DEFINER_FAMILIES</span><span class="p">[</span><span class="n">method</span><span class="p">]:</span>
         <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">definer</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">None</span>
-    <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Non-canonical definer without bookend binding&quot;</span>
+    <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"Non-canonical definer without bookend binding"</span>
 </code></pre></div>
 <hr />
 <h2 id="ebnf-grammar-extension">EBNF Grammar Extension<a class="headerlink" href="#ebnf-grammar-extension" title="Permanent link">&para;</a></h2>
 <p>Extends the <a href="../../url-grammar/complete-grammar-ebnf/">Complete Grammar</a>:</p>
 <div class="highlight"><pre><span></span><code><span class="cm">(* Definer Verb Grammar — extends WebSpec request *)</span>
 
-<span class="k">definer_header  </span><span class="o">=</span> <span class="k">definer_verb </span><span class="p">,</span> <span class="p">[</span> <span class="s2">&quot;:&quot;</span> <span class="p">,</span> <span class="k">bookend_hash </span><span class="p">]</span> <span class="p">;</span>
+<span class="k">definer_header  </span><span class="o">=</span> <span class="k">definer_verb </span><span class="p">,</span> <span class="p">[</span> <span class="s2">":"</span> <span class="p">,</span> <span class="k">bookend_hash </span><span class="p">]</span> <span class="p">;</span>
 <span class="k">definer_verb    </span><span class="o">=</span> <span class="k">UPPER_ALPHA </span><span class="p">,</span> <span class="p">{</span> <span class="k">UPPER_ALPHA </span><span class="p">}</span> <span class="p">;</span>
 <span class="k">bookend_hash    </span><span class="o">=</span> <span class="err">8</span> <span class="err">*</span> <span class="k">HEXDIG </span><span class="p">;</span>
 
 <span class="k">nonce_header    </span><span class="o">=</span> <span class="k">DIGIT </span><span class="p">,</span> <span class="p">{</span> <span class="k">DIGIT </span><span class="p">}</span> <span class="p">;</span>
 
 <span class="cm">(* Definer families — verb must match method *)</span>
-<span class="k">post_definer    </span><span class="o">=</span> <span class="s2">&quot;CREATE&quot;</span> <span class="p">|</span> <span class="s2">&quot;SEND&quot;</span> <span class="p">|</span> <span class="s2">&quot;INVOKE&quot;</span> <span class="p">|</span> <span class="s2">&quot;TRIGGER&quot;</span> <span class="p">|</span> <span class="s2">&quot;UPLOAD&quot;</span> <span class="p">;</span>
-<span class="k">put_definer     </span><span class="o">=</span> <span class="s2">&quot;REPLACE&quot;</span> <span class="p">|</span> <span class="s2">&quot;OVERWRITE&quot;</span> <span class="p">|</span> <span class="s2">&quot;SET&quot;</span> <span class="p">;</span>
-<span class="k">patch_definer   </span><span class="o">=</span> <span class="s2">&quot;MODIFY&quot;</span> <span class="p">|</span> <span class="s2">&quot;APPEND&quot;</span> <span class="p">|</span> <span class="s2">&quot;AMEND&quot;</span> <span class="p">|</span> <span class="s2">&quot;RENAME&quot;</span> <span class="p">;</span>
+<span class="k">post_definer    </span><span class="o">=</span> <span class="s2">"CREATE"</span> <span class="p">|</span> <span class="s2">"SEND"</span> <span class="p">|</span> <span class="s2">"INVOKE"</span> <span class="p">|</span> <span class="s2">"TRIGGER"</span> <span class="p">|</span> <span class="s2">"UPLOAD"</span> <span class="p">;</span>
+<span class="k">put_definer     </span><span class="o">=</span> <span class="s2">"REPLACE"</span> <span class="p">|</span> <span class="s2">"OVERWRITE"</span> <span class="p">|</span> <span class="s2">"SET"</span> <span class="p">;</span>
+<span class="k">patch_definer   </span><span class="o">=</span> <span class="s2">"MODIFY"</span> <span class="p">|</span> <span class="s2">"APPEND"</span> <span class="p">|</span> <span class="s2">"AMEND"</span> <span class="p">|</span> <span class="s2">"RENAME"</span> <span class="p">;</span>
 
-<span class="cm">(* With Tier 3, definer_verb may be any verb in the method&#39;s atlas family *)</span>
+<span class="cm">(* With Tier 3, definer_verb may be any verb in the method's atlas family *)</span>
 <span class="k">rotated_definer </span><span class="o">=</span> <span class="k">atlas_verb </span><span class="p">;</span>    <span class="cm">(* validated by rotation algorithm *)</span>
 
 <span class="cm">(* Header declarations *)</span>
-<span class="err">&quot;</span><span class="k">X-Gimme-Definer</span><span class="err">&quot;</span> <span class="o">=</span> <span class="k">definer_header </span><span class="p">;</span>
-<span class="err">&quot;</span><span class="k">X-Gimme-Nonce</span><span class="err">&quot;</span>   <span class="o">=</span> <span class="k">nonce_header </span><span class="p">;</span>
-<span class="err">&quot;</span><span class="k">X-Gimme-Atlas</span><span class="err">&quot;</span>   <span class="o">=</span> <span class="k">semver </span><span class="p">;</span>
+<span class="err">"</span><span class="k">X-Gimme-Definer</span><span class="err">"</span> <span class="o">=</span> <span class="k">definer_header </span><span class="p">;</span>
+<span class="err">"</span><span class="k">X-Gimme-Nonce</span><span class="err">"</span>   <span class="o">=</span> <span class="k">nonce_header </span><span class="p">;</span>
+<span class="err">"</span><span class="k">X-Gimme-Atlas</span><span class="err">"</span>   <span class="o">=</span> <span class="k">semver </span><span class="p">;</span>
 
 <span class="cm">(* Terminals *)</span>
-<span class="k">UPPER_ALPHA     </span><span class="o">=</span> <span class="s2">&quot;A&quot;</span> <span class="p">|</span> <span class="s2">&quot;B&quot;</span> <span class="p">|</span> <span class="p">.</span><span class="err">..</span> <span class="err">|</span> <span class="err">&quot;</span><span class="k">Z</span><span class="err">&quot;</span> <span class="err">;</span>
-<span class="k">HEXDIG          </span><span class="o">=</span> <span class="s2">&quot;0&quot;</span> <span class="p">|</span> <span class="p">.</span><span class="err">..</span> <span class="err">|</span> <span class="err">&quot;9&quot;</span> <span class="err">|</span> <span class="err">&quot;</span><span class="k">a</span><span class="err">&quot;</span> <span class="err">|</span> <span class="err">...</span> <span class="err">|</span> <span class="err">&quot;</span><span class="k">f</span><span class="err">&quot;</span> <span class="err">;</span>
-<span class="k">DIGIT           </span><span class="o">=</span> <span class="s2">&quot;0&quot;</span> <span class="p">|</span> <span class="p">.</span><span class="err">..</span> <span class="err">|</span> <span class="err">&quot;9&quot;</span> <span class="err">;</span>
-<span class="k">semver          </span><span class="o">=</span> <span class="k">DIGIT </span><span class="p">,</span> <span class="p">{</span> <span class="k">DIGIT </span><span class="p">}</span> <span class="p">,</span> <span class="s2">&quot;.&quot;</span> <span class="p">,</span> <span class="k">DIGIT </span><span class="p">,</span> <span class="p">{</span> <span class="k">DIGIT </span><span class="p">}</span> <span class="p">,</span> <span class="s2">&quot;.&quot;</span> <span class="p">,</span> <span class="k">DIGIT </span><span class="p">,</span> <span class="p">{</span> <span class="k">DIGIT </span><span class="p">}</span> <span class="p">;</span>
+<span class="k">UPPER_ALPHA     </span><span class="o">=</span> <span class="s2">"A"</span> <span class="p">|</span> <span class="s2">"B"</span> <span class="p">|</span> <span class="p">.</span><span class="err">..</span> <span class="err">|</span> <span class="err">"</span><span class="k">Z</span><span class="err">"</span> <span class="err">;</span>
+<span class="k">HEXDIG          </span><span class="o">=</span> <span class="s2">"0"</span> <span class="p">|</span> <span class="p">.</span><span class="err">..</span> <span class="err">|</span> <span class="err">"9"</span> <span class="err">|</span> <span class="err">"</span><span class="k">a</span><span class="err">"</span> <span class="err">|</span> <span class="err">...</span> <span class="err">|</span> <span class="err">"</span><span class="k">f</span><span class="err">"</span> <span class="err">;</span>
+<span class="k">DIGIT           </span><span class="o">=</span> <span class="s2">"0"</span> <span class="p">|</span> <span class="p">.</span><span class="err">..</span> <span class="err">|</span> <span class="err">"9"</span> <span class="err">;</span>
+<span class="k">semver          </span><span class="o">=</span> <span class="k">DIGIT </span><span class="p">,</span> <span class="p">{</span> <span class="k">DIGIT </span><span class="p">}</span> <span class="p">,</span> <span class="s2">"."</span> <span class="p">,</span> <span class="k">DIGIT </span><span class="p">,</span> <span class="p">{</span> <span class="k">DIGIT </span><span class="p">}</span> <span class="p">,</span> <span class="s2">"."</span> <span class="p">,</span> <span class="k">DIGIT </span><span class="p">,</span> <span class="p">{</span> <span class="k">DIGIT </span><span class="p">}</span> <span class="p">;</span>
 </code></pre></div>
 <hr />
 <h2 id="interaction-with-existing-spec">Interaction with Existing Spec<a class="headerlink" href="#interaction-with-existing-spec" title="Permanent link">&para;</a></h2>
@@ -3316,11 +3316,11 @@ POST[CREATE]:slack.gimme.tools/channels.*
 <h3 id="token-structure">Token Structure<a class="headerlink" href="#token-structure" title="Permanent link">&para;</a></h3>
 <p>JWTs may include a <code>definers</code> claim restricting which definers a token may use:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;sub&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user-123&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;aud&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slack.gimme.tools&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;scope&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;POST:slack.gimme.tools/message.*&quot;</span><span class="p">],</span>
-<span class="w">  </span><span class="nt">&quot;definers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;POST&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;SEND&quot;</span><span class="p">]},</span>
-<span class="w">  </span><span class="nt">&quot;exp&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1702603600</span>
+<span class="w">  </span><span class="nt">"sub"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user-123"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"aud"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slack.gimme.tools"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"scope"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"POST:slack.gimme.tools/message.*"</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">"definers"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"POST"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"SEND"</span><span class="p">]},</span>
+<span class="w">  </span><span class="nt">"exp"</span><span class="p">:</span><span class="w"> </span><span class="mi">1702603600</span>
 <span class="p">}</span>
 </code></pre></div>
 <hr />
@@ -3446,7 +3446,7 @@ POST[CREATE]:slack.gimme.tools/channels.*
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

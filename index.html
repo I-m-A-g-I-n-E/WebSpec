@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
@@ -368,6 +368,17 @@
     <span class="md-ellipsis">
       
         Status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#domains-ports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domains &amp; Ports
       
     </span>
   </a>
@@ -1851,6 +1862,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#domains-ports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domains &amp; Ports
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1962,11 +1984,55 @@ A cron job          → works
 <li><strong><a href="reference/">Reference</a></strong> — Comparisons and appendices</li>
 </ul>
 <h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
+<p>WebSpec started as a much larger aspirational design than the gateway currently builds. This
+table tells you, per area, whether a section describes the live system or the roadmap. See
+<a href="ROADMAP-C/">ROADMAP-C.md</a> for the index of everything marked <strong>Proposed (C)</strong>.</p>
 <table>
 <thead>
 <tr>
 <th>Section</th>
-<th>Status</th>
+<th>State</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Subdomain routing (path = MCP tool name)</td>
+<td><strong>Implemented (B)</strong></td>
+</tr>
+<tr>
+<td>HMAC guard + nonce, password-manager–sourced key</td>
+<td><strong>Implemented (B)</strong></td>
+</tr>
+<tr>
+<td>Definer verbs</td>
+<td><strong>Implemented (B)</strong></td>
+</tr>
+<tr>
+<td>op-auth UFO tiers</td>
+<td><strong>Implemented (B)</strong></td>
+</tr>
+<tr>
+<td>Semantic resolution / embedding registry</td>
+<td>Proposed (see registry package)</td>
+</tr>
+<tr>
+<td>REST collection hierarchy, format suffixes, DELETE</td>
+<td><strong>Proposed (C)</strong></td>
+</tr>
+<tr>
+<td>OAuth/JWT, multi-tenant, keychain FaceID flow</td>
+<td><strong>Proposed (C)</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Below this table, "Draft" markers on individual spec sections describe the <em>aspirational</em> design
+that section documents, not implementation status — consult the table above for what actually
+ships.</p>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Draft Status</th>
 </tr>
 </thead>
 <tbody>
@@ -2004,6 +2070,20 @@ A cron job          → works
 </tr>
 </tbody>
 </table>
+<h2 id="domains-ports">Domains &amp; Ports<a class="headerlink" href="#domains-ports" title="Permanent link">&para;</a></h2>
+<p>The spec prose on this site uses <code>gimme.tools</code> throughout — that's the intended <strong>product</strong>
+domain for the public, multi-tenant WebSpec service the spec describes (<strong>Proposed (C)</strong>). It is
+aspirational; nothing is currently deployed there.</p>
+<p>The reference implementation that actually ships today (<strong>Implemented (B)</strong>) runs on a different
+domain, <code>i-a-m.live</code>, in front of a two-hop local topology:</p>
+<div class="highlight"><pre><span></span><code>*.i-a-m.live  --&gt;  Cloudflare tunnel  --&gt;  Caddy (:7001)  --&gt;  gateway (:7002)
+</code></pre></div>
+<p>Caddy terminates the tunnel and listens on port 7001; it reverse-proxies to the Starlette gateway
+process, which listens on port 7002. Where other pages in this spec say ".gimme.tools" or refer to
+"the gateway on localhost:7001," read that as the spec/vision domain and port — the live
+deployment fact is <code>i-a-m.live</code> via Caddy on <code>:7001</code> in front of the gateway on <code>:7002</code>. Keeping
+<code>gimme.tools</code> in the spec prose is intentional (it names the product this spec is designing
+toward); this section is a clarifying note, not a rename.</p>
 
 
 
@@ -2062,7 +2142,7 @@ A cron job          → works
       <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

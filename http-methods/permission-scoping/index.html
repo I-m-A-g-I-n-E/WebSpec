@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2057,6 +2057,15 @@
 
 
 <h1 id="permission-scoping">Permission Scoping<a class="headerlink" href="#permission-scoping" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Status: Mixed.</strong> The <code>METHOD:host/path</code> scope-matching mechanism itself is <strong>Implemented (B)</strong>
+— see <code>gateway/webspec/permissions.py</code> (<code>fnmatch</code>-based <code>METHOD:host/path</code> patterns). The
+examples below use the implementation's path form, where the path <em>is</em> the MCP tool name (e.g.
+<code>send_message</code>, <code>list_messages</code>) rather than an <code>object.provider</code> path segment (banned — see
+<a href="../../url-grammar/core-syntax/">Core Syntax</a>). Examples with an <code>id</code>-style path segment (e.g.
+<code>/task/LIN-*</code>) illustrate the <code>/collection/id</code> REST hierarchy, which is <strong>Proposed (C)</strong> — see
+<a href="../../#status">status matrix</a> and <a href="../../ROADMAP-C/">ROADMAP-C.md</a>.</p>
+</blockquote>
 <p>Because HTTP methods carry semantic meaning, permissions become simple pattern matching on <code>METHOD:path</code>.</p>
 <h2 id="the-core-insight">The Core Insight<a class="headerlink" href="#the-core-insight" title="Permanent link">&para;</a></h2>
 <p>Traditional API permissions:</p>
@@ -2072,19 +2081,19 @@
 <p>WebSpec permissions:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Universal: METHOD:path pattern</span>
 <span class="nt">scopes</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;GET:/message.*&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;POST:/message.*&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;DELETE:/message.*&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;GET:/file.*&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;POST:/file.*&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"GET:/list_messages"</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"POST:/send_message"</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"DELETE:/delete_message"</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"GET:/list_files"</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"POST:/upload_file"</span>
 </code></pre></div>
 <p>The permission IS the method + path. No custom vocabulary. Universal across all services.</p>
 <hr />
 <h2 id="scope-grammar">Scope Grammar<a class="headerlink" href="#scope-grammar" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>SCOPE := METHOD &quot;:&quot; HOST? PATH_PATTERN
+<div class="highlight"><pre><span></span><code>SCOPE := METHOD ":" HOST? PATH_PATTERN
 
-METHOD := &quot;GET&quot; | &quot;POST&quot; | &quot;PUT&quot; | &quot;PATCH&quot; | &quot;DELETE&quot; | &quot;HEAD&quot; | &quot;OPTIONS&quot; | &quot;*&quot;
-HOST := subdomain &quot;.gimme.tools&quot;
+METHOD := "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS" | "*"
+HOST := subdomain ".gimme.tools"
 PATH_PATTERN := glob pattern with * and **
 </code></pre></div>
 <h3 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h3>
@@ -2101,7 +2110,7 @@ PATH_PATTERN := glob pattern with * and **
 <td>Read any message type</td>
 </tr>
 <tr>
-<td><code>POST:/message.slack</code></td>
+<td><code>POST:slack.gimme.tools/send_message</code></td>
 <td>Send Slack messages only</td>
 </tr>
 <tr>
@@ -2125,14 +2134,14 @@ PATH_PATTERN := glob pattern with * and **
 <hr />
 <h2 id="token-structure">Token Structure<a class="headerlink" href="#token-structure" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;sub&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user-123&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;aud&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;slack.gimme.tools&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;scope&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">    </span><span class="s2">&quot;GET:slack.gimme.tools/message.*&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s2">&quot;GET:slack.gimme.tools/file.*&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="s2">&quot;POST:slack.gimme.tools/message.*&quot;</span>
+<span class="w">  </span><span class="nt">"sub"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user-123"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"aud"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slack.gimme.tools"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"scope"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">"GET:slack.gimme.tools/list_messages"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"GET:slack.gimme.tools/list_files"</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">"POST:slack.gimme.tools/send_message"</span>
 <span class="w">  </span><span class="p">],</span>
-<span class="w">  </span><span class="nt">&quot;exp&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1702600000</span>
+<span class="w">  </span><span class="nt">"exp"</span><span class="p">:</span><span class="w"> </span><span class="mi">1702600000</span>
 <span class="p">}</span>
 </code></pre></div>
 <p>The <code>aud</code> (audience) claim binds the token to a specific subdomain. Even if the token leaks, it's rejected by other services.</p>
@@ -2142,18 +2151,18 @@ PATH_PATTERN := glob pattern with * and **
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">fnmatch</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">authorize</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
-    <span class="n">pattern</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">host</span><span class="si">}{</span><span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">host</span><span class="si">}{</span><span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span>
     <span class="k">return</span> <span class="nb">any</span><span class="p">(</span>
         <span class="n">fnmatch</span><span class="o">.</span><span class="n">fnmatch</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">scope</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">scope</span> <span class="ow">in</span> <span class="n">token</span><span class="p">[</span><span class="s1">&#39;scope&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">scope</span> <span class="ow">in</span> <span class="n">token</span><span class="p">[</span><span class="s1">'scope'</span><span class="p">]</span>
     <span class="p">)</span>
 </code></pre></div>
 <p>Six lines. Domain-agnostic. Works for any service.</p>
 <hr />
 <h2 id="enforcement-examples">Enforcement Examples<a class="headerlink" href="#enforcement-examples" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="nt">Token scopes</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;GET:/message.*&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;POST:/message.slack&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"GET:*.gimme.tools/list_messages"</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"POST:slack.gimme.tools/send_message"</span>
 </code></pre></div>
 <table>
 <thead>
@@ -2165,33 +2174,33 @@ PATH_PATTERN := glob pattern with * and **
 </thead>
 <tbody>
 <tr>
-<td><code>GET /message.slack/123</code></td>
-<td>GET matches, path matches</td>
+<td><code>GET slack.gimme.tools/list_messages</code></td>
+<td>GET matches, host+path match <code>*.gimme.tools/list_messages</code></td>
 <td>Allowed</td>
 </tr>
 <tr>
-<td><code>GET /message.email/456</code></td>
-<td>GET matches, path matches</td>
+<td><code>GET email.gimme.tools/list_messages</code></td>
+<td>GET matches, host+path match <code>*.gimme.tools/list_messages</code></td>
 <td>Allowed</td>
 </tr>
 <tr>
-<td><code>POST /message.slack</code></td>
-<td>POST matches, path matches</td>
+<td><code>POST slack.gimme.tools/send_message</code></td>
+<td>POST matches, host+path match <code>slack.gimme.tools/send_message</code></td>
 <td>Allowed</td>
 </tr>
 <tr>
-<td><code>POST /message.email</code></td>
-<td>POST matches, path doesn't match</td>
+<td><code>POST email.gimme.tools/send_message</code></td>
+<td>POST matches, but host doesn't match <code>slack.gimme.tools</code></td>
 <td>Denied</td>
 </tr>
 <tr>
-<td><code>DELETE /message.slack/123</code></td>
+<td><code>DELETE slack.gimme.tools/send_message</code></td>
 <td>DELETE not in scopes</td>
 <td>Denied</td>
 </tr>
 <tr>
-<td><code>GET /file.gdrive/abc</code></td>
-<td>path doesn't match /message.*</td>
+<td><code>GET gdrive.gimme.tools/upload_file</code></td>
+<td>path doesn't match <code>list_messages</code></td>
 <td>Denied</td>
 </tr>
 </tbody>
@@ -2200,20 +2209,20 @@ PATH_PATTERN := glob pattern with * and **
 <h2 id="scope-hierarchies">Scope Hierarchies<a class="headerlink" href="#scope-hierarchies" title="Permanent link">&para;</a></h2>
 <h3 id="read-only-access">Read-only Access<a class="headerlink" href="#read-only-access" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="nt">scopes</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;GET:*&quot;</span><span class="w">      </span><span class="c1"># Can read everything</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;HEAD:*&quot;</span><span class="w">     </span><span class="c1"># Can check existence</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;OPTIONS:*&quot;</span><span class="w">  </span><span class="c1"># Can discover capabilities</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"GET:*"</span><span class="w">      </span><span class="c1"># Can read everything</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"HEAD:*"</span><span class="w">     </span><span class="c1"># Can check existence</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"OPTIONS:*"</span><span class="w">  </span><span class="c1"># Can discover capabilities</span>
 </code></pre></div>
 <h3 id="write-access-additive">Write Access (additive)<a class="headerlink" href="#write-access-additive" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="nt">scopes</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;POST:*&quot;</span><span class="w">     </span><span class="c1"># Can create</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;PATCH:*&quot;</span><span class="w">    </span><span class="c1"># Can update</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;PUT:*&quot;</span><span class="w">      </span><span class="c1"># Can replace</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"POST:*"</span><span class="w">     </span><span class="c1"># Can create</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"PATCH:*"</span><span class="w">    </span><span class="c1"># Can update</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"PUT:*"</span><span class="w">      </span><span class="c1"># Can replace</span>
 </code></pre></div>
 <h3 id="admin-access">Admin Access<a class="headerlink" href="#admin-access" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="nt">scopes</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;DELETE:*&quot;</span><span class="w">   </span><span class="c1"># Can remove</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;*:*&quot;</span><span class="w">        </span><span class="c1"># Full access</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"DELETE:*"</span><span class="w">   </span><span class="c1"># Can remove</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"*:*"</span><span class="w">        </span><span class="c1"># Full access</span>
 </code></pre></div>
 <hr />
 <h2 id="scope-request-ui">Scope Request UI<a class="headerlink" href="#scope-request-ui" title="Permanent link">&para;</a></h2>
@@ -2222,10 +2231,10 @@ PATH_PATTERN := glob pattern with * and **
 |  Slack wants to:                                  |
 +---------------------------------------------------+
 |                                                   |
-|  GET  /message.*    Read your messages             |
-|  POST /message.*    Send messages                  |
-|  GET  /file.*       Access shared files            |
-|  DELETE /message.*  (not requested)                |
+|  GET    /list_messages     Read your messages       |
+|  POST   /send_message      Send messages            |
+|  GET    /list_files        Access shared files      |
+|  DELETE /delete_message    (not requested)          |
 |                                                   |
 |              [Authorize]  [Deny]                   |
 +---------------------------------------------------+
@@ -2236,12 +2245,12 @@ PATH_PATTERN := glob pattern with * and **
 <p>Clients should request minimum scopes:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Bad: requesting everything</span>
 <span class="nt">scopes</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;*:*&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"*:*"</span>
 
-<span class="c1"># Good: requesting exactly what&#39;s needed</span>
+<span class="c1"># Good: requesting exactly what's needed</span>
 <span class="nt">scopes</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;GET:/message.slack&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;POST:/message.slack&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"GET:slack.gimme.tools/list_messages"</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"POST:slack.gimme.tools/send_message"</span>
 </code></pre></div>
 <p>Services can reject overly broad scope requests.</p>
 
@@ -2302,7 +2311,7 @@ PATH_PATTERN := glob pattern with * and **
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

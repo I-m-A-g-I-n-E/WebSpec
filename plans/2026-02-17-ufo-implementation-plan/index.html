@@ -1,0 +1,2743 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A protocol specification for tool invocation that meshes with web architecture">
+      
+      
+      
+        <link rel="canonical" href="https://webspec.gimme.tools/plans/2026-02-17-ufo-implementation-plan/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>UFO Implementation Plan - WebSpec</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ufo-implementation-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="WebSpec" class="md-header__button md-logo" aria-label="WebSpec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            WebSpec
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              UFO Implementation Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/psentro/webspec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    I-m-A-g-I-n-E/webspec
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="WebSpec" class="md-nav__button md-logo" aria-label="WebSpec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    WebSpec
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/psentro/webspec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    I-m-A-g-I-n-E/webspec
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../philosophy/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Philosophy
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Philosophy
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../philosophy/permissions-as-love-grammar/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Permissions as Love Grammar
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../philosophy/trust-gradients-philia-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trust Gradients (Philia Model)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../url-grammar/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    URL Grammar
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    URL Grammar
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../url-grammar/core-syntax/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Syntax
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../url-grammar/object-type-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Object Type System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../url-grammar/type-resolution-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Type Resolution & Inference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../url-grammar/complete-grammar-ebnf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Complete Grammar (EBNF)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../http-methods/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HTTP Methods
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    HTTP Methods
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../http-methods/method-semantics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Method Semantics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../http-methods/permission-scoping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Permission Scoping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../http-methods/head-options-discovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HEAD & OPTIONS Discovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../http-methods/method-tokenization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    METHOD Tokenization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../http-methods/definer-verbs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Definer Verbs & Payload Binding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../subdomain-architecture/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subdomain Architecture
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Subdomain Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../subdomain-architecture/isolation-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Isolation Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../subdomain-architecture/cookie-token-scoping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookie & Token Scoping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../subdomain-architecture/local-bridge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    local.gimme.tools Bridge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../subdomain-architecture/local-service-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Service Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../auth/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Authentication
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auth/auth-flow-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Flow Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auth/keychain-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Keychain Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auth/onboarding-subdomain-provisioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding & Provisioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auth/token-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Token Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../discovery/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Discovery
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Service Discovery
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../discovery/nlp-driven-resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    NLP-Driven Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../discovery/embedding-schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../discovery/three-way-join/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Three-Way Join
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../registration/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Registration
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Service Registration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../registration/registration-schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../registration/domain-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/comparison-with-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comparison with MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/moltbook-case-study/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MoltBook Case Study
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#task-1-test-infrastructure-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 1: Test infrastructure setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-2-ufo-clearance-token-computation-in-guardpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 2: UFO clearance token computation in guard.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-3-provenance-chain-validation-in-guardpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 3: Provenance chain validation in guard.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-4-create-ufopy-tier-policy-allowlist-audit-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 4: Create ufo.py — tier policy, allowlist, audit log
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-5-wire-ufo-enforcement-into-op-auth-serverpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 5: Wire UFO enforcement into op-auth server.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-6-pass-ufo-headers-through-gateway-apppy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 6: Pass UFO headers through gateway app.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-7-end-to-end-live-gateway-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 7: End-to-end live gateway test
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-8-update-claudemd-and-notion-page" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 8: Update CLAUDE.md and Notion page
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-9-final-integration-commit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 9: Final integration commit
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/psentro/webspec/edit/main/docs/plans/2026-02-17-ufo-implementation-plan.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="ufo-implementation-plan">UFO Implementation Plan<a class="headerlink" href="#ufo-implementation-plan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>For Claude:</strong> REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.</p>
+</blockquote>
+<p><strong>Goal:</strong> Add per-tool prompt injection mitigation to op-auth via UFO clearance tokens, provenance chains, and audit logging.</p>
+<p><strong>Architecture:</strong> The op-auth service self-enforces UFO policy (tier classification, clearance validation, audit logging) via a new <code>ufo.py</code> module. The gateway adds clearance token computation and provenance chain validation to <code>guard.py</code>, and passes UFO headers through to guarded services in <code>app.py</code>. A <code>/__challenge</code> endpoint enables human confirmation for dangerous-tier tools.</p>
+<p><strong>Tech Stack:</strong> Python 3.11+, FastMCP, Starlette, HMAC-SHA256, pytest</p>
+<hr />
+<h3 id="task-1-test-infrastructure-setup">Task 1: Test infrastructure setup<a class="headerlink" href="#task-1-test-infrastructure-setup" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Create: <code>gateway/tests/__init__.py</code>
+- Create: <code>gateway/tests/conftest.py</code></p>
+<p><strong>Step 1: Create test fixtures</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/__init__.py</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/conftest.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">session_key</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Fixed 32-byte session key for deterministic tests."""</span>
+    <span class="k">return</span> <span class="sa">b</span><span class="s2">"</span><span class="se">\x01</span><span class="s2">"</span> <span class="o">*</span> <span class="mi">32</span>
+</code></pre></div>
+<p><strong>Step 2: Verify pytest runs</strong></p>
+<p>Run: <code>cd ~/WebSpec/gateway &amp;&amp; /home/preston/miniconda3/bin/python -m pytest tests/ -v --co</code>
+Expected: <code>no tests ran</code> (collected 0)</p>
+<p><strong>Step 3: Commit</strong></p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/tests/__init__.py<span class="w"> </span>gateway/tests/conftest.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"chore: add test infrastructure for gateway"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-2-ufo-clearance-token-computation-in-guardpy">Task 2: UFO clearance token computation in guard.py<a class="headerlink" href="#task-2-ufo-clearance-token-computation-in-guardpy" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Create: <code>gateway/tests/test_ufo_clearance.py</code>
+- Modify: <code>gateway/webspec/guard.py:65-77</code> (add after <code>compute_guard_hmac</code>)</p>
+<p><strong>Step 1: Write the failing tests</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_ufo_clearance.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec.guard</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_clearance_token</span><span class="p">,</span> <span class="n">validate_clearance_token</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_clearance_token_roundtrip</span><span class="p">(</span><span class="n">session_key</span><span class="p">):</span>
+    <span class="n">ts</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">compute_clearance_token</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"reference"</span><span class="p">:</span> <span class="s2">"op://V/I/f"</span><span class="p">},</span> <span class="n">ts</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">token</span><span class="p">)</span> <span class="o">==</span> <span class="mi">8</span>  <span class="c1"># 4 bytes hex</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">validate_clearance_token</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"reference"</span><span class="p">:</span> <span class="s2">"op://V/I/f"</span><span class="p">},</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">ts</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span>  <span class="c1"># None = success</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_clearance_token_wrong_tool</span><span class="p">(</span><span class="n">session_key</span><span class="p">):</span>
+    <span class="n">ts</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">compute_clearance_token</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"reference"</span><span class="p">:</span> <span class="s2">"op://V/I/f"</span><span class="p">},</span> <span class="n">ts</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">validate_clearance_token</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"list_vaults"</span><span class="p">,</span> <span class="p">{},</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">ts</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">result</span> <span class="o">==</span> <span class="s2">"clearance_invalid"</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_clearance_token_wrong_args</span><span class="p">(</span><span class="n">session_key</span><span class="p">):</span>
+    <span class="n">ts</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">compute_clearance_token</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"reference"</span><span class="p">:</span> <span class="s2">"op://V/I/f"</span><span class="p">},</span> <span class="n">ts</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">validate_clearance_token</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"reference"</span><span class="p">:</span> <span class="s2">"op://Other/Item/f"</span><span class="p">},</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">ts</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">result</span> <span class="o">==</span> <span class="s2">"clearance_invalid"</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_clearance_token_expired</span><span class="p">(</span><span class="n">session_key</span><span class="p">):</span>
+    <span class="n">ts</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span> <span class="o">-</span> <span class="mi">60</span><span class="p">)</span>  <span class="c1"># 60 seconds ago</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">compute_clearance_token</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"reference"</span><span class="p">:</span> <span class="s2">"op://V/I/f"</span><span class="p">},</span> <span class="n">ts</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">validate_clearance_token</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"reference"</span><span class="p">:</span> <span class="s2">"op://V/I/f"</span><span class="p">},</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">ts</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">result</span> <span class="o">==</span> <span class="s2">"clearance_expired"</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_clearance_token_malformed</span><span class="p">(</span><span class="n">session_key</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">validate_clearance_token</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">,</span> <span class="p">{},</span> <span class="s2">"garbage"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">result</span> <span class="o">==</span> <span class="s2">"clearance_malformed"</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_clearance_token_missing</span><span class="p">(</span><span class="n">session_key</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">validate_clearance_token</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">,</span> <span class="p">{},</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">result</span> <span class="o">==</span> <span class="s2">"clearance_missing"</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_clearance_args_canonicalization</span><span class="p">(</span><span class="n">session_key</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Arg order doesn't matter — keys are sorted."""</span>
+    <span class="n">ts</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))</span>
+    <span class="n">token1</span> <span class="o">=</span> <span class="n">compute_clearance_token</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"get_item"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"vault"</span><span class="p">:</span> <span class="s2">"A"</span><span class="p">,</span> <span class="s2">"item"</span><span class="p">:</span> <span class="s2">"B"</span><span class="p">},</span> <span class="n">ts</span><span class="p">)</span>
+    <span class="n">token2</span> <span class="o">=</span> <span class="n">compute_clearance_token</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"get_item"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"item"</span><span class="p">:</span> <span class="s2">"B"</span><span class="p">,</span> <span class="s2">"vault"</span><span class="p">:</span> <span class="s2">"A"</span><span class="p">},</span> <span class="n">ts</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">token1</span> <span class="o">==</span> <span class="n">token2</span>
+</code></pre></div>
+<p><strong>Step 2: Run tests to verify they fail</strong></p>
+<p>Run: <code>cd ~/WebSpec/gateway &amp;&amp; /home/preston/miniconda3/bin/python -m pytest tests/test_ufo_clearance.py -v</code>
+Expected: FAIL with <code>ImportError: cannot import name 'compute_clearance_token'</code></p>
+<p><strong>Step 3: Implement clearance token functions</strong></p>
+<p>Add to <code>gateway/webspec/guard.py</code> after the <code>generate_nonce</code> function (after line 153):</p>
+<div class="highlight"><pre><span></span><code><span class="n">CLEARANCE_TTL</span> <span class="o">=</span> <span class="mi">30</span>  <span class="c1"># seconds</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_canonical_args</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Canonicalize tool arguments: sorted keys, JSON-serialized."""</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_clearance_token</span><span class="p">(</span><span class="n">session_key</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">tool</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Compute UFO clearance token: HMAC-SHA256(key, ufo:tool:canonical_args:ts) → 8 hex chars."""</span>
+    <span class="n">canonical</span> <span class="o">=</span> <span class="n">_canonical_args</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"ufo:</span><span class="si">{</span><span class="n">tool</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">canonical</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+    <span class="n">mac</span> <span class="o">=</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">mac</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_clearance_token</span><span class="p">(</span>
+    <span class="n">session_key</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">tool</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">header</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Validate X-UFO-Clearance header. Returns None on success, error string on failure."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">header</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"clearance_missing"</span>
+
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">":"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"clearance_malformed"</span>
+
+    <span class="n">token</span><span class="p">,</span> <span class="n">timestamp</span> <span class="o">=</span> <span class="n">parts</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">token</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">8</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"clearance_malformed"</span>
+
+    <span class="c1"># Check expiry</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ts_int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">timestamp</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"clearance_malformed"</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">ts_int</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">CLEARANCE_TTL</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"clearance_expired"</span>
+
+    <span class="c1"># Verify HMAC</span>
+    <span class="n">expected</span> <span class="o">=</span> <span class="n">compute_clearance_token</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="n">tool</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">hmac</span><span class="o">.</span><span class="n">compare_digest</span><span class="p">(</span><span class="n">token</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">expected</span><span class="o">.</span><span class="n">lower</span><span class="p">()):</span>
+        <span class="k">return</span> <span class="s2">"clearance_invalid"</span>
+
+    <span class="k">return</span> <span class="kc">None</span>
+</code></pre></div>
+<p>Also add <code>import json</code> to the top of <code>guard.py</code> (after <code>import hashlib</code>).</p>
+<p><strong>Step 4: Run tests to verify they pass</strong></p>
+<p>Run: <code>cd ~/WebSpec/gateway &amp;&amp; /home/preston/miniconda3/bin/python -m pytest tests/test_ufo_clearance.py -v</code>
+Expected: 7 passed</p>
+<p><strong>Step 5: Commit</strong></p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec/guard.py<span class="w"> </span>gateway/tests/test_ufo_clearance.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(guard): add UFO clearance token computation and validation"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-3-provenance-chain-validation-in-guardpy">Task 3: Provenance chain validation in guard.py<a class="headerlink" href="#task-3-provenance-chain-validation-in-guardpy" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Create: <code>gateway/tests/test_provenance.py</code>
+- Modify: <code>gateway/webspec/guard.py</code> (add after clearance functions)</p>
+<p><strong>Step 1: Write the failing tests</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_provenance.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec.guard</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_provenance_link</span><span class="p">,</span> <span class="n">validate_provenance_chain</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_single_link_human</span><span class="p">(</span><span class="n">session_key</span><span class="p">):</span>
+    <span class="n">link</span> <span class="o">=</span> <span class="n">build_provenance_link</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"human"</span><span class="p">,</span> <span class="s2">"agent"</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">)</span>
+    <span class="n">chain</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"human:</span><span class="si">{</span><span class="n">link</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">validate_provenance_chain</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">valid</span> <span class="ow">is</span> <span class="kc">True</span>
+    <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">origin</span> <span class="o">==</span> <span class="s2">"human"</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">links</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_two_link_chain</span><span class="p">(</span><span class="n">session_key</span><span class="p">):</span>
+    <span class="n">link1</span> <span class="o">=</span> <span class="n">build_provenance_link</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"human"</span><span class="p">,</span> <span class="s2">"agent"</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">)</span>
+    <span class="n">link2</span> <span class="o">=</span> <span class="n">build_provenance_link</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"agent"</span><span class="p">,</span> <span class="s2">"gateway"</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">)</span>
+    <span class="n">chain</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"human:</span><span class="si">{</span><span class="n">link1</span><span class="si">}</span><span class="s2">-&gt;agent:</span><span class="si">{</span><span class="n">link2</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">validate_provenance_chain</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">valid</span> <span class="ow">is</span> <span class="kc">True</span>
+    <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">origin</span> <span class="o">==</span> <span class="s2">"human"</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">links</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_broken_chain_bad_sig</span><span class="p">(</span><span class="n">session_key</span><span class="p">):</span>
+    <span class="n">chain</span> <span class="o">=</span> <span class="s2">"human:deadbeef"</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">validate_provenance_chain</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">valid</span> <span class="ow">is</span> <span class="kc">False</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_missing_chain</span><span class="p">(</span><span class="n">session_key</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">validate_provenance_chain</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">valid</span> <span class="ow">is</span> <span class="kc">False</span>
+    <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">origin</span> <span class="o">==</span> <span class="s2">"unknown"</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_empty_chain</span><span class="p">(</span><span class="n">session_key</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">validate_provenance_chain</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">valid</span> <span class="ow">is</span> <span class="kc">False</span>
+</code></pre></div>
+<p><strong>Step 2: Run tests to verify they fail</strong></p>
+<p>Run: <code>cd ~/WebSpec/gateway &amp;&amp; /home/preston/miniconda3/bin/python -m pytest tests/test_provenance.py -v</code>
+Expected: FAIL with <code>ImportError</code></p>
+<p><strong>Step 3: Implement provenance chain</strong></p>
+<p>Add to <code>gateway/webspec/guard.py</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProvenanceResult</span><span class="p">:</span>
+    <span class="n">valid</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">origin</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># "human", "agent", "unknown"</span>
+    <span class="n">links</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_provenance_link</span><span class="p">(</span><span class="n">session_key</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build a provenance link signature: HMAC(key, source-&gt;target:action) → 4 hex chars."""</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">-&gt;</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">action</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+    <span class="n">mac</span> <span class="o">=</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">mac</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_provenance_chain</span><span class="p">(</span>
+    <span class="n">session_key</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">chain_header</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProvenanceResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Validate X-UFO-Provenance header. Walks the chain and verifies each link."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">chain_header</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ProvenanceResult</span><span class="p">(</span><span class="n">valid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s2">"unknown"</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="s2">"provenance_missing"</span><span class="p">)</span>
+
+    <span class="c1"># Parse: "human:h3a9-&gt;agent:a7f2-&gt;gateway"</span>
+    <span class="n">links</span> <span class="o">=</span> <span class="n">chain_header</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"-&gt;"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">links</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ProvenanceResult</span><span class="p">(</span><span class="n">valid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s2">"unknown"</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="s2">"provenance_empty"</span><span class="p">)</span>
+
+    <span class="n">parsed</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">links</span><span class="p">:</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">link</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ProvenanceResult</span><span class="p">(</span><span class="n">valid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s2">"unknown"</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="s2">"provenance_malformed"</span><span class="p">)</span>
+        <span class="n">parsed</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>  <span class="c1"># (role, signature)</span>
+
+    <span class="c1"># Verify each link's signature</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">sig</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">parsed</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">parsed</span><span class="p">):</span>
+            <span class="n">target_role</span> <span class="o">=</span> <span class="n">parsed</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">target_role</span> <span class="o">=</span> <span class="s2">"gateway"</span>  <span class="c1"># last link always targets gateway</span>
+        <span class="n">expected</span> <span class="o">=</span> <span class="n">build_provenance_link</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="n">role</span><span class="p">,</span> <span class="n">target_role</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">hmac</span><span class="o">.</span><span class="n">compare_digest</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">expected</span><span class="o">.</span><span class="n">lower</span><span class="p">()):</span>
+            <span class="k">return</span> <span class="n">ProvenanceResult</span><span class="p">(</span>
+                <span class="n">valid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="n">parsed</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">links</span><span class="o">=</span><span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parsed</span><span class="p">],</span> <span class="n">error</span><span class="o">=</span><span class="s2">"provenance_invalid"</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ProvenanceResult</span><span class="p">(</span>
+        <span class="n">valid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="n">parsed</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">links</span><span class="o">=</span><span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parsed</span><span class="p">]</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p><strong>Step 4: Run tests to verify they pass</strong></p>
+<p>Run: <code>cd ~/WebSpec/gateway &amp;&amp; /home/preston/miniconda3/bin/python -m pytest tests/test_provenance.py -v</code>
+Expected: 5 passed</p>
+<p><strong>Step 5: Commit</strong></p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec/guard.py<span class="w"> </span>gateway/tests/test_provenance.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(guard): add provenance chain build/validate"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-4-create-ufopy-tier-policy-allowlist-audit-log">Task 4: Create ufo.py — tier policy, allowlist, audit log<a class="headerlink" href="#task-4-create-ufopy-tier-policy-allowlist-audit-log" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Create: <code>services/op-auth/ufo.py</code>
+- Create: <code>gateway/tests/test_ufo_policy.py</code></p>
+<p><strong>Step 1: Write the failing tests</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_ufo_policy.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="c1"># We need to test ufo.py which lives in services/op-auth, so add to path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="s2">"services"</span> <span class="o">/</span> <span class="s2">"op-auth"</span><span class="p">))</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ufo</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tier</span><span class="p">,</span> <span class="n">is_run_allowed</span><span class="p">,</span> <span class="n">write_audit_entry</span><span class="p">,</span> <span class="n">TIERS</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_tier_classification</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="n">get_tier</span><span class="p">(</span><span class="s2">"list_vaults"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"open"</span>
+    <span class="k">assert</span> <span class="n">get_tier</span><span class="p">(</span><span class="s2">"read"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"sensitive"</span>
+    <span class="k">assert</span> <span class="n">get_tier</span><span class="p">(</span><span class="s2">"list_items"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"sensitive"</span>
+    <span class="k">assert</span> <span class="n">get_tier</span><span class="p">(</span><span class="s2">"get_item"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"sensitive"</span>
+    <span class="k">assert</span> <span class="n">get_tier</span><span class="p">(</span><span class="s2">"run"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"dangerous"</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_unknown_tool_is_dangerous</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="n">get_tier</span><span class="p">(</span><span class="s2">"unknown_tool"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"dangerous"</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_run_allowlist</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="n">is_run_allowed</span><span class="p">(</span><span class="s2">"vault"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"list"</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">True</span>
+    <span class="k">assert</span> <span class="n">is_run_allowed</span><span class="p">(</span><span class="s2">"item"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"list"</span><span class="p">,</span> <span class="s2">"--vault"</span><span class="p">,</span> <span class="s2">"Personal"</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">True</span>
+    <span class="k">assert</span> <span class="n">is_run_allowed</span><span class="p">(</span><span class="s2">"item"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"get"</span><span class="p">,</span> <span class="s2">"MyItem"</span><span class="p">,</span> <span class="s2">"--vault"</span><span class="p">,</span> <span class="s2">"Personal"</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">True</span>
+    <span class="k">assert</span> <span class="n">is_run_allowed</span><span class="p">(</span><span class="s2">"document"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"get"</span><span class="p">,</span> <span class="s2">"MyDoc"</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">True</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_run_blocklist</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="n">is_run_allowed</span><span class="p">(</span><span class="s2">"account"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"list"</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">False</span>
+    <span class="k">assert</span> <span class="n">is_run_allowed</span><span class="p">(</span><span class="s2">"item"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"delete"</span><span class="p">,</span> <span class="s2">"MyItem"</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">False</span>
+    <span class="k">assert</span> <span class="n">is_run_allowed</span><span class="p">(</span><span class="s2">"item"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"edit"</span><span class="p">,</span> <span class="s2">"MyItem"</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">False</span>
+    <span class="k">assert</span> <span class="n">is_run_allowed</span><span class="p">(</span><span class="s2">"user"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"list"</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">False</span>
+    <span class="k">assert</span> <span class="n">is_run_allowed</span><span class="p">(</span><span class="s2">"events-api"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"create"</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">False</span>
+    <span class="k">assert</span> <span class="n">is_run_allowed</span><span class="p">(</span><span class="s2">"inject"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"--template"</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">False</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_audit_log</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">):</span>
+    <span class="n">log_path</span> <span class="o">=</span> <span class="n">tmp_path</span> <span class="o">/</span> <span class="s2">"audit.jsonl"</span>
+    <span class="n">write_audit_entry</span><span class="p">(</span>
+        <span class="n">log_path</span><span class="o">=</span><span class="n">log_path</span><span class="p">,</span>
+        <span class="n">tool</span><span class="o">=</span><span class="s2">"read"</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">=</span><span class="p">{</span><span class="s2">"reference"</span><span class="p">:</span> <span class="s2">"op://V/I/f"</span><span class="p">},</span>
+        <span class="n">tier</span><span class="o">=</span><span class="s2">"sensitive"</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="s2">"human:abcd-&gt;gateway"</span><span class="p">,</span>
+        <span class="n">outcome</span><span class="o">=</span><span class="s2">"allowed"</span><span class="p">,</span>
+        <span class="n">clearance_valid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">log_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="n">entry</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">assert</span> <span class="n">entry</span><span class="p">[</span><span class="s2">"tool"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"read"</span>
+    <span class="k">assert</span> <span class="n">entry</span><span class="p">[</span><span class="s2">"outcome"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"allowed"</span>
+    <span class="k">assert</span> <span class="s2">"timestamp"</span> <span class="ow">in</span> <span class="n">entry</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_audit_log_append</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">):</span>
+    <span class="n">log_path</span> <span class="o">=</span> <span class="n">tmp_path</span> <span class="o">/</span> <span class="s2">"audit.jsonl"</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+        <span class="n">write_audit_entry</span><span class="p">(</span><span class="n">log_path</span><span class="o">=</span><span class="n">log_path</span><span class="p">,</span> <span class="n">tool</span><span class="o">=</span><span class="sa">f</span><span class="s2">"tool_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">{},</span>
+                          <span class="n">tier</span><span class="o">=</span><span class="s2">"open"</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">outcome</span><span class="o">=</span><span class="s2">"allowed"</span><span class="p">,</span> <span class="n">clearance_valid</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">log_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
+</code></pre></div>
+<p><strong>Step 2: Run tests to verify they fail</strong></p>
+<p>Run: <code>cd ~/WebSpec/gateway &amp;&amp; /home/preston/miniconda3/bin/python -m pytest tests/test_ufo_policy.py -v</code>
+Expected: FAIL with <code>ModuleNotFoundError: No module named 'ufo'</code></p>
+<p><strong>Step 3: Implement ufo.py</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># services/op-auth/ufo.py</span>
+<span class="sd">"""UFO policy: tool sensitivity tiers, run() allowlist, audit logging."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="c1"># Tool sensitivity tiers</span>
+<span class="n">TIERS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"list_vaults"</span><span class="p">:</span> <span class="s2">"open"</span><span class="p">,</span>
+    <span class="s2">"read"</span><span class="p">:</span> <span class="s2">"sensitive"</span><span class="p">,</span>
+    <span class="s2">"list_items"</span><span class="p">:</span> <span class="s2">"sensitive"</span><span class="p">,</span>
+    <span class="s2">"get_item"</span><span class="p">:</span> <span class="s2">"sensitive"</span><span class="p">,</span>
+    <span class="s2">"run"</span><span class="p">:</span> <span class="s2">"dangerous"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1"># run() allowlist: (subcommand, allowed_first_args)</span>
+<span class="c1"># If first_args is None, any args are allowed for that subcommand.</span>
+<span class="c1"># If first_args is a set, only those first positional args are allowed.</span>
+<span class="n">RUN_ALLOWLIST</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"vault"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># vault list, vault get, etc.</span>
+    <span class="s2">"item"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"list"</span><span class="p">,</span> <span class="s2">"get"</span><span class="p">},</span>  <span class="c1"># item list, item get only</span>
+    <span class="s2">"document"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"get"</span><span class="p">},</span>  <span class="c1"># document get only</span>
+<span class="p">}</span>
+
+<span class="n">DEFAULT_AUDIT_PATH</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span> <span class="o">/</span> <span class="s2">".webspec"</span> <span class="o">/</span> <span class="s2">"op-auth-audit.jsonl"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_tier</span><span class="p">(</span><span class="n">tool_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Get the sensitivity tier for a tool. Unknown tools default to dangerous."""</span>
+    <span class="k">return</span> <span class="n">TIERS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tool_name</span><span class="p">,</span> <span class="s2">"dangerous"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">is_run_allowed</span><span class="p">(</span><span class="n">subcommand</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Check if a run() subcommand + args combination is on the allowlist."""</span>
+    <span class="n">subcommand</span> <span class="o">=</span> <span class="n">subcommand</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">subcommand</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">RUN_ALLOWLIST</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">allowed_first</span> <span class="o">=</span> <span class="n">RUN_ALLOWLIST</span><span class="p">[</span><span class="n">subcommand</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">allowed_first</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="c1"># Check the first positional arg (skip flags starting with --)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
+        <span class="n">first_positional</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"--"</span><span class="p">)),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">first_positional</span> <span class="ow">and</span> <span class="n">first_positional</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">allowed_first</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">write_audit_entry</span><span class="p">(</span>
+    <span class="n">tool</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="n">tier</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">outcome</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">clearance_valid</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">log_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">DEFAULT_AUDIT_PATH</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Append an audit entry to the JSONL log."""</span>
+    <span class="n">log_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">entry</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"timestamp"</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+        <span class="s2">"tool"</span><span class="p">:</span> <span class="n">tool</span><span class="p">,</span>
+        <span class="s2">"args"</span><span class="p">:</span> <span class="n">args</span><span class="p">,</span>
+        <span class="s2">"tier"</span><span class="p">:</span> <span class="n">tier</span><span class="p">,</span>
+        <span class="s2">"provenance"</span><span class="p">:</span> <span class="n">provenance</span><span class="p">,</span>
+        <span class="s2">"outcome"</span><span class="p">:</span> <span class="n">outcome</span><span class="p">,</span>
+        <span class="s2">"clearance_valid"</span><span class="p">:</span> <span class="n">clearance_valid</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_path</span><span class="p">,</span> <span class="s2">"a"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Step 4: Run tests to verify they pass</strong></p>
+<p>Run: <code>cd ~/WebSpec/gateway &amp;&amp; /home/preston/miniconda3/bin/python -m pytest tests/test_ufo_policy.py -v</code>
+Expected: 6 passed</p>
+<p><strong>Step 5: Commit</strong></p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>services/op-auth/ufo.py<span class="w"> </span>gateway/tests/test_ufo_policy.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(op-auth): add UFO policy — tiers, run() allowlist, audit log"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-5-wire-ufo-enforcement-into-op-auth-serverpy">Task 5: Wire UFO enforcement into op-auth server.py<a class="headerlink" href="#task-5-wire-ufo-enforcement-into-op-auth-serverpy" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>services/op-auth/server.py</code></p>
+<p><strong>Step 1: Write integration test</strong></p>
+<p>Create <code>gateway/tests/test_opauth_ufo_integration.py</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_opauth_ufo_integration.py</span>
+<span class="sd">"""Test that op-auth server.py enforces UFO tiers."""</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="s2">"services"</span> <span class="o">/</span> <span class="s2">"op-auth"</span><span class="p">))</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ufo</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tier</span><span class="p">,</span> <span class="n">is_run_allowed</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_run_rejects_delete</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""run() with item delete must be denied by allowlist."""</span>
+    <span class="k">assert</span> <span class="n">is_run_allowed</span><span class="p">(</span><span class="s2">"item"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"delete"</span><span class="p">,</span> <span class="s2">"MyItem"</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">False</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_run_rejects_edit</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""run() with item edit must be denied by allowlist."""</span>
+    <span class="k">assert</span> <span class="n">is_run_allowed</span><span class="p">(</span><span class="s2">"item"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"edit"</span><span class="p">,</span> <span class="s2">"MyItem"</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">False</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_run_allows_item_list</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="n">is_run_allowed</span><span class="p">(</span><span class="s2">"item"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"list"</span><span class="p">,</span> <span class="s2">"--vault"</span><span class="p">,</span> <span class="s2">"Personal"</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">True</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_all_tools_have_tiers</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Every tool declared in server.py has a tier in ufo.py."""</span>
+    <span class="n">expected_tools</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"read"</span><span class="p">,</span> <span class="s2">"list_vaults"</span><span class="p">,</span> <span class="s2">"list_items"</span><span class="p">,</span> <span class="s2">"get_item"</span><span class="p">,</span> <span class="s2">"run"</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">tool</span> <span class="ow">in</span> <span class="n">expected_tools</span><span class="p">:</span>
+        <span class="n">tier</span> <span class="o">=</span> <span class="n">get_tier</span><span class="p">(</span><span class="n">tool</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">tier</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"open"</span><span class="p">,</span> <span class="s2">"sensitive"</span><span class="p">,</span> <span class="s2">"dangerous"</span><span class="p">),</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">tool</span><span class="si">}</span><span class="s2"> has invalid tier: </span><span class="si">{</span><span class="n">tier</span><span class="si">}</span><span class="s2">"</span>
+</code></pre></div>
+<p><strong>Step 2: Run to verify tests pass (these test policy, not server enforcement)</strong></p>
+<p>Run: <code>cd ~/WebSpec/gateway &amp;&amp; /home/preston/miniconda3/bin/python -m pytest tests/test_opauth_ufo_integration.py -v</code>
+Expected: 4 passed</p>
+<p><strong>Step 3: Rewrite server.py with UFO enforcement</strong></p>
+<p>Replace <code>services/op-auth/server.py</code> with the following. Key changes:
+- Import <code>ufo</code> module
+- <code>run()</code> uses <code>is_run_allowed()</code> instead of blocklist check
+- Each tool calls <code>write_audit_entry()</code> on success and failure
+- Remove old <code>BLOCKED_SUBCOMMANDS</code> constant
+- Tools accept <code>_ufo_clearance</code> and <code>_ufo_provenance</code> metadata params (passed by gateway, validated by service)</p>
+<div class="highlight"><pre><span></span><code><span class="sd">"""MCP server wrapping the 1Password CLI for per-secret, per-service access."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastmcp</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastMCP</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ufo</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tier</span><span class="p">,</span> <span class="n">is_run_allowed</span><span class="p">,</span> <span class="n">write_audit_entry</span>
+
+<span class="n">OP_TIMEOUT</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># seconds per op call</span>
+
+<span class="n">mcp</span> <span class="o">=</span> <span class="n">FastMCP</span><span class="p">(</span>
+    <span class="s2">"op-auth"</span><span class="p">,</span>
+    <span class="n">instructions</span><span class="o">=</span><span class="s2">"1Password CLI proxy — read secrets, list vaults/items, run safe op commands"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_run_op</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parse_json</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run an op CLI command and return the result."""</span>
+    <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"op"</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">]</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="n">cmd</span><span class="p">,</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">timeout</span><span class="o">=</span><span class="n">OP_TIMEOUT</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"op exited with code </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">returncode</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="n">output</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">parse_json</span> <span class="ow">and</span> <span class="n">output</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">output</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_audit</span><span class="p">(</span><span class="n">tool</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">outcome</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">clearance_valid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+           <span class="n">provenance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Log a tool call to the audit log."""</span>
+    <span class="n">write_audit_entry</span><span class="p">(</span>
+        <span class="n">tool</span><span class="o">=</span><span class="n">tool</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="n">get_tier</span><span class="p">(</span><span class="n">tool</span><span class="p">),</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">provenance</span><span class="p">,</span> <span class="n">outcome</span><span class="o">=</span><span class="n">outcome</span><span class="p">,</span> <span class="n">clearance_valid</span><span class="o">=</span><span class="n">clearance_valid</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">read</span><span class="p">(</span><span class="n">reference</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read a single secret by its 1Password reference URI.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        reference: 1Password secret reference (e.g. "op://Vault/Item/field").</span>
+<span class="sd">    """</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="p">}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">_run_op</span><span class="p">(</span><span class="s2">"read"</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">parse_json</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">_audit</span><span class="p">(</span><span class="s2">"read"</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="s2">"allowed"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">TimeoutExpired</span><span class="p">:</span>
+        <span class="n">_audit</span><span class="p">(</span><span class="s2">"read"</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"Error: op command timed out"</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">_audit</span><span class="p">(</span><span class="s2">"read"</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
+
+
+<span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">list_vaults</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""List all accessible 1Password vaults."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">_run_op</span><span class="p">(</span><span class="s2">"vault"</span><span class="p">,</span> <span class="s2">"list"</span><span class="p">,</span> <span class="s2">"--format=json"</span><span class="p">)</span>
+        <span class="n">_audit</span><span class="p">(</span><span class="s2">"list_vaults"</span><span class="p">,</span> <span class="p">{},</span> <span class="s2">"allowed"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">result</span>
+    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">TimeoutExpired</span><span class="p">:</span>
+        <span class="n">_audit</span><span class="p">(</span><span class="s2">"list_vaults"</span><span class="p">,</span> <span class="p">{},</span> <span class="s2">"error"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"Error: op command timed out"</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">_audit</span><span class="p">(</span><span class="s2">"list_vaults"</span><span class="p">,</span> <span class="p">{},</span> <span class="s2">"error"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
+
+
+<span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">list_items</span><span class="p">(</span><span class="n">vault</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""List items in a specific vault.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        vault: Vault name or ID.</span>
+<span class="sd">    """</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"vault"</span><span class="p">:</span> <span class="n">vault</span><span class="p">}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">_run_op</span><span class="p">(</span><span class="s2">"item"</span><span class="p">,</span> <span class="s2">"list"</span><span class="p">,</span> <span class="s2">"--vault"</span><span class="p">,</span> <span class="n">vault</span><span class="p">,</span> <span class="s2">"--format=json"</span><span class="p">)</span>
+        <span class="n">_audit</span><span class="p">(</span><span class="s2">"list_items"</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="s2">"allowed"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">result</span>
+    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">TimeoutExpired</span><span class="p">:</span>
+        <span class="n">_audit</span><span class="p">(</span><span class="s2">"list_items"</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"Error: op command timed out"</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">_audit</span><span class="p">(</span><span class="s2">"list_items"</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
+
+
+<span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_item</span><span class="p">(</span><span class="n">vault</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Get full details of a specific item.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        vault: Vault name or ID.</span>
+<span class="sd">        item: Item name or ID.</span>
+<span class="sd">    """</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"vault"</span><span class="p">:</span> <span class="n">vault</span><span class="p">,</span> <span class="s2">"item"</span><span class="p">:</span> <span class="n">item</span><span class="p">}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">_run_op</span><span class="p">(</span><span class="s2">"item"</span><span class="p">,</span> <span class="s2">"get"</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="s2">"--vault"</span><span class="p">,</span> <span class="n">vault</span><span class="p">,</span> <span class="s2">"--format=json"</span><span class="p">)</span>
+        <span class="n">_audit</span><span class="p">(</span><span class="s2">"get_item"</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="s2">"allowed"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">result</span>
+    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">TimeoutExpired</span><span class="p">:</span>
+        <span class="n">_audit</span><span class="p">(</span><span class="s2">"get_item"</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"Error: op command timed out"</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">_audit</span><span class="p">(</span><span class="s2">"get_item"</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
+
+
+<span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">subcommand</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run an op CLI command (allowlisted subcommands only).</span>
+
+<span class="sd">    Allowed: vault (any), item list, item get, document get.</span>
+<span class="sd">    Everything else is denied.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        subcommand: The op subcommand (e.g. "item", "vault", "document").</span>
+<span class="sd">        args: Additional arguments for the subcommand.</span>
+<span class="sd">    """</span>
+    <span class="n">run_args</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"subcommand"</span><span class="p">:</span> <span class="n">subcommand</span><span class="p">,</span> <span class="s2">"args"</span><span class="p">:</span> <span class="n">args</span> <span class="ow">or</span> <span class="p">[]}</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_run_allowed</span><span class="p">(</span><span class="n">subcommand</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="n">_audit</span><span class="p">(</span><span class="s2">"run"</span><span class="p">,</span> <span class="n">run_args</span><span class="p">,</span> <span class="s2">"denied"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Error: '</span><span class="si">{</span><span class="n">subcommand</span><span class="si">}</span><span class="s2">' with args </span><span class="si">{</span><span class="n">args</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="p">[]</span><span class="si">}</span><span class="s2"> is not on the allowlist"</span>
+
+    <span class="n">cmd_args</span> <span class="o">=</span> <span class="p">[</span><span class="n">subcommand</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
+        <span class="n">cmd_args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">cmd_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"--format=json"</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">_run_op</span><span class="p">(</span><span class="o">*</span><span class="n">cmd_args</span><span class="p">)</span>
+        <span class="n">_audit</span><span class="p">(</span><span class="s2">"run"</span><span class="p">,</span> <span class="n">run_args</span><span class="p">,</span> <span class="s2">"allowed"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">result</span>
+    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">TimeoutExpired</span><span class="p">:</span>
+        <span class="n">_audit</span><span class="p">(</span><span class="s2">"run"</span><span class="p">,</span> <span class="n">run_args</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">"Error: op command timed out"</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">_audit</span><span class="p">(</span><span class="s2">"run"</span><span class="p">,</span> <span class="n">run_args</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">mcp</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</code></pre></div>
+<p><strong>Step 4: Verify module loads</strong></p>
+<p>Run: <code>cd ~/WebSpec/services/op-auth &amp;&amp; /home/preston/miniconda3/bin/python -c "import server; print([t for t in server.mcp._tool_manager._tools])"</code>
+Expected: prints the 5 tool names</p>
+<p><strong>Step 5: Run all tests</strong></p>
+<p>Run: <code>cd ~/WebSpec/gateway &amp;&amp; /home/preston/miniconda3/bin/python -m pytest tests/ -v</code>
+Expected: all tests pass</p>
+<p><strong>Step 6: Commit</strong></p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>services/op-auth/server.py<span class="w"> </span>gateway/tests/test_opauth_ufo_integration.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(op-auth): enforce UFO tiers — allowlist run(), audit all calls"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-6-pass-ufo-headers-through-gateway-apppy">Task 6: Pass UFO headers through gateway app.py<a class="headerlink" href="#task-6-pass-ufo-headers-through-gateway-apppy" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>gateway/webspec/app.py:69-93</code> (guard enforcement block)</p>
+<p><strong>Step 1: Write the test</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_ufo_headers.py</span>
+<span class="sd">"""Test that UFO headers are extracted and would be passed through."""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec.guard</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_clearance_token</span><span class="p">,</span> <span class="n">build_provenance_link</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_clearance_header_format</span><span class="p">(</span><span class="n">session_key</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Clearance header is token:timestamp format."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+    <span class="n">ts</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">compute_clearance_token</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"reference"</span><span class="p">:</span> <span class="s2">"op://V/I/f"</span><span class="p">},</span> <span class="n">ts</span><span class="p">)</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">ts</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">assert</span> <span class="s2">":"</span> <span class="ow">in</span> <span class="n">header</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="mi">8</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_provenance_header_format</span><span class="p">(</span><span class="n">session_key</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Provenance header is role:sig-&gt;role:sig format."""</span>
+    <span class="n">link</span> <span class="o">=</span> <span class="n">build_provenance_link</span><span class="p">(</span><span class="n">session_key</span><span class="p">,</span> <span class="s2">"human"</span><span class="p">,</span> <span class="s2">"gateway"</span><span class="p">,</span> <span class="s2">"read"</span><span class="p">)</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"human:</span><span class="si">{</span><span class="n">link</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">assert</span> <span class="s2">":"</span> <span class="ow">in</span> <span class="n">header</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"human"</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">==</span> <span class="mi">8</span>
+</code></pre></div>
+<p><strong>Step 2: Run test</strong></p>
+<p>Run: <code>cd ~/WebSpec/gateway &amp;&amp; /home/preston/miniconda3/bin/python -m pytest tests/test_ufo_headers.py -v</code>
+Expected: 2 passed (these test the format, not the gateway wiring)</p>
+<p><strong>Step 3: Modify app.py dispatch to extract and log UFO headers</strong></p>
+<p>In <code>gateway/webspec/app.py</code>, update the guard enforcement block in <code>_service_dispatch</code> (lines 69-93). After the guard passes, extract UFO headers and store on request state:</p>
+<p>Replace the guard enforcement block with:</p>
+<div class="highlight"><pre><span></span><code>    <span class="c1"># Check if this service requires guard authentication</span>
+    <span class="k">if</span> <span class="n">registry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">entry</span><span class="o">.</span><span class="n">guard</span><span class="p">:</span>
+            <span class="c1"># Handle /__nonce bootstrap endpoint</span>
+            <span class="k">if</span> <span class="n">path</span> <span class="o">==</span> <span class="s2">"__nonce"</span> <span class="ow">and</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"GET"</span><span class="p">:</span>
+                <span class="k">return</span> <span class="k">await</span> <span class="n">_handle_nonce</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">service</span><span class="p">)</span>
+
+            <span class="c1"># Handle /__challenge endpoint for dangerous-tier human confirmation</span>
+            <span class="k">if</span> <span class="n">path</span> <span class="o">==</span> <span class="s2">"__challenge"</span> <span class="ow">and</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"GET"</span><span class="p">:</span>
+                <span class="k">return</span> <span class="k">await</span> <span class="n">_handle_challenge</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">service</span><span class="p">)</span>
+
+            <span class="c1"># Enforce guard on all other requests</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">body</span><span class="p">()</span>
+            <span class="n">host</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"host"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+            <span class="n">guard_result</span> <span class="o">=</span> <span class="n">validate_guard</span><span class="p">(</span>
+                <span class="n">session_key</span><span class="o">=</span><span class="n">get_session_key</span><span class="p">(),</span>
+                <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                <span class="n">host</span><span class="o">=</span><span class="n">host</span><span class="p">,</span>
+                <span class="n">path</span><span class="o">=</span><span class="sa">f</span><span class="s2">"/</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">path</span> <span class="k">else</span> <span class="s2">"/"</span><span class="p">,</span>
+                <span class="n">body</span><span class="o">=</span><span class="n">body</span><span class="p">,</span>
+                <span class="n">guard_header</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"X-WebSpec-Guard"</span><span class="p">),</span>
+                <span class="n">nonce_header</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"X-WebSpec-Nonce"</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">guard_result</span><span class="p">,</span> <span class="n">GuardError</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">JSONResponse</span><span class="p">(</span>
+                    <span class="p">{</span><span class="s2">"error"</span><span class="p">:</span> <span class="n">guard_result</span><span class="o">.</span><span class="n">error_type</span><span class="p">,</span> <span class="s2">"detail"</span><span class="p">:</span> <span class="n">guard_result</span><span class="o">.</span><span class="n">detail</span><span class="p">},</span>
+                    <span class="n">status_code</span><span class="o">=</span><span class="n">guard_result</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Store UFO headers on request state for downstream use</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">ufo_clearance</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"X-UFO-Clearance"</span><span class="p">)</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">ufo_provenance</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"X-UFO-Provenance"</span><span class="p">)</span>
+</code></pre></div>
+<p>Add the <code>_handle_challenge</code> function after <code>_handle_nonce</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_handle_challenge</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">service</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Response</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Handle GET /__challenge — issue a human confirmation challenge for dangerous-tier tools."""</span>
+    <span class="n">host</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"host"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="n">guard_result</span> <span class="o">=</span> <span class="n">validate_guard</span><span class="p">(</span>
+        <span class="n">session_key</span><span class="o">=</span><span class="n">get_session_key</span><span class="p">(),</span>
+        <span class="n">method</span><span class="o">=</span><span class="s2">"GET"</span><span class="p">,</span>
+        <span class="n">host</span><span class="o">=</span><span class="n">host</span><span class="p">,</span>
+        <span class="n">path</span><span class="o">=</span><span class="s2">"/__challenge"</span><span class="p">,</span>
+        <span class="n">body</span><span class="o">=</span><span class="sa">b</span><span class="s2">""</span><span class="p">,</span>
+        <span class="n">guard_header</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"X-WebSpec-Guard"</span><span class="p">),</span>
+        <span class="n">nonce_header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">is_nonce_request</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># challenge bootstrap works like nonce bootstrap</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">guard_result</span><span class="p">,</span> <span class="n">GuardError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">JSONResponse</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">"error"</span><span class="p">:</span> <span class="n">guard_result</span><span class="o">.</span><span class="n">error_type</span><span class="p">,</span> <span class="s2">"detail"</span><span class="p">:</span> <span class="n">guard_result</span><span class="o">.</span><span class="n">detail</span><span class="p">},</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="n">guard_result</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_secrets</span>
+    <span class="n">challenge</span> <span class="o">=</span> <span class="n">_secrets</span><span class="o">.</span><span class="n">token_hex</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
+    <span class="c1"># Store challenge for later verification (reuse nonce store with short TTL)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.guard</span><span class="w"> </span><span class="kn">import</span> <span class="n">nonce_store</span>
+    <span class="n">nonce_store</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="sa">f</span><span class="s2">"challenge:</span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>  <span class="c1"># audience = challenge:service</span>
+
+    <span class="n">tool</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">query_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tool"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">JSONResponse</span><span class="p">({</span>
+        <span class="s2">"challenge"</span><span class="p">:</span> <span class="n">challenge</span><span class="p">,</span>
+        <span class="s2">"service"</span><span class="p">:</span> <span class="n">service</span><span class="p">,</span>
+        <span class="s2">"tool"</span><span class="p">:</span> <span class="n">tool</span><span class="p">,</span>
+        <span class="s2">"message"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"Confirm: execute '</span><span class="si">{</span><span class="n">tool</span><span class="si">}</span><span class="s2">' on </span><span class="si">{</span><span class="n">service</span><span class="si">}</span><span class="s2">?"</span><span class="p">,</span>
+        <span class="s2">"expires_in"</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>
+    <span class="p">})</span>
+</code></pre></div>
+<p>Also add the import for <code>validate_provenance_chain</code> at the top of app.py:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">.guard</span><span class="w"> </span><span class="kn">import</span> <span class="n">GuardError</span><span class="p">,</span> <span class="n">generate_nonce</span><span class="p">,</span> <span class="n">validate_guard</span><span class="p">,</span> <span class="n">validate_provenance_chain</span>
+</code></pre></div>
+<p><strong>Step 4: Run all tests</strong></p>
+<p>Run: <code>cd ~/WebSpec/gateway &amp;&amp; /home/preston/miniconda3/bin/python -m pytest tests/ -v</code>
+Expected: all pass</p>
+<p><strong>Step 5: Commit</strong></p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec/app.py<span class="w"> </span>gateway/tests/test_ufo_headers.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(gateway): extract UFO headers, add /__challenge endpoint"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-7-end-to-end-live-gateway-test">Task 7: End-to-end live gateway test<a class="headerlink" href="#task-7-end-to-end-live-gateway-test" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Create: <code>gateway/tests/test_ufo_e2e.py</code> (run against live gateway)</p>
+<p><strong>Step 1: Write the E2E test script</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_ufo_e2e.py</span>
+<span class="sd">"""End-to-end UFO tests against the live gateway. Run with: python tests/test_ufo_e2e.py"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hmac</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.request</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.error</span>
+
+<span class="n">SESSION_KEY_PATH</span> <span class="o">=</span> <span class="s2">"/home/preston/.webspec/session.key"</span>
+<span class="n">BASE</span> <span class="o">=</span> <span class="s2">"http://op-auth.localhost:7001"</span>
+<span class="n">HOST</span> <span class="o">=</span> <span class="s2">"op-auth.localhost:7001"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_key</span><span class="p">():</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">SESSION_KEY_PATH</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">guard_hmac</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">nonce</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="sa">b</span><span class="s2">""</span><span class="p">):</span>
+    <span class="n">body_hash</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">body</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">nonce</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">body_hash</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+    <span class="n">mac</span> <span class="o">=</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">mac</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">clearance_token</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">tool</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">ts</span><span class="p">):</span>
+    <span class="n">canonical</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">))</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"ufo:</span><span class="si">{</span><span class="n">tool</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">canonical</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">ts</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+    <span class="n">mac</span> <span class="o">=</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">mac</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_nonce</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+    <span class="n">mac</span> <span class="o">=</span> <span class="n">guard_hmac</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">"GET"</span><span class="p">,</span> <span class="n">HOST</span><span class="p">,</span> <span class="s2">"/__nonce"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="sa">b</span><span class="s2">""</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">BASE</span> <span class="o">+</span> <span class="s2">"/__nonce"</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s2">"X-WebSpec-Guard"</span><span class="p">,</span> <span class="n">mac</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">())[</span><span class="s2">"nonce"</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">guarded_get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">tool_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tool_args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">nonce</span> <span class="o">=</span> <span class="n">get_nonce</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="n">mac</span> <span class="o">=</span> <span class="n">guard_hmac</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">"GET"</span><span class="p">,</span> <span class="n">HOST</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">nonce</span><span class="p">,</span> <span class="sa">b</span><span class="s2">""</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">BASE</span> <span class="o">+</span> <span class="n">path</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s2">"X-WebSpec-Guard"</span><span class="p">,</span> <span class="n">mac</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s2">"X-WebSpec-Nonce"</span><span class="p">,</span> <span class="n">nonce</span><span class="p">)</span>
+    <span class="c1"># Add UFO clearance if provided</span>
+    <span class="k">if</span> <span class="n">tool_name</span><span class="p">:</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()))</span>
+        <span class="n">ct</span> <span class="o">=</span> <span class="n">clearance_token</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">tool_name</span><span class="p">,</span> <span class="n">tool_args</span> <span class="ow">or</span> <span class="p">{},</span> <span class="n">ts</span><span class="p">)</span>
+        <span class="n">r</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s2">"X-UFO-Clearance"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ct</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">ts</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">resp</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="k">except</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">load_key</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"UFO E2E TESTS"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+
+    <span class="c1"># 1. Open tier (list_vaults) — no clearance needed</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">1. Open tier: list_vaults (no clearance)"</span><span class="p">)</span>
+    <span class="n">status</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">guarded_get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">"/list_vaults"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">401</span><span class="p">,</span> <span class="mi">403</span><span class="p">),</span> <span class="sa">f</span><span class="s2">"Guard failed: </span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">"</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   PASS: status=</span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># 2. list_vaults with clearance header (should still work)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">2. Open tier: list_vaults with clearance (still works)"</span><span class="p">)</span>
+    <span class="n">status</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">guarded_get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">"/list_vaults"</span><span class="p">,</span> <span class="s2">"list_vaults"</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">assert</span> <span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">401</span><span class="p">,</span> <span class="mi">403</span><span class="p">),</span> <span class="sa">f</span><span class="s2">"Guard failed: </span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">"</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   PASS: status=</span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># 3. /__challenge endpoint</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">3. Challenge endpoint"</span><span class="p">)</span>
+    <span class="n">nonce_mac</span> <span class="o">=</span> <span class="n">guard_hmac</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">"GET"</span><span class="p">,</span> <span class="n">HOST</span><span class="p">,</span> <span class="s2">"/__challenge"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="sa">b</span><span class="s2">""</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">BASE</span> <span class="o">+</span> <span class="s2">"/__challenge?tool=run"</span><span class="p">)</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s2">"X-WebSpec-Guard"</span><span class="p">,</span> <span class="n">nonce_mac</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
+            <span class="n">cdata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   PASS: challenge=</span><span class="si">{</span><span class="n">cdata</span><span class="p">[</span><span class="s1">'challenge'</span><span class="p">][:</span><span class="mi">12</span><span class="p">]</span><span class="si">}</span><span class="s2">... tool=</span><span class="si">{</span><span class="n">cdata</span><span class="p">[</span><span class="s1">'tool'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   Status: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2"> (challenge endpoint)"</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"UFO E2E TESTS COMPLETE"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Step 2: Restart gateway to pick up new code</strong></p>
+<p>Run: <code>kill $(pgrep -f 'python -m webspec') &amp;&amp; sleep 4</code>
+Wait for systemd to restart it.</p>
+<p><strong>Step 3: Run E2E tests</strong></p>
+<p>Run: <code>cd ~/WebSpec/gateway &amp;&amp; /home/preston/miniconda3/bin/python tests/test_ufo_e2e.py</code>
+Expected: all 3 tests pass</p>
+<p><strong>Step 4: Commit</strong></p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/tests/test_ufo_e2e.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"test: add UFO end-to-end tests against live gateway"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-8-update-claudemd-and-notion-page">Task 8: Update CLAUDE.md and Notion page<a class="headerlink" href="#task-8-update-claudemd-and-notion-page" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>CLAUDE.md</code></p>
+<p><strong>Step 1: Add UFO documentation to CLAUDE.md</strong></p>
+<p>Add to the <code>## MCP Services</code> section under <code>**op-auth**</code>:</p>
+<div class="highlight"><pre><span></span><code>UFO policy (`services/op-auth/ufo.py`): tools classified as open/sensitive/dangerous. `run()` uses strict allowlist (vault, item list/get, document get). All calls logged to `~/.webspec/op-auth-audit.jsonl`. Sensitive tools require `X-UFO-Clearance` header; dangerous tools require human confirmation via `/__challenge`.
+</code></pre></div>
+<p>Add to the <code>## Gateway Architecture</code> section:</p>
+<div class="highlight"><pre><span></span><code>- **guard.py** — ...also: UFO clearance token computation (`compute_clearance_token`), provenance chain validation (`validate_provenance_chain`)
+</code></pre></div>
+<p><strong>Step 2: Update Notion page with implementation status</strong></p>
+<p>Use the Notion MCP tool to update the checklist on page <code>30a42c9038be818f9b41f45458ee4a8f</code>.</p>
+<p><strong>Step 3: Commit</strong></p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>CLAUDE.md
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"docs: document UFO policy in CLAUDE.md"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-9-final-integration-commit">Task 9: Final integration commit<a class="headerlink" href="#task-9-final-integration-commit" title="Permanent link">&para;</a></h3>
+<p><strong>Step 1: Run full test suite</strong></p>
+<p>Run: <code>cd ~/WebSpec/gateway &amp;&amp; /home/preston/miniconda3/bin/python -m pytest tests/ -v</code>
+Expected: all tests pass</p>
+<p><strong>Step 2: Run E2E against live gateway</strong></p>
+<p>Run: <code>cd ~/WebSpec/gateway &amp;&amp; /home/preston/miniconda3/bin/python tests/test_ufo_e2e.py</code>
+Expected: all pass</p>
+<p><strong>Step 3: Verify audit log exists</strong></p>
+<p>Run: <code>ls -la ~/.webspec/op-auth-audit.jsonl</code>
+Expected: file exists (may be empty if op CLI isn't configured yet, but E2E tests should have created denied/error entries)</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

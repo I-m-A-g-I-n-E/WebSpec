@@ -1,0 +1,2584 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A protocol specification for tool invocation that meshes with web architecture">
+      
+      
+      
+        <link rel="canonical" href="https://webspec.gimme.tools/superpowers/plans/2026-07-11-webspec-track-a-ship-and-harden/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>WebSpec Track A — Ship & Harden — Implementation Plan - WebSpec</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#webspec-track-a-ship-harden-implementation-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="WebSpec" class="md-header__button md-logo" aria-label="WebSpec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            WebSpec
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              WebSpec Track A — Ship &amp; Harden — Implementation Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/psentro/webspec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    I-m-A-g-I-n-E/webspec
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="WebSpec" class="md-nav__button md-logo" aria-label="WebSpec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    WebSpec
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/psentro/webspec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    I-m-A-g-I-n-E/webspec
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../philosophy/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Philosophy
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Philosophy
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../philosophy/permissions-as-love-grammar/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Permissions as Love Grammar
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../philosophy/trust-gradients-philia-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trust Gradients (Philia Model)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../url-grammar/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    URL Grammar
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    URL Grammar
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../url-grammar/core-syntax/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Syntax
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../url-grammar/object-type-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Object Type System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../url-grammar/type-resolution-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Type Resolution & Inference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../url-grammar/complete-grammar-ebnf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Complete Grammar (EBNF)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../http-methods/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HTTP Methods
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    HTTP Methods
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../http-methods/method-semantics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Method Semantics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../http-methods/permission-scoping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Permission Scoping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../http-methods/head-options-discovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HEAD & OPTIONS Discovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../http-methods/method-tokenization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    METHOD Tokenization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../http-methods/definer-verbs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Definer Verbs & Payload Binding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../subdomain-architecture/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subdomain Architecture
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Subdomain Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../subdomain-architecture/isolation-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Isolation Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../subdomain-architecture/cookie-token-scoping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookie & Token Scoping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../subdomain-architecture/local-bridge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    local.gimme.tools Bridge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../subdomain-architecture/local-service-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Service Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../auth/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Authentication
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/auth-flow-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Flow Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/keychain-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Keychain Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/onboarding-subdomain-provisioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding & Provisioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../auth/token-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Token Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../discovery/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Discovery
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Service Discovery
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../discovery/nlp-driven-resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    NLP-Driven Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../discovery/embedding-schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../discovery/three-way-join/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Three-Way Join
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../registration/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Registration
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Service Registration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registration/registration-schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../registration/domain-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/comparison-with-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comparison with MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/moltbook-case-study/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MoltBook Case Study
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#global-constraints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global Constraints
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Global Constraints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#task-1-vault-sourced-guard-key-delete-sessionkey" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 1: Vault-sourced guard key (delete session.key)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-2-enforce-public-exposure-requires-guard-at-the-gateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 2: Enforce "public exposure requires guard" at the gateway
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-3-caddy-generator-emits-public-host-only-for-guarded-services" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 3: Caddy generator emits public host only for guarded services
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-4-bind-gateway-to-localhost-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 4: Bind gateway to localhost by default
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-5-lock-cors-to-an-explicit-allowlist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 5: Lock CORS to an explicit allowlist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-6-externalize-config-paths-webspec_config-webspec_env_file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 6: Externalize config paths (WEBSPEC_CONFIG, WEBSPEC_ENV_FILE)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-7-docker-compose-stack-guard-key-entrypoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 7: Docker Compose stack + guard-key entrypoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-8-docs-reconciliation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 8: Docs reconciliation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#self-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Self-Review
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/psentro/webspec/edit/main/docs/superpowers/plans/2026-07-11-webspec-track-a-ship-and-harden.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="webspec-track-a-ship-harden-implementation-plan">WebSpec Track A — Ship &amp; Harden — Implementation Plan<a class="headerlink" href="#webspec-track-a-ship-harden-implementation-plan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>For agentic workers:</strong> REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (<code>- [ ]</code>) syntax for tracking.</p>
+</blockquote>
+<p><strong>Goal:</strong> Turn the live personal gateway into a self-hostable (tier B), hardened, <code>docker compose</code>–deployable WebSpec whose auth root is a password manager and whose docs match the code.</p>
+<p><strong>Architecture:</strong> Modify the existing <code>webspec</code> gateway package in place. Replace the local <code>session.key</code> with a vault-sourced <code>WEBSPEC_GUARD_KEY</code>. Enforce a "public exposure requires guard" invariant at both the gateway and the Caddy-config generator. Externalize host-path config. Add a <code>docker/</code> compose stack. Reconcile <code>docs/</code>.</p>
+<p><strong>Tech Stack:</strong> Python 3.11, Starlette, uvicorn, pytest, Caddy, Docker Compose, 1Password <code>op</code> CLI.</p>
+<h2 id="global-constraints">Global Constraints<a class="headerlink" href="#global-constraints" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Python <code>&gt;=3.11</code>; keep deps within existing floors (<code>starlette&gt;=0.35</code>, <code>uvicorn&gt;=0.30</code>, <code>fastmcp&gt;=2.14,&lt;3</code>, <code>mcp&gt;=1.25</code>). Do not add heavy new runtime deps in this track.</li>
+<li>Tests: <code>pytest</code>, run from <code>gateway/</code>. Match existing style in <code>gateway/tests/</code> (function/class tests, <code>tmp_path</code>, <code>monkeypatch</code>, injected <code>path=</code>/env).</li>
+<li>Never silently generate a persistent auth secret. Missing guard key ⇒ fail closed.</li>
+<li>Do not break the live symlinks/service names in <code>CLAUDE.md</code> (<code>~/MCP/webspec-gateway</code>, <code>webspec-gateway.service</code>).</li>
+<li>Every guard key value is derived identically on gateway and client: 64-hex ⇒ <code>bytes.fromhex</code>; otherwise ⇒ <code>sha256(utf8(value))</code>.</li>
+<li>Commit after every task with a <code>feat:</code>/<code>fix:</code>/<code>docs:</code>/<code>test:</code> message.</li>
+</ul>
+<hr />
+<h3 id="task-1-vault-sourced-guard-key-delete-sessionkey">Task 1: Vault-sourced guard key (delete <code>session.key</code>)<a class="headerlink" href="#task-1-vault-sourced-guard-key-delete-sessionkey" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>gateway/webspec/config.py</code> (replace <code>get_session_key</code>, remove <code>WEBSPEC_DIR</code>/<code>SESSION_KEY_PATH</code> usage for the key)
+- Test: <code>gateway/tests/test_guard_key.py</code> (create)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: <code>os.environ["WEBSPEC_GUARD_KEY"]</code>, optional <code>WEBSPEC_GUARD_KEY_DEV_EPHEMERAL</code>.
+- Produces: <code>get_session_key() -&gt; bytes</code> (32 bytes); <code>GuardKeyError(RuntimeError)</code>; <code>_derive_guard_key(raw: str) -&gt; bytes</code>. Callers in <code>app.py</code>/<code>handlers.py</code> are unchanged (same signature).</p>
+<ul>
+<li>[ ] <strong>Step 1: Write the failing tests</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_guard_key.py</span>
+<span class="sd">"""Guard key is sourced from the environment (populated from a password manager), never a file."""</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">webspec.config</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">GuardKeyError</span><span class="p">,</span> <span class="n">get_session_key</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">autouse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_reset_ephemeral</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+    <span class="c1"># Ensure a clean env + reset the cached dev key between tests.</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">delenv</span><span class="p">(</span><span class="s2">"WEBSPEC_GUARD_KEY"</span><span class="p">,</span> <span class="n">raising</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">delenv</span><span class="p">(</span><span class="s2">"WEBSPEC_GUARD_KEY_DEV_EPHEMERAL"</span><span class="p">,</span> <span class="n">raising</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">_dev_ephemeral_key</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">yield</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">_dev_ephemeral_key</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_hex_key_decoded</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">"WEBSPEC_GUARD_KEY"</span><span class="p">,</span> <span class="s2">"01"</span> <span class="o">*</span> <span class="mi">32</span><span class="p">)</span>  <span class="c1"># 64 hex chars</span>
+    <span class="k">assert</span> <span class="n">get_session_key</span><span class="p">()</span> <span class="o">==</span> <span class="sa">b</span><span class="s2">"</span><span class="se">\x01</span><span class="s2">"</span> <span class="o">*</span> <span class="mi">32</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_passphrase_key_derived</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">"WEBSPEC_GUARD_KEY"</span><span class="p">,</span> <span class="s2">"hunter2"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">get_session_key</span><span class="p">()</span> <span class="o">==</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="sa">b</span><span class="s2">"hunter2"</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">get_session_key</span><span class="p">())</span> <span class="o">==</span> <span class="mi">32</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_missing_key_fails_closed</span><span class="p">():</span>
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="n">GuardKeyError</span><span class="p">):</span>
+        <span class="n">get_session_key</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_dev_ephemeral_is_stable</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">"WEBSPEC_GUARD_KEY_DEV_EPHEMERAL"</span><span class="p">,</span> <span class="s2">"1"</span><span class="p">)</span>
+    <span class="n">k1</span> <span class="o">=</span> <span class="n">get_session_key</span><span class="p">()</span>
+    <span class="n">k2</span> <span class="o">=</span> <span class="n">get_session_key</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">k1</span> <span class="o">==</span> <span class="n">k2</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">k1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">32</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_no_session_key_file_created</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">,</span> <span class="n">tmp_path</span><span class="p">):</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">"HOME"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">))</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">"WEBSPEC_GUARD_KEY"</span><span class="p">,</span> <span class="s2">"02"</span> <span class="o">*</span> <span class="mi">32</span><span class="p">)</span>
+    <span class="n">get_session_key</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="p">(</span><span class="n">tmp_path</span> <span class="o">/</span> <span class="s2">".webspec"</span> <span class="o">/</span> <span class="s2">"session.key"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run tests to verify they fail</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_guard_key.py -v</code>
+Expected: FAIL (<code>ImportError: cannot import name 'GuardKeyError'</code>).</p>
+<ul>
+<li>[ ] <strong>Step 3: Rewrite <code>get_session_key</code> in <code>config.py</code></strong></li>
+</ul>
+<p>Add <code>import hashlib</code> and <code>import sys</code> at the top. Replace the <code>WEBSPEC_DIR</code>/<code>SESSION_KEY_PATH</code>/<code>get_session_key</code> block (currently lines ~112-128) with:</p>
+<div class="highlight"><pre><span></span><code><span class="n">WEBSPEC_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span> <span class="o">/</span> <span class="s2">".webspec"</span>  <span class="c1"># still used for audit logs elsewhere</span>
+
+<span class="n">_dev_ephemeral_key</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">GuardKeyError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Raised when no guard key is available and none may be safely generated."""</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_derive_guard_key</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""64-hex → raw 32 bytes; anything else → sha256(utf8) so any passphrase works."""</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="o">==</span> <span class="mi">64</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">bytes</span><span class="o">.</span><span class="n">fromhex</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_session_key</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return the 32-byte guard key, sourced from the password manager via env.</span>
+
+<span class="sd">    Populate WEBSPEC_GUARD_KEY from your vault at launch, e.g.:</span>
+<span class="sd">        export WEBSPEC_GUARD_KEY=$(op read "op://WebSpec/gateway-guard/key")</span>
+<span class="sd">    Fails closed if absent (no silent random key). Dev-only escape hatch:</span>
+<span class="sd">    WEBSPEC_GUARD_KEY_DEV_EPHEMERAL=1 mints an insecure in-memory key.</span>
+<span class="sd">    """</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"WEBSPEC_GUARD_KEY"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">raw</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_derive_guard_key</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"WEBSPEC_GUARD_KEY_DEV_EPHEMERAL"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"1"</span><span class="p">:</span>
+        <span class="k">global</span> <span class="n">_dev_ephemeral_key</span>
+        <span class="k">if</span> <span class="n">_dev_ephemeral_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_dev_ephemeral_key</span> <span class="o">=</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_bytes</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">"WARNING: WEBSPEC_GUARD_KEY_DEV_EPHEMERAL=1 — using an insecure "</span>
+                <span class="s2">"in-memory guard key (dev only)."</span><span class="p">,</span>
+                <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">_dev_ephemeral_key</span>
+
+    <span class="k">raise</span> <span class="n">GuardKeyError</span><span class="p">(</span>
+        <span class="s2">"WEBSPEC_GUARD_KEY is not set. Source it from your password manager, e.g. "</span>
+        <span class="s2">"`export WEBSPEC_GUARD_KEY=$(op read 'op://WebSpec/gateway-guard/key')`. "</span>
+        <span class="s2">"For local dev only, set WEBSPEC_GUARD_KEY_DEV_EPHEMERAL=1."</span>
+    <span class="p">)</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 4: Run tests to verify they pass</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_guard_key.py -v</code>
+Expected: PASS (5 passed).</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec/config.py<span class="w"> </span>gateway/tests/test_guard_key.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(gateway): source guard key from password manager env, fail closed"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-2-enforce-public-exposure-requires-guard-at-the-gateway">Task 2: Enforce "public exposure requires guard" at the gateway<a class="headerlink" href="#task-2-enforce-public-exposure-requires-guard-at-the-gateway" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>gateway/webspec/app.py</code> (<code>_service_dispatch</code>, add <code>_is_public_host</code>)
+- Test: <code>gateway/tests/test_public_guard_invariant.py</code> (create)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: <code>os.environ.get("WEBSPEC_DOMAIN")</code>, <code>registry.get(service).guard</code>, request <code>Host</code> header.
+- Produces: gateway returns HTTP 403 <code>unguarded_public</code> for any request whose host is the public domain and whose service is not guarded — before dispatch.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write the failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_public_guard_invariant.py</span>
+<span class="sd">"""An unguarded service must never be reachable on the public domain."""</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">starlette.testclient</span><span class="w"> </span><span class="kn">import</span> <span class="n">TestClient</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">webspec.app</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">appmod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">ServiceEntry</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_FakeRegistry</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entry</span> <span class="o">=</span> <span class="n">entry</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entry</span> <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"mail-proton"</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="p">[</span><span class="s2">"mail-proton"</span><span class="p">]</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">services</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="p">{</span><span class="s2">"mail-proton"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entry</span><span class="p">}</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">public_client</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">"WEBSPEC_DOMAIN"</span><span class="p">,</span> <span class="s2">"i-a-m.live"</span><span class="p">)</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">"WEBSPEC_GUARD_KEY_DEV_EPHEMERAL"</span><span class="p">,</span> <span class="s2">"1"</span><span class="p">)</span>
+    <span class="n">entry</span> <span class="o">=</span> <span class="n">ServiceEntry</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"mail-proton"</span><span class="p">,</span> <span class="n">original_name</span><span class="o">=</span><span class="s2">"mail-proton"</span><span class="p">,</span>
+                         <span class="n">transport_type</span><span class="o">=</span><span class="s2">"stdio"</span><span class="p">,</span> <span class="n">command</span><span class="o">=</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">appmod</span><span class="o">.</span><span class="n">registry</span> <span class="o">=</span> <span class="n">_FakeRegistry</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">appmod</span><span class="o">.</span><span class="n">create_app</span><span class="p">()</span>
+    <span class="n">appmod</span><span class="o">.</span><span class="n">registry</span> <span class="o">=</span> <span class="n">_FakeRegistry</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>  <span class="c1"># create_app resets it; pin our fake</span>
+    <span class="k">return</span> <span class="n">TestClient</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_unguarded_service_blocked_on_public_domain</span><span class="p">(</span><span class="n">public_client</span><span class="p">):</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">public_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"Host"</span><span class="p">:</span> <span class="s2">"mail-proton.i-a-m.live"</span><span class="p">})</span>
+    <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">403</span>
+    <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">"error"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"unguarded_public"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_unguarded_service_allowed_on_localhost</span><span class="p">(</span><span class="n">public_client</span><span class="p">):</span>
+    <span class="c1"># localhost is not the public domain → normal handling (503/200, not 403)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">public_client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"Host"</span><span class="p">:</span> <span class="s2">"mail-proton.localhost"</span><span class="p">})</span>
+    <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">403</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_public_guard_invariant.py -v</code>
+Expected: FAIL (unguarded request returns 200/503, not 403).</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement the invariant in <code>app.py</code></strong></li>
+</ul>
+<p>Add near the top of <code>app.py</code> after imports:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_is_public_host</span><span class="p">(</span><span class="n">host</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""True if the Host header targets the configured public domain (not localhost)."""</span>
+    <span class="n">public_domain</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"WEBSPEC_DOMAIN"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">public_domain</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">hostname</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">hostname</span> <span class="o">==</span> <span class="n">public_domain</span> <span class="ow">or</span> <span class="n">hostname</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"."</span> <span class="o">+</span> <span class="n">public_domain</span><span class="p">)</span>
+</code></pre></div>
+<p>In <code>_service_dispatch</code>, immediately after <code>entry = registry.get(service)</code> resolution (inside the
+<code>if registry is not None:</code> block, before the guard checks), add:</p>
+<div class="highlight"><pre><span></span><code>        <span class="n">entry</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">service</span><span class="p">)</span>
+        <span class="n">host_header</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"host"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">guard</span> <span class="ow">and</span> <span class="n">_is_public_host</span><span class="p">(</span><span class="n">host_header</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">JSONResponse</span><span class="p">(</span>
+                <span class="p">{</span><span class="s2">"error"</span><span class="p">:</span> <span class="s2">"unguarded_public"</span><span class="p">,</span>
+                 <span class="s2">"detail"</span><span class="p">:</span> <span class="s2">"Unguarded services are not exposed on the public domain."</span><span class="p">},</span>
+                <span class="n">status_code</span><span class="o">=</span><span class="mi">403</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">entry</span><span class="o">.</span><span class="n">guard</span><span class="p">:</span>
+            <span class="o">...</span>  <span class="c1"># existing guard block unchanged</span>
+</code></pre></div>
+<p>(Reuse the already-fetched <code>entry</code>; do not call <code>registry.get</code> twice.)</p>
+<ul>
+<li>[ ] <strong>Step 4: Run test to verify it passes</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_public_guard_invariant.py -v</code>
+Expected: PASS (2 passed).</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec/app.py<span class="w"> </span>gateway/tests/test_public_guard_invariant.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"fix(gateway): block unguarded services on the public domain"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-3-caddy-generator-emits-public-host-only-for-guarded-services">Task 3: Caddy generator emits public host only for guarded services<a class="headerlink" href="#task-3-caddy-generator-emits-public-host-only-for-guarded-services" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>gateway/webspec/caddy.py</code> (<code>generate_site_block</code>)
+- Test: <code>gateway/tests/test_caddy.py</code> (extend — file already exists)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: <code>generate_site_block(name, domain, guard=..., ...)</code>.
+- Produces: when <code>guard=False</code>, the emitted block's host line contains only <code>{name}.localhost:{port}</code> (no <code>{name}.{domain}</code> host); when <code>guard=True</code>, both hosts appear. This is defense-in-depth paired with Task 2.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write the failing test</strong> (append to <code>gateway/tests/test_caddy.py</code>)</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">test_unguarded_block_has_no_public_host</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">webspec.caddy</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_site_block</span>
+    <span class="n">block</span> <span class="o">=</span> <span class="n">generate_site_block</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"mail-proton"</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="s2">"i-a-m.live"</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="s2">"mail-proton.localhost"</span> <span class="ow">in</span> <span class="n">block</span>
+    <span class="k">assert</span> <span class="s2">"mail-proton.i-a-m.live"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">block</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_guarded_block_has_public_host</span><span class="p">():</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">webspec.caddy</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_site_block</span>
+    <span class="n">block</span> <span class="o">=</span> <span class="n">generate_site_block</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"op-auth"</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="s2">"i-a-m.live"</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="s2">"op-auth.localhost"</span> <span class="ow">in</span> <span class="n">block</span>
+    <span class="k">assert</span> <span class="s2">"op-auth.i-a-m.live"</span> <span class="ow">in</span> <span class="n">block</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_caddy.py -k public_host -v</code>
+Expected: FAIL (<code>mail-proton.i-a-m.live</code> currently present in every block).</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement in <code>caddy.py</code></strong></li>
+</ul>
+<p>In <code>generate_site_block</code>, replace the <code>hosts = ...</code> line with a guard-conditional host list:</p>
+<div class="highlight"><pre><span></span><code>    <span class="k">if</span> <span class="n">guard</span><span class="p">:</span>
+        <span class="n">hosts</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"http://</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.localhost:</span><span class="si">{</span><span class="n">caddy_port</span><span class="si">}</span><span class="s2">, http://</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">domain</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">caddy_port</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Unguarded services are localhost-only (see public-guard invariant).</span>
+        <span class="n">hosts</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"http://</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.localhost:</span><span class="si">{</span><span class="n">caddy_port</span><span class="si">}</span><span class="s2">"</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 4: Run test to verify it passes</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_caddy.py -v</code>
+Expected: PASS (existing + 2 new).</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec/caddy.py<span class="w"> </span>gateway/tests/test_caddy.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"fix(caddy): only publish public host block for guarded services"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-4-bind-gateway-to-localhost-by-default">Task 4: Bind gateway to localhost by default<a class="headerlink" href="#task-4-bind-gateway-to-localhost-by-default" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>gateway/webspec/__main__.py</code>
+- Test: <code>gateway/tests/test_bind_default.py</code> (create)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: <code>os.environ.get("WEBSPEC_HOST")</code>.
+- Produces: <code>resolve_bind_host() -&gt; str</code> returning <code>"127.0.0.1"</code> unless <code>WEBSPEC_HOST</code> is set.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write the failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_bind_default.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">webspec.__main__</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">m</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_default_bind_is_localhost</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">delenv</span><span class="p">(</span><span class="s2">"WEBSPEC_HOST"</span><span class="p">,</span> <span class="n">raising</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">resolve_bind_host</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"127.0.0.1"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_bind_override</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">"WEBSPEC_HOST"</span><span class="p">,</span> <span class="s2">"0.0.0.0"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">resolve_bind_host</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"0.0.0.0"</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_bind_default.py -v</code>
+Expected: FAIL (<code>resolve_bind_host</code> not defined).</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement in <code>__main__.py</code></strong></li>
+</ul>
+<p>Add the helper and use it in <code>main()</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">resolve_bind_host</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Default to loopback; require an explicit override to bind all interfaces."""</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"WEBSPEC_HOST"</span><span class="p">,</span> <span class="s2">"127.0.0.1"</span><span class="p">)</span>
+</code></pre></div>
+<p>In <code>uvicorn.run(...)</code>, change <code>host=os.environ.get("WEBSPEC_HOST", "0.0.0.0")</code> to <code>host=resolve_bind_host()</code>.</p>
+<ul>
+<li>[ ] <strong>Step 4: Run test to verify it passes</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_bind_default.py -v</code>
+Expected: PASS (2 passed).</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec/__main__.py<span class="w"> </span>gateway/tests/test_bind_default.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"fix(gateway): bind loopback by default, require explicit WEBSPEC_HOST override"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-5-lock-cors-to-an-explicit-allowlist">Task 5: Lock CORS to an explicit allowlist<a class="headerlink" href="#task-5-lock-cors-to-an-explicit-allowlist" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>gateway/webspec/app.py</code> (<code>create_app</code> middleware)
+- Test: <code>gateway/tests/test_cors.py</code> (create)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: <code>os.environ.get("WEBSPEC_CORS_ORIGINS")</code> (comma-separated).
+- Produces: <code>cors_origins() -&gt; list[str]</code> — <code>[]</code> by default, parsed list when set. Middleware uses it instead of <code>["*"]</code>.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write the failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_cors.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">webspec.app</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">appmod</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_cors_empty_by_default</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">delenv</span><span class="p">(</span><span class="s2">"WEBSPEC_CORS_ORIGINS"</span><span class="p">,</span> <span class="n">raising</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">appmod</span><span class="o">.</span><span class="n">cors_origins</span><span class="p">()</span> <span class="o">==</span> <span class="p">[]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_cors_parses_list</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">"WEBSPEC_CORS_ORIGINS"</span><span class="p">,</span> <span class="s2">"https://a.example, https://b.example"</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">appmod</span><span class="o">.</span><span class="n">cors_origins</span><span class="p">()</span> <span class="o">==</span> <span class="p">[</span><span class="s2">"https://a.example"</span><span class="p">,</span> <span class="s2">"https://b.example"</span><span class="p">]</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_cors.py -v</code>
+Expected: FAIL (<code>cors_origins</code> not defined).</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement in <code>app.py</code></strong></li>
+</ul>
+<p>Add:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">cors_origins</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Explicit CORS allowlist from WEBSPEC_CORS_ORIGINS (comma-separated). Empty by default."""</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"WEBSPEC_CORS_ORIGINS"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">o</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span> <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+</code></pre></div>
+<p>In <code>create_app</code>, change the <code>CORSMiddleware</code> config from <code>allow_origins=["*"]</code> (and <code>allow_methods=["*"]</code>, <code>allow_headers=["*"]</code>) to:</p>
+<div class="highlight"><pre><span></span><code>                <span class="n">CORSMiddleware</span><span class="p">,</span>
+                <span class="n">allow_origins</span><span class="o">=</span><span class="n">cors_origins</span><span class="p">(),</span>
+                <span class="n">allow_methods</span><span class="o">=</span><span class="p">[</span><span class="s2">"GET"</span><span class="p">,</span> <span class="s2">"HEAD"</span><span class="p">,</span> <span class="s2">"OPTIONS"</span><span class="p">,</span> <span class="s2">"POST"</span><span class="p">,</span> <span class="s2">"PUT"</span><span class="p">,</span> <span class="s2">"PATCH"</span><span class="p">],</span>
+                <span class="n">allow_headers</span><span class="o">=</span><span class="p">[</span><span class="s2">"X-WebSpec-Guard"</span><span class="p">,</span> <span class="s2">"X-WebSpec-Nonce"</span><span class="p">,</span> <span class="s2">"X-Gimme-Definer"</span><span class="p">,</span>
+                               <span class="s2">"X-UFO-Clearance"</span><span class="p">,</span> <span class="s2">"X-UFO-Provenance"</span><span class="p">,</span> <span class="s2">"Content-Type"</span><span class="p">],</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 4: Run test to verify it passes</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_cors.py -v</code>
+Expected: PASS (2 passed).</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec/app.py<span class="w"> </span>gateway/tests/test_cors.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"fix(gateway): replace wildcard CORS with explicit allowlist"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-6-externalize-config-paths-webspec_config-webspec_env_file">Task 6: Externalize config paths (<code>WEBSPEC_CONFIG</code>, <code>WEBSPEC_ENV_FILE</code>)<a class="headerlink" href="#task-6-externalize-config-paths-webspec_config-webspec_env_file" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>gateway/webspec/config.py</code> (<code>ServiceRegistry.__init__</code> default), <code>gateway/webspec/config_writer.py</code> (module path constants → functions)
+- Test: <code>gateway/tests/test_config_paths.py</code> (create)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: <code>WEBSPEC_CONFIG</code>, <code>WEBSPEC_ENV_FILE</code>.
+- Produces: <code>default_config_path() -&gt; Path</code> and <code>default_env_path() -&gt; Path</code> in <code>config_writer.py</code>; <code>ServiceRegistry()</code> with no args reads <code>WEBSPEC_CONFIG</code> then falls back to <code>~/.claude.json</code>.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write the failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_config_paths.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">webspec.config_writer</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cw</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">webspec.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">ServiceRegistry</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_default_config_path_env</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">,</span> <span class="n">tmp_path</span><span class="p">):</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">tmp_path</span> <span class="o">/</span> <span class="s2">"alt.json"</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">"WEBSPEC_CONFIG"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="n">cw</span><span class="o">.</span><span class="n">default_config_path</span><span class="p">()</span> <span class="o">==</span> <span class="n">p</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_registry_reads_env_config</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">,</span> <span class="n">tmp_path</span><span class="p">):</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">tmp_path</span> <span class="o">/</span> <span class="s2">"alt.json"</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">"mcpServers"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"svc-x"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"http"</span><span class="p">,</span> <span class="s2">"url"</span><span class="p">:</span> <span class="s2">"http://x"</span><span class="p">}}}))</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">"WEBSPEC_CONFIG"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+    <span class="n">reg</span> <span class="o">=</span> <span class="n">ServiceRegistry</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="s2">"svc-x"</span> <span class="ow">in</span> <span class="n">reg</span><span class="o">.</span><span class="n">names</span><span class="p">()</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_config_paths.py -v</code>
+Expected: FAIL (<code>default_config_path</code> not defined; registry ignores env).</p>
+<ul>
+<li>[ ] <strong>Step 3: Implement</strong></li>
+</ul>
+<p>In <code>config_writer.py</code>, replace the module constants with functions:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">default_config_path</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"WEBSPEC_CONFIG"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span> <span class="o">/</span> <span class="s2">".claude.json"</span><span class="p">)))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">default_env_path</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"WEBSPEC_ENV_FILE"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span> <span class="o">/</span> <span class="s2">".env"</span><span class="p">)))</span>
+</code></pre></div>
+<p>Update <code>_read_claude_config</code>, <code>_write_claude_config</code>, <code>add_service</code>, <code>remove_service</code>,
+<code>list_services</code> to use <code>path or default_config_path()</code>, and <code>add_env_var</code>/<code>remove_env_var</code> to use
+<code>path or default_env_path()</code> (replace references to <code>_CLAUDE_CONFIG</code> / <code>_ENV_FILE</code>). Add <code>import os</code>.</p>
+<p>In <code>config.py</code>, change <code>ServiceRegistry.__init__</code>:</p>
+<div class="highlight"><pre><span></span><code>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">config_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">config_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"WEBSPEC_CONFIG"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span> <span class="o">/</span> <span class="s2">".claude.json"</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_config_path</span> <span class="o">=</span> <span class="n">config_path</span>
+        <span class="o">...</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 4: Run test to verify it passes</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_config_paths.py tests/test_config_writer.py -v</code>
+Expected: PASS (new + existing config_writer tests still green).</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>gateway/webspec/config.py<span class="w"> </span>gateway/webspec/config_writer.py<span class="w"> </span>gateway/tests/test_config_paths.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat(gateway): externalize config/env paths via WEBSPEC_CONFIG/WEBSPEC_ENV_FILE"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-7-docker-compose-stack-guard-key-entrypoint">Task 7: Docker Compose stack + guard-key entrypoint<a class="headerlink" href="#task-7-docker-compose-stack-guard-key-entrypoint" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Create: <code>docker/Dockerfile</code>, <code>docker/docker-compose.yml</code>, <code>docker/entrypoint.sh</code>, <code>docker/README.md</code>
+- Test: <code>gateway/tests/test_compose_config.py</code> (create — validates compose is well-formed and the entrypoint sources the key)</p>
+<p><strong>Interfaces:</strong>
+- Consumes: <code>WEBSPEC_GUARD_KEY</code> (or <code>OP_GUARD_KEY_REF</code> + <code>op</code>), <code>WEBSPEC_CONFIG</code> mount.
+- Produces: a <code>docker compose</code> stack (<code>caddy</code>, <code>gateway</code>, <code>registry</code>) that boots the gateway with a vault-sourced key.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write the failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># gateway/tests/test_compose_config.py</span>
+<span class="sd">"""The compose stack is well-formed and the entrypoint sources the guard key from the vault."""</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+
+<span class="n">ROOT</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># repo root</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_entrypoint_sources_guard_key</span><span class="p">():</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="p">(</span><span class="n">ROOT</span> <span class="o">/</span> <span class="s2">"docker"</span> <span class="o">/</span> <span class="s2">"entrypoint.sh"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="s2">"OP_GUARD_KEY_REF"</span> <span class="ow">in</span> <span class="n">text</span>
+    <span class="k">assert</span> <span class="s2">"op read"</span> <span class="ow">in</span> <span class="n">text</span>
+    <span class="k">assert</span> <span class="s2">"WEBSPEC_GUARD_KEY"</span> <span class="ow">in</span> <span class="n">text</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_compose_declares_three_services</span><span class="p">():</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="p">(</span><span class="n">ROOT</span> <span class="o">/</span> <span class="s2">"docker"</span> <span class="o">/</span> <span class="s2">"docker-compose.yml"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">svc</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"caddy:"</span><span class="p">,</span> <span class="s2">"gateway:"</span><span class="p">,</span> <span class="s2">"registry:"</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">svc</span> <span class="ow">in</span> <span class="n">text</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skipif</span><span class="p">(</span><span class="ow">not</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">"docker"</span><span class="p">),</span> <span class="n">reason</span><span class="o">=</span><span class="s2">"docker not installed"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_compose_config_valid</span><span class="p">():</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"docker"</span><span class="p">,</span> <span class="s2">"compose"</span><span class="p">,</span> <span class="s2">"-f"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">ROOT</span> <span class="o">/</span> <span class="s2">"docker"</span> <span class="o">/</span> <span class="s2">"docker-compose.yml"</span><span class="p">),</span> <span class="s2">"config"</span><span class="p">],</span>
+                       <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">stderr</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_compose_config.py -v</code>
+Expected: FAIL (files do not exist).</p>
+<ul>
+<li>[ ] <strong>Step 3: Create the Docker files</strong></li>
+</ul>
+<p><code>docker/entrypoint.sh</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env sh</span>
+<span class="nb">set</span><span class="w"> </span>-eu
+<span class="c1"># Source the guard key from the password manager if not already provided.</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-z<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">WEBSPEC_GUARD_KEY</span><span class="k">:-</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">OP_GUARD_KEY_REF</span><span class="k">:-</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="nb">command</span><span class="w"> </span>-v<span class="w"> </span>op<span class="w"> </span>&gt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nv">WEBSPEC_GUARD_KEY</span><span class="o">=</span><span class="s2">"</span><span class="k">$(</span>op<span class="w"> </span><span class="nb">read</span><span class="w"> </span><span class="s2">"</span><span class="nv">$OP_GUARD_KEY_REF</span><span class="s2">"</span><span class="k">)</span><span class="s2">"</span>
+<span class="w">    </span><span class="nb">export</span><span class="w"> </span>WEBSPEC_GUARD_KEY
+<span class="w">  </span><span class="k">else</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"entrypoint: 'op' CLI not found but OP_GUARD_KEY_REF is set"</span><span class="w"> </span>&gt;<span class="p">&amp;</span><span class="m">2</span>
+<span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="w">  </span><span class="k">fi</span>
+<span class="k">fi</span>
+<span class="nb">exec</span><span class="w"> </span><span class="s2">"</span><span class="nv">$@</span><span class="s2">"</span>
+</code></pre></div>
+<p><code>docker/Dockerfile</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">FROM</span><span class="w"> </span><span class="s">python:3.11-slim</span>
+<span class="k">WORKDIR</span><span class="w"> </span><span class="s">/app</span>
+<span class="k">COPY</span><span class="w"> </span>gateway/<span class="w"> </span>/app/gateway/
+<span class="k">RUN</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-cache-dir<span class="w"> </span>./gateway
+<span class="k">COPY</span><span class="w"> </span>docker/entrypoint.sh<span class="w"> </span>/usr/local/bin/entrypoint.sh
+<span class="k">RUN</span><span class="w"> </span>chmod<span class="w"> </span>+x<span class="w"> </span>/usr/local/bin/entrypoint.sh
+<span class="k">ENTRYPOINT</span><span class="w"> </span><span class="p">[</span><span class="s2">"/usr/local/bin/entrypoint.sh"</span><span class="p">]</span>
+<span class="k">CMD</span><span class="w"> </span><span class="p">[</span><span class="s2">"python"</span><span class="p">,</span><span class="w"> </span><span class="s2">"-m"</span><span class="p">,</span><span class="w"> </span><span class="s2">"webspec"</span><span class="p">]</span>
+</code></pre></div>
+<p><code>docker/docker-compose.yml</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">services</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">caddy</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">caddy:2</span>
+<span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"7001:7001"</span>
+<span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./caddy/Caddyfile:/etc/caddy/Caddyfile:ro</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./caddy/conf.d:/etc/caddy/conf.d:ro</span>
+<span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">gateway</span><span class="p p-Indicator">]</span>
+
+<span class="w">  </span><span class="nt">gateway</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">build</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">context</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">..</span>
+<span class="w">      </span><span class="nt">dockerfile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker/Dockerfile</span>
+<span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">WEBSPEC_INTERNAL_PORT</span><span class="p">:</span><span class="w"> </span><span class="s">"7002"</span>
+<span class="w">      </span><span class="nt">WEBSPEC_HOST</span><span class="p">:</span><span class="w"> </span><span class="s">"0.0.0.0"</span><span class="w">          </span><span class="c1"># inside the compose network, fronted by caddy</span>
+<span class="w">      </span><span class="nt">WEBSPEC_CONFIG</span><span class="p">:</span><span class="w"> </span><span class="s">"/config/claude.json"</span>
+<span class="w">      </span><span class="nt">WEBSPEC_GUARD_KEY</span><span class="p">:</span><span class="w"> </span><span class="s">"${WEBSPEC_GUARD_KEY:-}"</span>
+<span class="w">      </span><span class="nt">OP_GUARD_KEY_REF</span><span class="p">:</span><span class="w"> </span><span class="s">"${OP_GUARD_KEY_REF:-}"</span>
+<span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${WEBSPEC_CONFIG_HOST:-./claude.json}:/config/claude.json:ro</span>
+<span class="w">    </span><span class="nt">expose</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"7002"</span>
+
+<span class="w">  </span><span class="nt">registry</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">build</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">context</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">..</span>
+<span class="w">      </span><span class="nt">dockerfile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker/Dockerfile</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"python"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"-m"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"webspec_registry"</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">WEBSPEC_INTERNAL_PORT</span><span class="p">:</span><span class="w"> </span><span class="s">"7003"</span>
+<span class="w">      </span><span class="nt">WEBSPEC_GATEWAY_URL</span><span class="p">:</span><span class="w"> </span><span class="s">"http://gateway:7002"</span>
+<span class="w">    </span><span class="nt">expose</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"7003"</span>
+</code></pre></div>
+<p><code>docker/README.md</code>: document <code>WEBSPEC_GUARD_KEY</code>/<code>OP_GUARD_KEY_REF</code>, the <code>WEBSPEC_CONFIG_HOST</code> mount,
+and the "bring your own MCP service" pattern (http services join the stack; stdio services like
+op-auth/mail-proton run on the host and are referenced by the mounted config). Note the <code>registry</code>
+service depends on Plan 2 (<code>webspec_registry</code>); until that lands, comment out the <code>registry</code> block
+or keep it — <code>docker compose config</code> still validates.</p>
+<ul>
+<li>[ ] <strong>Step 4: Run test to verify it passes</strong></li>
+</ul>
+<p>Run: <code>cd gateway &amp;&amp; python -m pytest tests/test_compose_config.py -v</code>
+Expected: PASS (<code>test_compose_config_valid</code> may skip if docker absent).</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>docker/<span class="w"> </span>gateway/tests/test_compose_config.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"feat: add docker compose stack with vault-sourced guard-key entrypoint"</span>
+</code></pre></div>
+<hr />
+<h3 id="task-8-docs-reconciliation">Task 8: Docs reconciliation<a class="headerlink" href="#task-8-docs-reconciliation" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>docs/index.md</code> (add status matrix), <code>docs/url-grammar/core-syntax.md</code>,
+  <code>docs/url-grammar/complete-grammar-ebnf.md</code>, <code>docs/url-grammar/object-type-system.md</code>
+  (collapse to one normative grammar page + examples), <code>docs/discovery/*.md</code> (remove the banned
+  <code>object.provider</code> form, e.g. <code>POST /message.slack</code> → <code>POST /messages</code> with a note that the
+  path is the MCP tool name in the current implementation)
+- Create: <code>docs/ROADMAP-C.md</code>
+- Test: <code>docs/tests/test_docs_consistency.py</code> (create)</p>
+<p><strong>Interfaces:</strong>
+- Produces: docs whose normative sections match the code; a machine-checkable consistency guard.</p>
+<ul>
+<li>[ ] <strong>Step 1: Write the failing test</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># docs/tests/test_docs_consistency.py</span>
+<span class="sd">"""Guard against the spec drifting from the implementation again."""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="n">DOCS</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_status_matrix_present</span><span class="p">():</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="p">(</span><span class="n">DOCS</span> <span class="o">/</span> <span class="s2">"index.md"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="s2">"Implemented"</span> <span class="ow">in</span> <span class="n">idx</span> <span class="ow">and</span> <span class="s2">"Proposed"</span> <span class="ow">in</span> <span class="n">idx</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_discovery_does_not_use_banned_provider_suffix</span><span class="p">():</span>
+    <span class="c1"># url-grammar bans `object.provider`; discovery must not demonstrate it.</span>
+    <span class="k">for</span> <span class="n">md</span> <span class="ow">in</span> <span class="p">(</span><span class="n">DOCS</span> <span class="o">/</span> <span class="s2">"discovery"</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">"*.md"</span><span class="p">):</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">banned</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"/message.slack"</span><span class="p">,</span> <span class="s2">"/file.gdrive"</span><span class="p">,</span> <span class="s2">"/spreadsheet.gsheets"</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="n">banned</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">text</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">md</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> still uses banned form </span><span class="si">{</span><span class="n">banned</span><span class="si">}</span><span class="s2">"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_roadmap_c_exists</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">DOCS</span> <span class="o">/</span> <span class="s2">"ROADMAP-C.md"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+</code></pre></div>
+<ul>
+<li>[ ] <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd docs &amp;&amp; python -m pytest tests/test_docs_consistency.py -v</code>
+Expected: FAIL (no status matrix; discovery still uses <code>/message.slack</code>; no ROADMAP-C).</p>
+<ul>
+<li>
+<p>[ ] <strong>Step 3: Make the edits</strong></p>
+</li>
+<li>
+<p>In <code>docs/index.md</code>, replace the <code>## Status</code> table with an Implemented-vs-Proposed matrix, e.g.:</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="gu">## Status</span>
+
+| Section | State |
+|---|---|
+| Subdomain routing (path = MCP tool name) | <span class="gs">**Implemented (B)**</span> |
+| HMAC guard + nonce, password-manager–sourced key | <span class="gs">**Implemented (B)**</span> |
+| Definer verbs | <span class="gs">**Implemented (B)**</span> |
+| op-auth UFO tiers | <span class="gs">**Implemented (B)**</span> |
+| Semantic resolution / embedding registry | Proposed (see registry package) |
+| REST collection hierarchy, format suffixes, DELETE | <span class="gs">**Proposed (C)**</span> |
+| OAuth/JWT, multi-tenant, keychain FaceID flow | <span class="gs">**Proposed (C)**</span> |
+</code></pre></div>
+<ol>
+<li>
+<p>In the <code>discovery/*.md</code> files, rewrite every <code>POST /message.slack</code>-style example to the
+   implementation's form (the path is the MCP tool name), adding one sentence: "In the current
+   implementation the path segment is the MCP tool name (e.g. <code>send_message</code>); the <code>/collection/id</code>
+   REST form is Proposed (C)." Remove the banned strings the test checks for.</p>
+</li>
+<li>
+<p>Collapse the three url-grammar pages: keep <code>complete-grammar-ebnf.md</code> as the single normative
+   grammar; reduce <code>core-syntax.md</code> to a short human overview that links to it; fold
+   <code>object-type-system.md</code>'s unique content (the collections tables) into an "Examples" section and
+   delete the duplicated "subdomain IS provider" prose. Ensure the "REST hierarchy" grammar is
+   labeled Proposed (C) since the code routes by tool name.</p>
+</li>
+<li>
+<p>Create <code>docs/ROADMAP-C.md</code> indexing every <code>TODO(C)</code> from the spec §8 with a one-line pointer to
+   its design section.</p>
+</li>
+<li>
+<p>[ ] <strong>Step 4: Run test to verify it passes</strong></p>
+</li>
+</ol>
+<p>Run: <code>cd docs &amp;&amp; python -m pytest tests/test_docs_consistency.py -v</code>
+Expected: PASS (3 passed).</p>
+<ul>
+<li>[ ] <strong>Step 5: Commit</strong></li>
+</ul>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>docs/index.md<span class="w"> </span>docs/url-grammar/<span class="w"> </span>docs/discovery/<span class="w"> </span>docs/ROADMAP-C.md<span class="w"> </span>docs/tests/test_docs_consistency.py
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"docs: reconcile spec with implementation, add status matrix and ROADMAP-C"</span>
+</code></pre></div>
+<hr />
+<h2 id="self-review">Self-Review<a class="headerlink" href="#self-review" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Spec coverage:</strong> §3.1 auth → Task 1; §3.2 invariants → Tasks 2,3,4,5; §3.3 externalization → Task 6; §3.4 topology → Task 7; §6 docs → Task 8. Guard-by-default (§3.2 #4) is realized by Tasks 2+3 (unguarded services can't reach the public domain) plus the existing <code>ctl.py</code> <code>--guard</code> default; no separate task needed.</li>
+<li><strong>Deferred to Plan 2:</strong> the <code>registry</code> service image <code>command: python -m webspec_registry</code> (Task 7) depends on Plan 2; documented inline.</li>
+<li><strong>Type consistency:</strong> <code>get_session_key() -&gt; bytes</code> signature unchanged (callers untouched); <code>_is_public_host</code>, <code>cors_origins</code>, <code>resolve_bind_host</code>, <code>default_config_path</code>, <code>default_env_path</code> are new and referenced only where defined.</li>
+<li><strong><code>wiki/</code> de-dup</strong> (§6.5): tracked as a follow-up in <code>docs/ROADMAP-C.md</code> (mechanical mirror change, not code); note it there during Task 8 rather than hand-editing both trees now.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

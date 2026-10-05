@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2090,8 +2090,8 @@
 <hr />
 <h2 id="tool-registration-record">Tool Registration Record<a class="headerlink" href="#tool-registration-record" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="nt">tool</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;slack-send-message&quot;</span>
-<span class="w">  </span><span class="nt">service</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;slack.gimme.tools&quot;</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">"slack-send-message"</span>
+<span class="w">  </span><span class="nt">service</span><span class="p">:</span><span class="w"> </span><span class="s">"slack.gimme.tools"</span>
 
 <span class="w">  </span><span class="c1"># The WebSpec route</span>
 <span class="w">  </span><span class="nt">route</span><span class="p">:</span>
@@ -2101,7 +2101,7 @@
 
 <span class="w">  </span><span class="c1"># Semantic anchors for embedding generation</span>
 <span class="w">  </span><span class="nt">semantics</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">canonical</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;send</span><span class="nv"> </span><span class="s">message</span><span class="nv"> </span><span class="s">via</span><span class="nv"> </span><span class="s">Slack&quot;</span>
+<span class="w">    </span><span class="nt">canonical</span><span class="p">:</span><span class="w"> </span><span class="s">"send</span><span class="nv"> </span><span class="s">message</span><span class="nv"> </span><span class="s">via</span><span class="nv"> </span><span class="s">Slack"</span>
 <span class="w">    </span><span class="nt">predicates</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">send</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">post</span>
@@ -2130,15 +2130,15 @@
 <span class="w">    </span><span class="nt">channel</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">      </span><span class="nt">required</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">      </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Slack</span><span class="nv"> </span><span class="s">channel</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">user</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">message&quot;</span>
+<span class="w">      </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Slack</span><span class="nv"> </span><span class="s">channel</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">user</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">message"</span>
 <span class="w">    </span><span class="nt">body</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">      </span><span class="nt">required</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">      </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Message</span><span class="nv"> </span><span class="s">content&quot;</span>
+<span class="w">      </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Message</span><span class="nv"> </span><span class="s">content"</span>
 <span class="w">    </span><span class="nt">thread</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">      </span><span class="nt">required</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-<span class="w">      </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Thread</span><span class="nv"> </span><span class="s">ID</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">replies&quot;</span>
+<span class="w">      </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Thread</span><span class="nv"> </span><span class="s">ID</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">replies"</span>
 </code></pre></div>
 <hr />
 <h2 id="embedding-generation">Embedding Generation<a class="headerlink" href="#embedding-generation" title="Permanent link">&para;</a></h2>
@@ -2146,23 +2146,23 @@
 <p>When a service registers a tool, the server generates embeddings:</p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">register_tool</span><span class="p">(</span><span class="n">tool_spec</span><span class="p">):</span>
     <span class="c1"># Generate canonical embedding</span>
-    <span class="n">canonical_emb</span> <span class="o">=</span> <span class="n">embed</span><span class="p">(</span><span class="n">tool_spec</span><span class="p">[</span><span class="s1">&#39;semantics&#39;</span><span class="p">][</span><span class="s1">&#39;canonical&#39;</span><span class="p">])</span>
+    <span class="n">canonical_emb</span> <span class="o">=</span> <span class="n">embed</span><span class="p">(</span><span class="n">tool_spec</span><span class="p">[</span><span class="s1">'semantics'</span><span class="p">][</span><span class="s1">'canonical'</span><span class="p">])</span>
 
     <span class="c1"># Generate predicate centroid</span>
-    <span class="n">pred_embeddings</span> <span class="o">=</span> <span class="p">[</span><span class="n">embed</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">tool_spec</span><span class="p">[</span><span class="s1">&#39;semantics&#39;</span><span class="p">][</span><span class="s1">&#39;predicates&#39;</span><span class="p">]]</span>
+    <span class="n">pred_embeddings</span> <span class="o">=</span> <span class="p">[</span><span class="n">embed</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">tool_spec</span><span class="p">[</span><span class="s1">'semantics'</span><span class="p">][</span><span class="s1">'predicates'</span><span class="p">]]</span>
     <span class="n">pred_centroid</span> <span class="o">=</span> <span class="n">average</span><span class="p">(</span><span class="n">pred_embeddings</span><span class="p">)</span>
 
     <span class="c1"># Generate object centroid</span>
-    <span class="n">obj_embeddings</span> <span class="o">=</span> <span class="p">[</span><span class="n">embed</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">tool_spec</span><span class="p">[</span><span class="s1">&#39;semantics&#39;</span><span class="p">][</span><span class="s1">&#39;objects&#39;</span><span class="p">]]</span>
+    <span class="n">obj_embeddings</span> <span class="o">=</span> <span class="p">[</span><span class="n">embed</span><span class="p">(</span><span class="n">o</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">tool_spec</span><span class="p">[</span><span class="s1">'semantics'</span><span class="p">][</span><span class="s1">'objects'</span><span class="p">]]</span>
     <span class="n">obj_centroid</span> <span class="o">=</span> <span class="n">average</span><span class="p">(</span><span class="n">obj_embeddings</span><span class="p">)</span>
 
     <span class="c1"># Store in vector database</span>
     <span class="n">vector_db</span><span class="o">.</span><span class="n">upsert</span><span class="p">(</span>
-        <span class="nb">id</span><span class="o">=</span><span class="n">tool_spec</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">],</span>
+        <span class="nb">id</span><span class="o">=</span><span class="n">tool_spec</span><span class="p">[</span><span class="s1">'id'</span><span class="p">],</span>
         <span class="n">vectors</span><span class="o">=</span><span class="p">{</span>
-            <span class="s1">&#39;canonical&#39;</span><span class="p">:</span> <span class="n">canonical_emb</span><span class="p">,</span>
-            <span class="s1">&#39;predicate&#39;</span><span class="p">:</span> <span class="n">pred_centroid</span><span class="p">,</span>
-            <span class="s1">&#39;object&#39;</span><span class="p">:</span> <span class="n">obj_centroid</span>
+            <span class="s1">'canonical'</span><span class="p">:</span> <span class="n">canonical_emb</span><span class="p">,</span>
+            <span class="s1">'predicate'</span><span class="p">:</span> <span class="n">pred_centroid</span><span class="p">,</span>
+            <span class="s1">'object'</span><span class="p">:</span> <span class="n">obj_centroid</span>
         <span class="p">},</span>
         <span class="n">metadata</span><span class="o">=</span><span class="n">tool_spec</span>
     <span class="p">)</span>
@@ -2172,14 +2172,14 @@
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">find_tools</span><span class="p">(</span><span class="n">user_request</span><span class="p">):</span>
     <span class="c1"># Extract and embed user intent</span>
     <span class="n">extraction</span> <span class="o">=</span> <span class="n">nlp_extract</span><span class="p">(</span><span class="n">user_request</span><span class="p">)</span>
-    <span class="n">query_emb</span> <span class="o">=</span> <span class="n">embed</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">extraction</span><span class="p">[</span><span class="s1">&#39;predicate&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">extraction</span><span class="p">[</span><span class="s1">&#39;object&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">query_emb</span> <span class="o">=</span> <span class="n">embed</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">extraction</span><span class="p">[</span><span class="s1">'predicate'</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">extraction</span><span class="p">[</span><span class="s1">'object'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="c1"># Multi-vector search</span>
     <span class="n">results</span> <span class="o">=</span> <span class="n">vector_db</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
         <span class="n">queries</span><span class="o">=</span><span class="p">[</span>
-            <span class="p">(</span><span class="s1">&#39;canonical&#39;</span><span class="p">,</span> <span class="n">query_emb</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
-            <span class="p">(</span><span class="s1">&#39;predicate&#39;</span><span class="p">,</span> <span class="n">embed</span><span class="p">(</span><span class="n">extraction</span><span class="p">[</span><span class="s1">&#39;predicate&#39;</span><span class="p">]),</span> <span class="n">weight</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>
-            <span class="p">(</span><span class="s1">&#39;object&#39;</span><span class="p">,</span> <span class="n">embed</span><span class="p">(</span><span class="n">extraction</span><span class="p">[</span><span class="s1">&#39;object&#39;</span><span class="p">]),</span> <span class="n">weight</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+            <span class="p">(</span><span class="s1">'canonical'</span><span class="p">,</span> <span class="n">query_emb</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
+            <span class="p">(</span><span class="s1">'predicate'</span><span class="p">,</span> <span class="n">embed</span><span class="p">(</span><span class="n">extraction</span><span class="p">[</span><span class="s1">'predicate'</span><span class="p">]),</span> <span class="n">weight</span><span class="o">=</span><span class="mf">0.3</span><span class="p">),</span>
+            <span class="p">(</span><span class="s1">'object'</span><span class="p">,</span> <span class="n">embed</span><span class="p">(</span><span class="n">extraction</span><span class="p">[</span><span class="s1">'object'</span><span class="p">]),</span> <span class="n">weight</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
         <span class="p">],</span>
         <span class="n">top_k</span><span class="o">=</span><span class="mi">10</span>
     <span class="p">)</span>
@@ -2288,10 +2288,10 @@
 <p>To improve recall, queries can be expanded:</p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">expand_query</span><span class="p">(</span><span class="n">predicate</span><span class="p">,</span> <span class="nb">object</span><span class="p">):</span>
     <span class="c1"># Use LLM to generate synonyms</span>
-    <span class="n">expansions</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">complete</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">        Given the action &quot;</span><span class="si">{</span><span class="n">predicate</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nb">object</span><span class="si">}</span><span class="s2">&quot;,</span>
+    <span class="n">expansions</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">complete</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
+<span class="s2">        Given the action "</span><span class="si">{</span><span class="n">predicate</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nb">object</span><span class="si">}</span><span class="s2">",</span>
 <span class="s2">        list 5 synonymous phrases:</span>
-<span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s2">    """</span><span class="p">)</span>
 
     <span class="c1"># Embed all expansions</span>
     <span class="n">embeddings</span> <span class="o">=</span> <span class="p">[</span><span class="n">embed</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">expansions</span><span class="p">]</span>
@@ -2303,13 +2303,13 @@
 <h2 id="negative-examples">Negative Examples<a class="headerlink" href="#negative-examples" title="Permanent link">&para;</a></h2>
 <p>Tools can register what they are NOT:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">tool</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;slack-send-message&quot;</span>
+<span class="w">  </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">"slack-send-message"</span>
 <span class="w">  </span><span class="nt">semantics</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">canonical</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;send</span><span class="nv"> </span><span class="s">message</span><span class="nv"> </span><span class="s">via</span><span class="nv"> </span><span class="s">Slack&quot;</span>
+<span class="w">    </span><span class="nt">canonical</span><span class="p">:</span><span class="w"> </span><span class="s">"send</span><span class="nv"> </span><span class="s">message</span><span class="nv"> </span><span class="s">via</span><span class="nv"> </span><span class="s">Slack"</span>
 <span class="w">    </span><span class="nt">not</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;send</span><span class="nv"> </span><span class="s">email&quot;</span><span class="w">      </span><span class="c1"># Prevent confusion with email</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;schedule</span><span class="nv"> </span><span class="s">message&quot;</span><span class="w"> </span><span class="c1"># Different tool</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;send</span><span class="nv"> </span><span class="s">file&quot;</span><span class="w">       </span><span class="c1"># Use /file endpoint instead</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"send</span><span class="nv"> </span><span class="s">email"</span><span class="w">      </span><span class="c1"># Prevent confusion with email</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"schedule</span><span class="nv"> </span><span class="s">message"</span><span class="w"> </span><span class="c1"># Different tool</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"send</span><span class="nv"> </span><span class="s">file"</span><span class="w">       </span><span class="c1"># Use /file endpoint instead</span>
 </code></pre></div>
 <p>Negative examples create "repulsion" in the embedding space.</p>
 <hr />
@@ -2393,7 +2393,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

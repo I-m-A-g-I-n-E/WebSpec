@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2145,7 +2145,7 @@
 <h2 id="service-connection-flow">Service Connection Flow<a class="headerlink" href="#service-connection-flow" title="Permanent link">&para;</a></h2>
 <h3 id="initial-oauth">Initial OAuth<a class="headerlink" href="#initial-oauth" title="Permanent link">&para;</a></h3>
 <p>When a user first connects a service:</p>
-<div class="highlight"><pre><span></span><code>1. User clicks &quot;Connect Slack&quot;
+<div class="highlight"><pre><span></span><code>1. User clicks "Connect Slack"
            |
            v
 2. Redirect to Slack OAuth:
@@ -2209,22 +2209,22 @@
    POST https://auth.gimme.tools/token
    Cookie: session=xxx
    Body: {
-     &quot;service&quot;: &quot;slack.gimme.tools&quot;,
-     &quot;scope&quot;: [&quot;GET:/message.*&quot;, &quot;POST:/message.*&quot;]
+     "service": "slack.gimme.tools",
+     "scope": ["GET:/message.*", "POST:/message.*"]
    }
            |
            v
 3. auth.gimme.tools validates:
    - Session cookie valid?
    - User has connected Slack?
-   - Requested scope is subset of user&#39;s authorized scope?
+   - Requested scope is subset of user's authorized scope?
            |
            v
 4. Returns scoped token:
    {
-     &quot;token&quot;: &quot;eyJ...&quot;,
-     &quot;expires_in&quot;: 3600,
-     &quot;scope&quot;: [&quot;GET:/message.*&quot;, &quot;POST:/message.*&quot;]
+     "token": "eyJ...",
+     "expires_in": 3600,
+     "scope": ["GET:/message.*", "POST:/message.*"]
    }
            |
            v
@@ -2262,13 +2262,13 @@
 <hr />
 <h2 id="token-refresh">Token Refresh<a class="headerlink" href="#token-refresh" title="Permanent link">&para;</a></h2>
 <p>Service tokens are short-lived (1 hour typical). Refresh is automatic:</p>
-<div class="highlight"><pre><span></span><code>1. Client&#39;s token approaching expiry
+<div class="highlight"><pre><span></span><code>1. Client's token approaching expiry
            |
            v
 2. Request new token:
    POST https://auth.gimme.tools/token/refresh
    Cookie: session=xxx
-   Body: {&quot;service&quot;: &quot;slack.gimme.tools&quot;}
+   Body: {"service": "slack.gimme.tools"}
            |
            v
 3. auth.gimme.tools validates session, issues new token
@@ -2366,7 +2366,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

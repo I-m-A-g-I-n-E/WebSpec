@@ -42,12 +42,13 @@ logger = logging.getLogger("webspec.approval")
 APPROVAL_NAMESPACE = "webspec-approval"
 APPROVAL_TTL = 300  # seconds
 SIGN_PREFIX = "webspec-approval/v1"
-MAX_PENDING = 1000
+MAX_PENDING_PER_SERVICE = 100  # per destination: one noisy service can't starve the others
 MAX_FAILED_ATTEMPTS = 5
 SSH_KEYGEN_TIMEOUT = 10.0
 
 PENDING = "pending"
 VERIFYING = "verifying"
+APPROVED = "approved"  # signature verified, not yet spent (spent only when the call commits)
 USED = "used"
 
 
@@ -92,12 +93,14 @@ def dearmor(armored: str) -> str:
 class _Challenge:
     fingerprint: str
     created_at: float
+    service: str = ""
     state: str = PENDING
     failures: int = 0
+    signature_sha256: str = ""
 
 
 class ApprovalStore:
-    def __init__(self, ttl: float = APPROVAL_TTL, max_pending: int = MAX_PENDING):
+    def __init__(self, ttl: float = APPROVAL_TTL, max_pending: int = MAX_PENDING_PER_SERVICE):
         self._ttl = ttl
         self._max = max_pending
         self._challenges: dict[str, _Challenge] = {}  # insertion order == age order
@@ -122,10 +125,11 @@ class ApprovalStore:
         cid = next((c for c, ch in self._challenges.items()
                     if ch.fingerprint == fingerprint and ch.state == PENDING), None)
         if cid is None:
-            if len(self._challenges) >= self._max:
+            service = str(summary.get("service", ""))
+            if sum(1 for ch in self._challenges.values() if ch.service == service) >= self._max:
                 return None
             cid = secrets.token_hex(16)
-            self._challenges[cid] = _Challenge(fingerprint=fingerprint, created_at=now)
+            self._challenges[cid] = _Challenge(fingerprint=fingerprint, created_at=now, service=service)
         return {
             "error": "approval_required",
             "detail": "This action requires human approval (level 4). "
@@ -140,7 +144,12 @@ class ApprovalStore:
         }
 
     async def verify(self, header: str | None, fingerprint: str) -> str | None:
-        """Return None if the header carries a valid, fresh, matching approval; else an error code."""
+        """Return None if the header carries a valid, fresh, matching, unspent approval; else an error.
+
+        Verifying does NOT spend the approval: it moves to APPROVED, and ``spend()`` consumes
+        it only when the request commits to running. A retry carrying the same signature
+        (e.g. after a lost idempotency race) is accepted again without re-running ssh-keygen.
+        """
         if not header:
             return "approval_missing"
         cid, sep, blob = header.strip().partition(":")
@@ -165,6 +174,10 @@ class ApprovalStore:
             return "approval_in_progress"
         if not secrets.compare_digest(ch.fingerprint, fingerprint):
             return "approval_mismatch"
+        blob_sha = hashlib.sha256(blob.encode()).hexdigest()
+        if ch.state == APPROVED:
+            # Bound to the signature that approved it.
+            return None if secrets.compare_digest(ch.signature_sha256, blob_sha) else "approval_invalid"
 
         approvers = os.environ.get("WEBSPEC_APPROVERS_FILE", "")
         keygen = os.environ.get("WEBSPEC_SSH_KEYGEN") or shutil.which("ssh-keygen")
@@ -181,13 +194,26 @@ class ApprovalStore:
         finally:
             # Runs on cancellation too, so a challenge can never be stranded in VERIFYING.
             if ok:
-                ch.state = USED
+                ch.state = APPROVED
+                ch.signature_sha256 = blob_sha
             else:
                 ch.failures += 1
                 ch.state = PENDING
                 if ch.failures >= MAX_FAILED_ATTEMPTS:
                     self._challenges.pop(cid, None)
         return None if ok else "approval_invalid"
+
+    def can_spend(self, header: str | None) -> bool:
+        ch = self._challenges.get((header or "").strip().partition(":")[0])
+        return ch is not None and ch.state == APPROVED
+
+    def spend(self, header: str | None) -> bool:
+        """Consume a verified approval. Call with no ``await`` between can_spend() and here."""
+        ch = self._challenges.get((header or "").strip().partition(":")[0])
+        if ch is None or ch.state != APPROVED:
+            return False
+        ch.state = USED
+        return True
 
 
 async def _run(argv: list[str], stdin: bytes | None = None) -> tuple[int, bytes]:

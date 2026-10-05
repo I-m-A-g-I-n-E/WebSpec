@@ -170,6 +170,13 @@ def _idempotency_response(decision: idem.Decision) -> Response:
                   "tool, so the tool may have run. Verify the outcome, then retry with a new key.")
 
 
+def _audited_idempotency_response(audit_ctx, decision: idem.Decision) -> Response:
+    response = _idempotency_response(decision)
+    reason = None if decision.kind == "replay" else f"idempotency_{decision.kind}"
+    audit.record(audit_ctx, outcome=f"idempotency:{decision.kind}", status=response.status_code, reason=reason)
+    return response
+
+
 # ── Service-level handlers (on {service}.<domain>) ──
 
 
@@ -341,8 +348,7 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
         fingerprint = idem.request_fingerprint(method, "/" + path, cquery, body)
         early_decision = idem.store.peek(service, idem_key, fingerprint)
         if early_decision.kind != "proceed":
-            audit.record(audit_ctx, outcome=f"idempotency:{early_decision.kind}", status=None, reason=None)
-            return _idempotency_response(early_decision)
+            return _audited_idempotency_response(audit_ctx, early_decision)
 
     # 4. Contract + tier rules (clearance is checked here, spent only at commit — step 5)
     clearance_header = request.headers.get("X-UFO-Clearance")
@@ -368,15 +374,20 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
             status = 503 if err == "approval_unavailable" else 403
             return deny(status, err, "Human approval missing, invalid, expired, reused, or for a different request")
 
-    # 5. Commit: spend the clearance and claim the idempotency key atomically — no await
-    #    between here and the tool call's start, so neither can be double-spent.
-    if reqs.clearance and not guard_mod.spend_clearance(clearance_header, service):
+    # 5. Commit: check → claim → spend, with no await from here until call_tool starts, so
+    #    nothing can be double-spent and nothing one-shot is spent unless the call runs.
+    if reqs.clearance and guard_mod.clearance_spent(clearance_header, service):
         return deny(403, "clearance_reused", "This X-UFO-Clearance token was already spent")
+    if reqs.approval and not approval_mod.store.can_spend(approval_header):
+        return deny(403, "approval_reused", "This approval was already spent")
     if use_idem:
         claim = idem.store.begin(service, idem_key, fingerprint)
         if claim.kind != "proceed":
-            audit.record(audit_ctx, outcome=f"idempotency:{claim.kind}", status=None, reason=None)
-            return _idempotency_response(claim)
+            return _audited_idempotency_response(audit_ctx, claim)
+    if reqs.clearance:
+        guard_mod.spend_clearance(clearance_header, service)
+    if reqs.approval:
+        approval_mod.store.spend(approval_header)
 
     # 6. Invoke. From here on the tool may have run, so every exit settles the key.
     try:

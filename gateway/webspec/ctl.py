@@ -93,6 +93,11 @@ def cmd_add(args: argparse.Namespace) -> int:
         print(f"Error: service '{name}' already exists (use --force to update)", file=sys.stderr)
         return 1
 
+    # Guard: explicit flag wins; --force keeps the existing setting; new services default to guarded.
+    previous = existing.get(name, {}) if isinstance(existing, dict) else {}
+    if args.guard is None:
+        args.guard = bool(previous.get("guard", False)) if previous else True
+
     # --port shorthand: expand to --type http --url http://localhost:PORT --no-guard
     if args.port:
         args.svc_type = "http"
@@ -174,7 +179,6 @@ def cmd_add(args: argparse.Namespace) -> int:
 
     # Security settings are never silently dropped by --force: keep the existing
     # level / tool overrides / qualifier labels unless explicitly replaced.
-    previous = existing.get(name, {}) if isinstance(existing, dict) else {}
     for key in ("level", "tools", "labels"):
         if key in previous:
             entry[key] = previous[key]
@@ -234,8 +238,8 @@ def cmd_ls(args: argparse.Namespace) -> int:
         return 0
 
     # Header
-    print(f"{'NAME':<20} {'TYPE':<8} {'LEVEL':<8} {'HEALTH':<10} {'URL'}")
-    print("-" * 75)
+    print(f"{'NAME':<20} {'TYPE':<8} {'LEVEL':<12} {'HEALTH':<10} {'URL'}")
+    print("-" * 79)
 
     for name, cfg in sorted(services.items()):
         normalized = normalize_name(name)
@@ -356,8 +360,8 @@ def build_parser() -> argparse.ArgumentParser:
                        help="Command arguments (repeatable)")
     add_p.add_argument("--env", action="append", metavar="KEY=VALUE", dest="svc_env",
                        help="Environment variable (repeatable)")
-    add_p.add_argument("--guard", action="store_true", default=True,
-                       help="Require HMAC auth (default)")
+    add_p.add_argument("--guard", action="store_true", default=None,
+                       help="Require HMAC auth (default for new services; --force keeps the existing setting)")
     add_p.add_argument("--no-guard", dest="guard", action="store_false",
                        help="Disable HMAC auth")
     add_p.add_argument("--secret", action="append", metavar="ENV_VAR",

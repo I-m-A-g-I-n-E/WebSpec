@@ -317,3 +317,71 @@ def test_approver_confirm_works_on_a_real_pty():
     script = os.path.join(os.path.dirname(__file__), "fixtures", "pty_confirm.py")
     result = subprocess.run([sys.executable, script], timeout=30, capture_output=True)
     assert result.returncode == 0, result
+
+
+
+# ── Cloud ultrareview: per-destination capacity ──
+
+def test_idempotency_capacity_is_per_destination():
+    s = IdempotencyStore(max_entries=1)
+    s.begin("noisy", "A", "f")
+    s.mark_unknown("noisy", "A")
+    assert s.begin("noisy", "B", "f").kind == "full"
+    assert s.begin("quiet", "B", "f").kind == "proceed"  # other services unaffected
+
+
+def test_approval_capacity_is_per_destination():
+    store = approval_mod.ApprovalStore(max_pending=1)
+    assert store.issue(approval_mod.request_summary("DELETE", "noisy", "h", "/p", "p", {"i": 1}, b"")) is not None
+    assert store.issue(approval_mod.request_summary("DELETE", "noisy", "h", "/p", "p", {"i": 2}, b"")) is None
+    assert store.issue(approval_mod.request_summary("DELETE", "quiet", "h", "/p", "p", {"i": 1}, b"")) is not None
+
+
+# ── Cloud ultrareview: one-shot credentials are spent only when the call commits ──
+
+@pytest.mark.skipif(not __import__("shutil").which("ssh-keygen"), reason="ssh-keygen not installed")
+def test_failed_idempotency_commit_does_not_burn_the_approval(monkeypatch, tmp_path):
+    from webspec import idempotency
+    from webspec.approval import sign_message
+    from webspec.guard import canonical_query
+    from tests._gateway import make_approver, ssh_sign
+
+    key, signers = make_approver(tmp_path)
+    monkeypatch.setenv("WEBSPEC_APPROVERS_FILE", str(signers))
+    client, pool = make_client(monkeypatch, [entry(level=4)], _tools())
+    hdrs = {"X-Gimme-Definer": bookend("DELETE", "PURGE", b""), "Idempotency-Key": "p-1",
+            "X-UFO-Clearance": clearance("purge", {"days": "30"}, method="DELETE")}
+    ch = request(client, "DELETE", H, "/purge", query="days=30", guarded=True, headers=hdrs).json()
+    hdrs["X-WebSpec-Approval"] = f"{ch['challenge']}:{ssh_sign(key, sign_message(ch['challenge'], ch['fingerprint']))}"
+
+    # A concurrent attempt holds the key, so this commit loses the race (409)…
+    fp = idempotency.request_fingerprint("DELETE", "/purge", canonical_query("days=30"), b"")
+    idempotency.store.begin("svc", "p-1", fp)
+    r = request(client, "DELETE", H, "/purge", query="days=30", guarded=True, headers=hdrs)
+    assert r.status_code == 409 and pool.calls == []
+    # …but neither the human's signature nor the clearance was spent: the retry succeeds.
+    idempotency.store.abandon("svc", "p-1")
+    r = request(client, "DELETE", H, "/purge", query="days=30", guarded=True, headers=hdrs)
+    assert r.status_code == 200, r.text
+    assert len(pool.calls) == 1
+    # Once committed, both are spent.
+    hdrs["Idempotency-Key"] = "p-2"
+    assert request(client, "DELETE", H, "/purge", query="days=30", guarded=True, headers=hdrs).json()["error"] in (
+        "clearance_reused", "approval_reused")
+
+
+# ── Cloud ultrareview: idempotency decisions carry their real status in the audit log ──
+
+def test_idempotency_audit_entries_have_status(monkeypatch, tmp_path):
+    client, _ = make_client(monkeypatch, [entry(level=2)], _tools())
+    body = b'{"to":"x"}'
+    hdrs = {"X-Gimme-Definer": bookend("POST", "SEND", body), "Idempotency-Key": "s-1"}
+    request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
+    request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)  # replay
+    other = b'{"to":"y"}'
+    request(client, "POST", H, "/send_thing", body=other, guarded=True,
+            headers={"X-Gimme-Definer": bookend("POST", "SEND", other), "Idempotency-Key": "s-1"})  # mismatch
+    idem_entries = [e for e in _audit_lines(tmp_path) if e["outcome"].startswith("idempotency:")]
+    assert [(e["outcome"], e["status"]) for e in idem_entries] == [
+        ("idempotency:replay", 200), ("idempotency:mismatch", 422)]
+    assert idem_entries[1]["reason"] == "idempotency_mismatch"

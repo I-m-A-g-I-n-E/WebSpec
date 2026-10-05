@@ -254,11 +254,18 @@ class _SpentClearances:
     def __init__(self) -> None:
         self._spent: dict[str, float] = {}
 
+    def _purge(self, now: float) -> None:
+        for k in [k for k, exp in self._spent.items() if exp < now]:
+            del self._spent[k]
+
+    def is_spent(self, token_and_ts: str) -> bool:
+        self._purge(time.monotonic())
+        return token_and_ts in self._spent
+
     def spend(self, token_and_ts: str) -> bool:
         """Mark as spent; False if it already was."""
         now = time.monotonic()
-        for k in [k for k, exp in self._spent.items() if exp < now]:
-            del self._spent[k]
+        self._purge(now)
         if token_and_ts in self._spent:
             return False
         self._spent[token_and_ts] = now + 2 * CLEARANCE_TTL + 1
@@ -268,6 +275,15 @@ class _SpentClearances:
 spent_clearances = _SpentClearances()
 
 
+def _clearance_key(header: str, service: str) -> str:
+    token, _, timestamp = header.rpartition(":")
+    return f"{token.lower()}:{timestamp}:{service}"
+
+
+def clearance_spent(header: str, service: str = "") -> bool:
+    return spent_clearances.is_spent(_clearance_key(header, service))
+
+
 def spend_clearance(header: str, service: str = "") -> bool:
     """Spend a clearance that already validated. False if it was already spent.
 
@@ -275,8 +291,7 @@ def spend_clearance(header: str, service: str = "") -> bool:
     committed to run, so a request refused for some later reason (e.g. a level-4
     approval challenge) does not burn the token its approved retry needs.
     """
-    token, _, timestamp = header.rpartition(":")
-    return spent_clearances.spend(f"{token.lower()}:{timestamp}:{service}")
+    return spent_clearances.spend(_clearance_key(header, service))
 
 
 def validate_clearance_token(

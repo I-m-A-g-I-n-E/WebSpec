@@ -35,6 +35,28 @@ GENESIS = "0" * 64
 
 _lock = threading.Lock()
 _state: dict[str, str] = {}  # path -> hash of last line written by this process
+_fds: dict[str, tuple[int, int]] = {}  # path -> (open O_APPEND fd, its inode)
+
+
+def _append_fd(path: Path) -> int:
+    """One cached O_APPEND descriptor per path (one stat per write, not mkdir/open/close).
+
+    Reopens when the path was renamed away (rotation) or replaced by another file.
+    """
+    key = str(path)
+    cached = _fds.get(key)
+    try:
+        inode = os.stat(path).st_ino
+    except FileNotFoundError:
+        inode = None
+    if cached is not None and cached[1] == inode:
+        return cached[0]
+    if cached is not None:
+        os.close(cached[0])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+    _fds[key] = (fd, os.fstat(fd).st_ino)
+    return fd
 
 
 @dataclass(frozen=True)
@@ -103,16 +125,11 @@ def record(ctx: Context, *, outcome: str, status: int | None, reason: str | None
     }
     try:
         with _lock:
-            path.parent.mkdir(parents=True, exist_ok=True)
             key = str(path)
             prev = _state.get(key) or _last_hash(path)
             entry["prev"] = prev
             line = canonical_json(entry).encode()
-            fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
-            try:
-                os.write(fd, line + b"\n")
-            finally:
-                os.close(fd)
+            os.write(_append_fd(path), line + b"\n")
             _state[key] = hashlib.sha256(line).hexdigest()
     except OSError:
         logger.exception("Audit log write failed (%s)", path)

@@ -14,9 +14,10 @@ re-execute side effects.
 
 Limits (spec §7): the store is in-memory and per-process. A restart forgets every key,
 including "outcome unknown" ones, and separate worker processes do not share it — run
-the gateway as a single process. Records that could cause a re-execution if forgotten
+the gateway as a single process. Capacity is per destination (scope), so one noisy
+service cannot exhaust another's. Records that could cause a re-execution if forgotten
 (in-flight, unknown) are never evicted for capacity; when only such records remain the
-store refuses new keys (``full``) instead.
+store refuses new keys for that destination (``full``) instead.
 """
 
 from __future__ import annotations
@@ -28,7 +29,7 @@ from dataclasses import dataclass, field
 
 IDEMPOTENCY_TTL = 24 * 3600   # seconds a settled result stays replayable / blocking
 IN_FLIGHT_TTL = 15 * 60       # an in-flight record older than this is treated as unknown
-MAX_ENTRIES = 10_000
+MAX_ENTRIES = 2_000  # per destination (scope)
 MAX_KEY_LENGTH = 255
 MAX_REPLAY_BODY = 256 * 1024  # larger results are remembered as "done" but not replayed
 
@@ -83,9 +84,9 @@ class IdempotencyStore:
         self._ttl = ttl
         self._max = max_entries
         self._in_flight_ttl = in_flight_ttl
-        # Ordered by last state change: settled records move to the end, so the front
-        # holds the oldest ones.
-        self._records: OrderedDict[tuple[str, str], _Record] = OrderedDict()
+        # Per scope (destination), ordered by last state change: settled records move to
+        # the end, so the front holds the oldest ones.
+        self._scopes: dict[str, OrderedDict[str, _Record]] = {}
 
     def _age_out(self, rec: _Record, now: float) -> bool:
         """Apply time-based transitions; True if the record has expired entirely."""
@@ -93,10 +94,14 @@ class IdempotencyStore:
             rec.state, rec.updated_at = UNKNOWN, now
         return rec.state != IN_FLIGHT and now - rec.updated_at > self._ttl
 
+    def _records(self, scope: str) -> OrderedDict[str, _Record]:
+        return self._scopes.setdefault(scope, OrderedDict())
+
     def _lookup(self, scope: str, key: str, now: float) -> _Record | None:
-        rec = self._records.get((scope, key))
+        records = self._scopes.get(scope)
+        rec = records.get(key) if records else None
         if rec is not None and self._age_out(rec, now):
-            del self._records[(scope, key)]
+            del records[key]
             return None
         return rec
 
@@ -110,14 +115,15 @@ class IdempotencyStore:
             return Decision("replay", rec.response)
         return Decision(rec.state)  # in_flight | unknown
 
-    def _make_room(self, now: float) -> bool:
-        for k in [k for k, r in self._records.items() if self._age_out(r, now)]:
-            del self._records[k]
-        while len(self._records) >= self._max:
-            victim = next((k for k, r in self._records.items() if r.state == DONE), None)
+    def _make_room(self, scope: str, now: float) -> bool:
+        records = self._records(scope)
+        for k in [k for k, r in records.items() if self._age_out(r, now)]:
+            del records[k]
+        while len(records) >= self._max:
+            victim = next((k for k, r in records.items() if r.state == DONE), None)
             if victim is None:
                 return False  # only in-flight/unknown left: never evict those
-            del self._records[victim]
+            del records[victim]
         return True
 
     def peek(self, scope: str, key: str, fingerprint: str) -> Decision:
@@ -133,16 +139,17 @@ class IdempotencyStore:
         decision = self._classify(self._lookup(scope, key, now), fingerprint)
         if decision.kind != "proceed":
             return decision
-        if not self._make_room(now):
+        if not self._make_room(scope, now):
             return Decision("full")
-        self._records[(scope, key)] = _Record(fingerprint=fingerprint, state=IN_FLIGHT, updated_at=now)
+        self._records(scope)[key] = _Record(fingerprint=fingerprint, state=IN_FLIGHT, updated_at=now)
         return decision
 
     def _settle(self, scope: str, key: str, state: str, response: StoredResponse | None = None) -> None:
-        rec = self._records.get((scope, key))
+        records = self._scopes.get(scope)
+        rec = records.get(key) if records else None
         if rec is not None:
             rec.state, rec.response, rec.updated_at = state, response, time.monotonic()
-            self._records.move_to_end((scope, key))
+            records.move_to_end(key)
 
     def complete(self, scope: str, key: str, response: StoredResponse) -> None:
         self._settle(scope, key, DONE, response)
@@ -153,9 +160,10 @@ class IdempotencyStore:
 
     def abandon(self, scope: str, key: str) -> None:
         """The tool definitely did not run — free the key for a retry."""
-        rec = self._records.get((scope, key))
+        records = self._scopes.get(scope)
+        rec = records.get(key) if records else None
         if rec is not None and rec.state == IN_FLIGHT:
-            del self._records[(scope, key)]
+            del records[key]
 
 
 def snapshot_response(status_code: int, body: bytes, media_type: str | None, headers) -> StoredResponse:

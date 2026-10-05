@@ -206,10 +206,17 @@ those checks pass. If the server refuses the call with a JSON-RPC error (so it d
 key is released.
 
 **Limits.** The store is in-memory and per-process: run the gateway as a single process, and
-know that a restart forgets every key, including "outcome unknown" ones. In-flight and unknown
-records are never evicted for capacity (that could re-execute a side effect); when only such
-records remain, new keys get `503 idempotency_store_full`. An in-flight record older than
-15 minutes becomes unknown.
+know that a restart forgets every key, including "outcome unknown" ones. Capacity is **per
+destination** (2,000 keys each), so one noisy service cannot exhaust another's. In-flight and
+unknown records are never evicted for capacity (that could re-execute a side effect); when only
+such records remain, new keys for that destination get `503 idempotency_store_full`. An in-flight
+record older than 15 minutes becomes unknown.
+
+**Commit order.** One-shot credentials are never spent unless the call actually runs. After all
+checks pass, the gateway — with no suspension point until the tool call starts — (1) confirms the
+clearance and approval are still unspent, (2) claims the idempotency key, then (3) spends the
+clearance and the approval. If the claim fails (another attempt holds the key), nothing was spent
+and the approved retry still works.
 
 ## 8. Human approval (level 4)
 
@@ -229,10 +236,12 @@ records remain, new keys get `503 idempotency_store_full`. An in-flight record o
 
 Challenges are single-use and expire after 300 s; a challenge cannot approve a different request
 (`approval_mismatch`), a second time (`approval_reused`), or with an unlisted key
-(`approval_invalid`); five invalid signatures burn it. A retry of the same request gets the same
-pending challenge back. Pending challenges are never evicted to make room — a full queue refuses
-new challenges (`429 approval_queue_full`) — so a guard-key holder cannot flush out the challenge
-a human is signing. If no approvers are configured, level-4 requests fail closed
+(`approval_invalid`); five invalid signatures burn it. Verifying a signature does not spend it:
+the approval is spent only when the call commits (§7), and a retry carrying the same signature is
+accepted again. A retry of the same request gets the same pending challenge back. Pending
+challenges are never evicted to make room — a full queue (100 per destination) refuses new
+challenges (`429 approval_queue_full`) — so a guard-key holder cannot flush out the challenge a
+human is signing, nor starve another destination's approvals. If no approvers are configured, level-4 requests fail closed
 (`503 approval_unavailable`). The retired `/__challenge` endpoint returns `410 Gone`: it minted a
 challenge that nothing ever verified.
 

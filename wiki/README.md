@@ -1,5 +1,8 @@
 # WebSpec
 
+> This wiki is a generated mirror of `docs/` (canonical source, published at webspec.gimme.tools).
+> Do not edit here directly — edit `docs/` and re-sync.
+
 **A protocol specification for tool invocation that meshes with web architecture rather than building on top of it.**
 
 ## What is WebSpec?

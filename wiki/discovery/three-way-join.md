@@ -2,6 +2,12 @@
 
 The Three-Way Join is the core discovery algorithm that matches user intent with available tools.
 
+> **Status: Proposed (C).** No resolver, registry, or ranking exists in the implemented gateway
+> today. In the current implementation the path segment is the MCP tool name (e.g. `send_message`);
+> the tool names below (`send_message`, `upload_file`, `share_spreadsheet`, …) illustrate that form.
+> The `/collection/id` REST-hierarchy shown in some examples elsewhere in these docs is itself
+> Proposed (C) — see [Complete Grammar (EBNF)](../url-grammar/complete-grammar-ebnf.md).
+
 ## The Three Data Sources
 
 ```
@@ -130,11 +136,11 @@ Where:
 
 | Tool | Semantic Similarity |
 |---|---|
-| POST /message.slack | 0.85 |
-| POST /file.slack | 0.82 |
-| POST /message.teams | 0.78 |
-| POST /file.gdrive | 0.65 |
-| POST /spreadsheet.gsheets | 0.60 |
+| POST slack.gimme.tools/send_message | 0.85 |
+| POST slack.gimme.tools/upload_file | 0.82 |
+| POST teams.gimme.tools/send_message | 0.78 |
+| POST gdrive.gimme.tools/upload_file | 0.65 |
+| POST gsheets.gimme.tools/share_spreadsheet | 0.60 |
 
 ### Step 3: User Classification
 
@@ -150,20 +156,20 @@ User's keychain hints:
 
 | Tool | Similarity | Status | Weight | Final |
 |---|---|---|---|---|
-| POST /message.slack | 0.85 | CONNECTED | 1.0 | **0.85** |
-| POST /file.slack | 0.82 | CONNECTED | 1.0 | **0.82** |
-| POST /message.teams | 0.78 | KEYCHAIN | 0.8 | **0.62** |
-| POST /file.gdrive | 0.65 | CONNECTED | 1.0 | **0.65** |
-| POST /spreadsheet.gsheets | 0.60 | AVAILABLE | 0.5 | **0.30** |
+| POST slack.gimme.tools/send_message | 0.85 | CONNECTED | 1.0 | **0.85** |
+| POST slack.gimme.tools/upload_file | 0.82 | CONNECTED | 1.0 | **0.82** |
+| POST teams.gimme.tools/send_message | 0.78 | KEYCHAIN | 0.8 | **0.62** |
+| POST gdrive.gimme.tools/upload_file | 0.65 | CONNECTED | 1.0 | **0.65** |
+| POST gsheets.gimme.tools/share_spreadsheet | 0.60 | AVAILABLE | 0.5 | **0.30** |
 
 ### Step 4: Ranked Results
 
 ```
-1. POST /message.slack     (0.85) - Connected
-2. POST /file.slack        (0.82) - Connected
-3. POST /file.gdrive       (0.65) - Connected
-4. POST /message.teams     (0.62) - In keychain
-5. POST /spreadsheet       (0.30) - Available
+1. POST slack.gimme.tools/send_message      (0.85) - Connected
+2. POST slack.gimme.tools/upload_file       (0.82) - Connected
+3. POST gdrive.gimme.tools/upload_file      (0.65) - Connected
+4. POST teams.gimme.tools/send_message      (0.62) - In keychain
+5. POST gsheets.gimme.tools/share_spreadsheet (0.30) - Available
 ```
 
 ---
@@ -176,16 +182,16 @@ User's keychain hints:
 +-------------------------------------------------------+
 |                                                       |
 | * Slack - #finance channel          [Send Message]    |
-|   POST /message.slack?channel=finance                 |
+|   POST slack.gimme.tools/send_message?channel=finance |
 |                                                       |
 | * Slack - Upload file               [Upload]          |
-|   POST /file.slack?channel=finance                    |
+|   POST slack.gimme.tools/upload_file?channel=finance  |
 |                                                       |
 | * Google Drive                      [Save]            |
-|   POST /file.gdrive                                  |
+|   POST gdrive.gimme.tools/upload_file                |
 |                                                       |
 | * Microsoft Teams (in 1Password)    [Connect - FaceID]|
-|   POST /message.teams                                 |
+|   POST teams.gimme.tools/send_message                 |
 |                                                       |
 +-------------------------------------------------------+
 ```

@@ -62,7 +62,25 @@ No SDK required. No client library. No protocol translation.
 
 ## Status
 
-| Section | Status |
+WebSpec started as a much larger aspirational design than the gateway currently builds. This
+table tells you, per area, whether a section describes the live system or the roadmap. See
+[ROADMAP-C.md](ROADMAP-C.md) for the index of everything marked **Proposed (C)**.
+
+| Section | State |
+|---|---|
+| Subdomain routing (path = MCP tool name) | **Implemented (B)** |
+| HMAC guard + nonce, password-manager–sourced key | **Implemented (B)** |
+| Definer verbs | **Implemented (B)** |
+| op-auth UFO tiers | **Implemented (B)** |
+| Semantic resolution / embedding registry | Proposed (see registry package) |
+| REST collection hierarchy, format suffixes, DELETE | **Proposed (C)** |
+| OAuth/JWT, multi-tenant, keychain FaceID flow | **Proposed (C)** |
+
+Below this table, "Draft" markers on individual spec sections describe the *aspirational* design
+that section documents, not implementation status — consult the table above for what actually
+ships.
+
+| Section | Draft Status |
 |---|---|
 | URL Grammar | Draft |
 | HTTP Methods | Draft |
@@ -72,3 +90,23 @@ No SDK required. No client library. No protocol translation.
 | Service Registration | Draft |
 | Definer Verbs & Payload Binding | Draft (new) |
 | Philosophical Foundations | Conceptual (non-normative) |
+
+## Domains & Ports
+
+The spec prose on this site uses `gimme.tools` throughout — that's the intended **product**
+domain for the public, multi-tenant WebSpec service the spec describes (**Proposed (C)**). It is
+aspirational; nothing is currently deployed there.
+
+The reference implementation that actually ships today (**Implemented (B)**) runs on a different
+domain, `i-a-m.live`, in front of a two-hop local topology:
+
+```
+*.i-a-m.live  -->  Cloudflare tunnel  -->  Caddy (:7001)  -->  gateway (:7002)
+```
+
+Caddy terminates the tunnel and listens on port 7001; it reverse-proxies to the Starlette gateway
+process, which listens on port 7002. Where other pages in this spec say ".gimme.tools" or refer to
+"the gateway on localhost:7001," read that as the spec/vision domain and port — the live
+deployment fact is `i-a-m.live` via Caddy on `:7001` in front of the gateway on `:7002`. Keeping
+`gimme.tools` in the spec prose is intentional (it names the product this spec is designing
+toward); this section is a clarifying note, not a rename.

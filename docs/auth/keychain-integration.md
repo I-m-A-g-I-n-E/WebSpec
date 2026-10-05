@@ -1,5 +1,12 @@
 # Keychain Integration
 
+> **Status: Proposed (C).** The three-way join (connected/available/keychain matching), biometric
+> auto-connect flow, and crowdsourced integration requests described below are not implemented —
+> see the [status matrix](../index.md#status) and [ROADMAP-C.md](../ROADMAP-C.md) (semantic
+> resolver / keychain graph, §5). Where examples show request paths, they use the implementation's
+> path form (path = MCP tool name, e.g. `upload_file`), not an `object.provider` path segment
+> (banned — see [Core Syntax](../url-grammar/core-syntax.md)).
+
 Password managers already know which services you use. WebSpec leverages this for **zero-friction service discovery**.
 
 ## The Insight
@@ -172,13 +179,13 @@ user:
 +----------------------------------------------------------+
 |                                                          |
 | [connected] Slack                         [Use This]     |
-|   POST /file.slack                                       |
+|   POST slack.gimme.tools/upload_file                      |
 |                                                          |
 | [in 1Password] Discord                [Connect - FaceID] |
-|   POST /file.discord                                     |
+|   POST discord.gimme.tools/upload_file                    |
 |                                                          |
 | [available] Microsoft Teams        [Sign Up / Connect]   |
-|   POST /file.teams                                       |
+|   POST teams.gimme.tools/upload_file                      |
 |                                                          |
 +----------------------------------------------------------+
 ```

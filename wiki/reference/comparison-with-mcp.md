@@ -25,7 +25,8 @@ WebSpec treats the web itself as the protocol. It uses existing web primitives f
 
 ```bash
 # WebSpec: The pipe IS the protocol
-POST /message.slack
+# (path = the MCP tool name, e.g. `send_message`, served under the provider's subdomain)
+POST slack.gimme.tools/send_message
 ```
 
 ---

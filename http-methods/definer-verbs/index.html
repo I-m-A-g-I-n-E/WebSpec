@@ -16,7 +16,7 @@
         <link rel="prev" href="../method-tokenization/">
       
       
-        <link rel="next" href="../../subdomain-architecture/">
+        <link rel="next" href="../method-profiles/">
       
       
         
@@ -627,6 +627,8 @@
       
         
           
+        
+      
         
       
         
@@ -1329,6 +1331,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../method-profiles/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Method Profiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -3376,7 +3406,7 @@ POST[CREATE]:slack.gimme.tools/channels.*
 <h2 id="open-questions">Open Questions<a class="headerlink" href="#open-questions" title="Permanent link">&para;</a></h2>
 <ol>
 <li>
-<p><strong>Should DELETE require a definer?</strong> DELETE is idempotent and typically has no payload, but definers like <code>REMOVE</code> / <code>REVOKE</code> / <code>ARCHIVE</code> could clarify intent. Currently excluded for simplicity.</p>
+<p><strong>Should DELETE require a definer?</strong> DELETE is idempotent and typically has no payload, but definers like <code>REMOVE</code> / <code>REVOKE</code> / <code>ARCHIVE</code> could clarify intent. Currently excluded for simplicity. <strong>Resolved:</strong> yes — see <a href="../method-profiles/">Method Profiles</a>; the <code>DELETE</code> family is <code>REMOVE REVOKE ARCHIVE CANCEL PURGE</code>.</p>
 </li>
 <li>
 <p><strong>Atlas update cadence?</strong> The verb atlas should be stable (verbs don't change often), but new service integrations may introduce domain-specific verbs. Versioning handles this, but frequent updates create client/server skew.</p>

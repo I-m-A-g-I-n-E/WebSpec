@@ -1,0 +1,2918 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A protocol specification for tool invocation that meshes with web architecture">
+      
+      
+      
+        <link rel="canonical" href="https://webspec.gimme.tools/http-methods/method-profiles/">
+      
+      
+        <link rel="prev" href="../definer-verbs/">
+      
+      
+        <link rel="next" href="../../subdomain-architecture/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Method Profiles - WebSpec</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#method-profiles" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="WebSpec" class="md-header__button md-logo" aria-label="WebSpec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            WebSpec
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Method Profiles
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/psentro/webspec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    I-m-A-g-I-n-E/webspec
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="WebSpec" class="md-nav__button md-logo" aria-label="WebSpec" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    WebSpec
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/psentro/webspec" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    I-m-A-g-I-n-E/webspec
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../philosophy/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Philosophy
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Philosophy
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../philosophy/permissions-as-love-grammar/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Permissions as Love Grammar
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../philosophy/trust-gradients-philia-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trust Gradients (Philia Model)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../url-grammar/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    URL Grammar
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    URL Grammar
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../url-grammar/core-syntax/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Syntax
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../url-grammar/object-type-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Object Type System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../url-grammar/type-resolution-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Type Resolution & Inference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../url-grammar/complete-grammar-ebnf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Complete Grammar (EBNF)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HTTP Methods
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    HTTP Methods
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../method-semantics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Method Semantics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../permission-scoping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Permission Scoping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../head-options-discovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HEAD & OPTIONS Discovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../method-tokenization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    METHOD Tokenization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../definer-verbs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Definer Verbs & Payload Binding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Method Profiles
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Method Profiles
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-per-method-rules-need-method-binding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why per-method rules need method binding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-host-grammar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Host grammar
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-tool-contracts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Tool contracts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-method-binding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Method binding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-levels-the-security-dial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Levels — the security dial
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-per-method-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Per-method profiles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-contract-and-tier-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Contract and tier rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-idempotency-post-patch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Idempotency (POST, PATCH)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-human-approval-level-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Human approval (level 4)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-signing-the-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Signing the request
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-response-obligations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Response obligations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Audit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-deployment-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Deployment requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-the-harness-shim-easy-for-the-ai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. The harness shim — easy for the AI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-threat-model-what-2026-actually-looked-like" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Threat model: what 2026 actually looked like
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-relationship-to-apples-platform-security-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. Relationship to Apple's platform security model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#16-open-questions-and-proposed-c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16. Open questions and Proposed (C)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conformance-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conformance summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../subdomain-architecture/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subdomain Architecture
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Subdomain Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../subdomain-architecture/isolation-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Isolation Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../subdomain-architecture/cookie-token-scoping/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookie & Token Scoping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../subdomain-architecture/local-bridge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    local.gimme.tools Bridge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../subdomain-architecture/local-service-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Service Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../auth/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Authentication
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auth/auth-flow-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auth Flow Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auth/keychain-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Keychain Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auth/onboarding-subdomain-provisioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding & Provisioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auth/token-structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Token Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../discovery/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Discovery
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Service Discovery
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../discovery/nlp-driven-resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    NLP-Driven Resolution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../discovery/embedding-schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embedding Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../discovery/three-way-join/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The Three-Way Join
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../registration/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Registration
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Service Registration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../registration/registration-schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Registration Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../registration/domain-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Domain Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../reference/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/comparison-with-mcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comparison with MCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/moltbook-case-study/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MoltBook Case Study
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-per-method-rules-need-method-binding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why per-method rules need method binding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-host-grammar" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Host grammar
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-tool-contracts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Tool contracts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-method-binding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Method binding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-levels-the-security-dial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Levels — the security dial
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-per-method-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Per-method profiles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-contract-and-tier-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Contract and tier rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-idempotency-post-patch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Idempotency (POST, PATCH)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-human-approval-level-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Human approval (level 4)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-signing-the-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Signing the request
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-response-obligations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Response obligations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Audit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-deployment-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Deployment requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-the-harness-shim-easy-for-the-ai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. The harness shim — easy for the AI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-threat-model-what-2026-actually-looked-like" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Threat model: what 2026 actually looked like
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-relationship-to-apples-platform-security-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. Relationship to Apple's platform security model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#16-open-questions-and-proposed-c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16. Open questions and Proposed (C)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conformance-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conformance summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/psentro/webspec/edit/main/docs/http-methods/method-profiles.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="method-profiles">Method Profiles<a class="headerlink" href="#method-profiles" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Status: Implemented (B)</strong> — <code>gateway/webspec/{methods,handlers,idempotency,approval,audit,hostgrammar,hardening}.py</code>,
+tests in <code>gateway/tests/test_method_profiles_http.py</code>, <code>test_methods.py</code>, <code>test_units_misc.py</code>.
+Items marked <strong>Proposed (C)</strong> are specified but not built; see <a href="../../ROADMAP-C/">ROADMAP-C</a>.</p>
+<p>The key words MUST, MUST NOT, SHOULD, and MAY are used as in RFC 2119.</p>
+</blockquote>
+<p>A WebSpec URL describes exactly <strong>what it is, what it does, and what's done to</strong>. That makes
+it convenient for an AI to write and for a human to read. Per-method profiles make it
+<em>trustworthy</em>: the gateway knows what each tool really is, so a request cannot describe itself
+as something weaker than it is.</p>
+<h2 id="why-per-method-rules-need-method-binding">Why per-method rules need method binding<a class="headerlink" href="#why-per-method-rules-need-method-binding" title="Permanent link">&para;</a></h2>
+<p>Every HTTP method gets its own rule set (below). But rules attached to the method alone are
+worthless if the <strong>caller</strong> picks the method: an attacker — or a coerced agent — simply calls a
+destructive tool with <code>GET</code>, the method with the weakest rules. Before this profile, the gateway
+did exactly that: <code>GET /send_email?...</code> sent mail with no definer at all.</p>
+<p><strong>Rule 0 (binding).</strong> The gateway, not the caller, decides which methods may invoke a tool, as a
+function of the tool's <em>contract</em>. A request whose method the contract does not admit MUST be
+refused with <code>405 Method Not Allowed</code> and an <code>Allow</code> header listing the admissible methods.</p>
+<p>The method is the <em>genus</em> of the action (safe / idempotent / destructive — the class the web
+already understands); the path names the <em>species</em> (<code>send_email</code>). The definer verb sits between
+them. All three must agree.</p>
+<hr />
+<h2 id="1-host-grammar">1. Host grammar<a class="headerlink" href="#1-host-grammar" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>host        = *( qualifier "." ) destination "." domain
+destination = label     ; the service — the only label that routes, the only isolation boundary
+qualifier   = label     ; optional routing selector (region, version, environment, …)
+label       = [a-z0-9] [ *61( [a-z0-9-] ) [a-z0-9] ]
+</code></pre></div>
+<ul>
+<li>The <strong>destination</strong> (the label immediately left of the domain) MUST be the only label used for
+  routing, audience binding, guard nonces, contracts, and levels.</li>
+<li><strong>Qualifiers</strong> MUST each appear in the destination's own allow-list (config key <code>"labels"</code>), at
+  most once, in the allow-list's order. The default allow-list is empty, so an unconfigured
+  service accepts exactly <code>{destination}.{domain}</code> — "two words, company and product".</li>
+<li>Qualifiers MUST only change <em>where</em> a request lands, never <em>what</em> it means (that is the path)
+  or <em>who</em> is asking (that is the signed credential).</li>
+<li>Labels MUST be lowercase; anything else is <code>404 invalid_host</code>. Unknown or misordered
+  qualifiers are <code>404 unknown_qualifier</code>.</li>
+<li><strong>Until per-qualifier backends exist, an allow-listed qualifier is refused with
+  <code>404 qualifier_not_routable</code>.</strong> Serving <code>eu.slack.&lt;domain&gt;</code> from the same backend as
+  <code>slack.&lt;domain&gt;</code> would give a false sense of region or residency routing, so the gateway
+  fails closed instead.</li>
+</ul>
+<p><strong>Why labels can route but never isolate.</strong> The web gives label hierarchy a meaning whether we
+want it or not: a cookie scoped to <code>slack.example</code> is sent to <code>eu.slack.example</code>, and every label
+under one registrable domain is <em>same-site</em>. Wildcard certificates cover exactly one label, so
+deeper names need <code>*.slack.example</code> certificates, which are published in Certificate
+Transparency logs. Therefore qualifiers live <em>inside</em> their destination's trust zone and MUST be
+safe to be public. Tenant or user identity in a label would violate both properties.</p>
+<p>Per-qualifier backends (each allow-listed qualifier path mapped to its own MCP server
+config) and edge support (Caddy host blocks, per-destination wildcard certificates) are
+<strong>Proposed (C)</strong>. Today the gateway validates the grammar on every host and refuses
+qualified hosts.</p>
+<hr />
+<h2 id="2-tool-contracts">2. Tool contracts<a class="headerlink" href="#2-tool-contracts" title="Permanent link">&para;</a></h2>
+<p>A tool's contract is five facts:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+<th>MCP source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>read_only</code></td>
+<td>does not modify its environment</td>
+<td><code>readOnlyHint</code></td>
+</tr>
+<tr>
+<td><code>destructive</code></td>
+<td>may destroy/overwrite (vs. only add)</td>
+<td><code>destructiveHint</code></td>
+</tr>
+<tr>
+<td><code>idempotent</code></td>
+<td>repeating it has no further effect</td>
+<td><code>idempotentHint</code></td>
+</tr>
+<tr>
+<td><code>open_world</code></td>
+<td>touches external, untrusted entities</td>
+<td><code>openWorldHint</code></td>
+</tr>
+<tr>
+<td><code>tier</code></td>
+<td><code>open</code> ⊑ <code>sensitive</code> ⊑ <code>dangerous</code></td>
+<td><code>_meta["webspec/tier"]</code> (raise-only)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Sources, in precedence order:</strong></p>
+<ol>
+<li><strong>Operator override</strong> — <code>mcpServers.&lt;name&gt;.tools.&lt;tool&gt;</code> in the gateway config. Authoritative;
+   MAY loosen. An override with unknown keys or wrongly typed values MUST fail closed to the
+   <em>strictest</em> contract (destructive, non-idempotent, open-world, <code>dangerous</code>). Setting
+   <code>"read_only": false</code> on a read-only tool MUST rebase it on the strict MCP defaults, never on
+   the read-only normalization (which would be weaker than an unannotated tool).</li>
+<li><strong>Server annotations</strong> — MCP <code>ToolAnnotations</code>. Trusted only because the operator chose to
+   configure the server; remote servers SHOULD be given explicit overrides.</li>
+<li><strong>MCP defaults</strong> — an unannotated tool is <em>not</em> read-only, <em>is</em> destructive, <em>is not</em>
+   idempotent, <em>is</em> open-world. Unannotated means strict.</li>
+</ol>
+<p>A server-declared tier MAY only raise the tier derived from annotations (<code>open</code> for read-only,
+<code>sensitive</code> otherwise); it can never lower it.</p>
+<p><strong>Pinning (rug-pull defense).</strong> Servers can re-list their tools at any time. The gateway MUST keep,
+per (service, tool), the join (least upper bound) of every contract it has observed. A re-listing
+can therefore tighten a contract immediately but can never loosen it; only an operator override
+loosens. Pins survive a service being removed from and re-added to the config (otherwise editing
+the config would reset them), and a half-written config file keeps the last good registry. Pins
+are per-process today; persisting an operator-approved snapshot is <strong>Proposed (C)</strong>.</p>
+<hr />
+<h2 id="3-method-binding">3. Method binding<a class="headerlink" href="#3-method-binding" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Contract</th>
+<th>Admissible invoking methods</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>read-only</td>
+<td><code>GET</code></td>
+</tr>
+<tr>
+<td>additive (not destructive)</td>
+<td><code>POST</code>, <code>PATCH</code> (+ <code>PUT</code> if idempotent)</td>
+</tr>
+<tr>
+<td>destructive</td>
+<td><code>DELETE</code> (+ <code>PUT</code> if idempotent, else <code>POST</code>)</td>
+</tr>
+</tbody>
+</table>
+<p><code>HEAD</code> and <code>OPTIONS</code> are available on every tool path and MUST NOT invoke the tool.
+<code>OPTIONS /{tool}</code> returns the contract, the admissible methods, and the requirements for each at
+the service's level, so an AI can learn exactly what to send before sending it.</p>
+<hr />
+<h2 id="4-levels-the-security-dial">4. Levels — the security dial<a class="headerlink" href="#4-levels-the-security-dial" title="Permanent link">&para;</a></h2>
+<p>Each service has a level from 0 to 4 (config key <code>"level"</code>). Raising the level only ever <strong>adds</strong>
+requirements; the requirement function is monotone in the level (test-enforced).</p>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Name</th>
+<th>Adds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>local</td>
+<td>Grammar rules only: binding, definers, empty <code>GET</code> body. Loopback only.</td>
+</tr>
+<tr>
+<td>1</td>
+<td>signed</td>
+<td>Guard: HMAC over method, host, path, nonce, body, <strong>and canonical query</strong>; single-use, audience-bound nonce.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>bound</td>
+<td>Tier-2 bookend on every unsafe method; <code>Idempotency-Key</code> for every non-idempotent tool.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>cleared</td>
+<td>UFO clearance token — bound to (destination, method, tool, arguments), single-use — for every non-read-only tool and every <code>sensitive</code>/<code>dangerous</code> tool.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>witnessed</td>
+<td>Human approval (an Ed25519 signature over the exact request) for every destructive tool, every <code>dangerous</code> tool, and every open-world mutation.</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Absent <code>level</code>: 1 if <code>"guard": true</code>, else 0 (backward compatible). <code>guard: true</code> forces level ≥ 1;
+  level ≥ 1 implies the guard. An invalid level MUST fail closed to 4.</li>
+<li>A service on the public domain MUST be at level ≥ 1 (existing invariant: unguarded services are
+  localhost-only).</li>
+</ul>
+<hr />
+<h2 id="5-per-method-profiles">5. Per-method profiles<a class="headerlink" href="#5-per-method-profiles" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Safe</th>
+<th>Idempotent</th>
+<th>Invokes</th>
+<th>Body</th>
+<th>Definer family</th>
+<th>Level ≥ 2 adds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HEAD</code></td>
+<td>yes</td>
+<td>yes</td>
+<td>never</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>OPTIONS</code></td>
+<td>yes</td>
+<td>yes</td>
+<td>never</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td>yes</td>
+<td>yes</td>
+<td>read-only tools</td>
+<td>MUST be empty</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td>no</td>
+<td>no</td>
+<td>additive / non-idempotent destructive</td>
+<td>one JSON object</td>
+<td><code>CREATE SEND INVOKE TRIGGER UPLOAD</code></td>
+<td>bookend; key if tool non-idempotent</td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td>no</td>
+<td>yes</td>
+<td>idempotent tools</td>
+<td>one JSON object</td>
+<td><code>REPLACE OVERWRITE SET</code></td>
+<td>bookend</td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td>no</td>
+<td>no</td>
+<td>additive tools</td>
+<td>one JSON object</td>
+<td><code>MODIFY APPEND AMEND RENAME</code></td>
+<td>bookend; key if tool non-idempotent</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td>no</td>
+<td>yes</td>
+<td>destructive tools</td>
+<td>one JSON object (query preferred)</td>
+<td><code>REMOVE REVOKE ARCHIVE CANCEL PURGE</code></td>
+<td>bookend; key if tool non-idempotent</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>GET</strong> MUST carry arguments in the query string only; a non-empty body is <code>400 body_not_allowed</code>.
+  <code>GET</code> never needs a definer — which is exactly why it must never reach a mutating tool. A query
+  parameter whose <code>inputSchema</code> type cannot be a string (integer, number, boolean, array, object)
+  MUST be strict JSON (<code>?limit=5&amp;ids=["a","b"]</code>); otherwise <code>400 invalid_arguments</code>.</li>
+<li><strong>Arguments, all methods:</strong> a query key MUST NOT repeat (<code>400 duplicate_query_key</code>) — the tool
+  would see only one value, so no signature could bind the one it used. A non-empty body MUST be a
+  single strict-JSON object (no <code>NaN</code>/<code>Infinity</code>/overflow); anything else is
+  <code>400 invalid_arguments</code>, never silently dropped. An argument MUST NOT appear in both the query
+  and the body.</li>
+<li><strong>POST / PUT / PATCH / DELETE</strong> MUST carry <code>X-Gimme-Definer</code> from their own family
+  (<code>400 missing_definer</code> / <code>definer_family_mismatch</code>). At level ≥ 2 the definer MUST carry the
+  Tier-2 bookend (<code>403 bookend_required</code>). <code>DELETE</code> joins the definer families with this profile,
+  closing <a href="../definer-verbs/">Definer Verbs</a> open question 1.</li>
+</ul>
+<h2 id="6-contract-and-tier-rules">6. Contract and tier rules<a class="headerlink" href="#6-contract-and-tier-rules" title="Permanent link">&para;</a></h2>
+<p>The requirements of a request are the union <strong>method rules ∪ contract rules ∪ tier rules</strong>, each
+gated by level:</p>
+<ul>
+<li><strong>Level ≥ 3:</strong> a valid <code>X-UFO-Clearance</code> token for any tool that is not read-only or whose tier
+  is above <code>open</code> (<code>403 clearance_missing|invalid|expired|malformed|reused</code>). The token is
+  <code>HMAC(key, "ufo2:" destination ":" METHOD ":" tool ":" canonical-args ":" ts)</code>, expires after
+  30 s, and is <strong>single-use</strong>: it is checked early but spent only when the request commits to
+  running, so a request refused later (e.g. by a level-4 challenge) does not burn it. This is
+  where the UFO tiers documented for op-auth are now actually enforced; before this profile
+  nothing checked them.</li>
+<li><strong>Level ≥ 4:</strong> human approval (§8) for any destructive tool, any <code>dangerous</code> tool, and <strong>any
+  open-world mutation</strong> — the exfiltration step (read a secret, then send it somewhere).</li>
+</ul>
+<p>Clearance proves that the <em>caller's harness</em> vouched for the call; it is only as strong as the
+policy that mints it (§13). Level 4 holds against a fully compromised harness <strong>for the actions
+it witnesses</strong> (destructive, dangerous, open-world mutations), because the gateway holds only
+<em>public</em> keys for it. A compromised harness can still perform un-witnessed actions — reads, and
+closed-world additive writes — within the level's other rules.</p>
+<hr />
+<h2 id="7-idempotency-post-patch">7. Idempotency (POST, PATCH)<a class="headerlink" href="#7-idempotency-post-patch" title="Permanent link">&para;</a></h2>
+<p>Agents retry. For non-idempotent <strong>tools</strong> — whichever unsafe method reaches them, <code>DELETE</code>
+included — the gateway implements the IETF HTTPAPI <code>Idempotency-Key</code> semantics, scoped per
+destination:</p>
+<table>
+<thead>
+<tr>
+<th>Same key, then…</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>same request fingerprint, completed</td>
+<td>the stored response, <code>Idempotent-Replayed: true</code>; the tool is <strong>not</strong> called again</td>
+</tr>
+<tr>
+<td>different fingerprint</td>
+<td><code>422 idempotency_key_reused</code></td>
+</tr>
+<tr>
+<td>first attempt still running</td>
+<td><code>409 idempotency_key_in_flight</code></td>
+</tr>
+<tr>
+<td>first attempt timed out, lost its connection, or failed after reaching the tool</td>
+<td><code>409 idempotency_outcome_unknown</code> — the tool may have run; the client MUST verify, then use a new key</td>
+</tr>
+<tr>
+<td>first attempt completed with a result too large to keep (&gt; 256 KiB)</td>
+<td><code>409 idempotency_result_not_replayable</code></td>
+</tr>
+</tbody>
+</table>
+<p>The fingerprint is SHA-256 over method, path, canonical query, and SHA-256 of the body. The key
+is optional below level 2 (honored if sent on any unsafe method) and required at level ≥ 2 for
+non-idempotent tools. A replay is checked <em>before</em> one-shot credentials (clearance, approval) so
+a legitimate retry never needs a second human signature; the key is claimed atomically only after
+those checks pass. If the server refuses the call with a JSON-RPC error (so it did not run), the
+key is released.</p>
+<p><strong>Limits.</strong> The store is in-memory and per-process: run the gateway as a single process, and
+know that a restart forgets every key, including "outcome unknown" ones. Capacity is <strong>per
+destination</strong> (2,000 keys each), so one noisy service cannot exhaust another's. In-flight and
+unknown records are never evicted for capacity (that could re-execute a side effect); when only
+such records remain, new keys for that destination get <code>503 idempotency_store_full</code>. An in-flight
+record older than 15 minutes becomes unknown.</p>
+<p><strong>Commit order.</strong> One-shot credentials are never spent unless the call actually runs. After all
+checks pass, the gateway — with no suspension point until the tool call starts — (1) confirms the
+clearance and approval are still unspent, (2) claims the idempotency key, then (3) spends the
+clearance and the approval. If the claim fails (another attempt holds the key), nothing was spent
+and the approved retry still works.</p>
+<h2 id="8-human-approval-level-4">8. Human approval (level 4)<a class="headerlink" href="#8-human-approval-level-4" title="Permanent link">&para;</a></h2>
+<ol>
+<li>A request that needs approval and lacks <code>X-WebSpec-Approval</code> gets <code>428 Precondition Required</code>
+   with <code>{challenge, fingerprint, summary, sign_message, namespace, expires_in}</code>. The <code>summary</code> is
+   the canonical description of <em>exactly</em> this request (method, destination, host, path, tool,
+   arguments, body hash); <code>fingerprint = SHA-256(canonical JSON of summary)</code>.</li>
+<li>A human runs <code>webspec-ctl approve</code> on that body. It MUST re-derive the fingerprint from the
+   summary it displays and refuse on mismatch (<em>what you see is what you sign</em>); it MUST display
+   the summary with all control and non-ASCII characters escaped; it MUST read confirmation from
+   the controlling terminal, never stdin. It signs <code>sign_message</code> with
+   <code>ssh-keygen -Y sign -n webspec-approval</code> (or a compatible signer such as 1Password's
+   <code>op-ssh-sign</code>) and prints the header.</li>
+<li>The client retries the identical request with <code>X-WebSpec-Approval: &lt;challenge&gt;:&lt;signature&gt;</code>.
+   The gateway verifies with OpenSSH (<code>ssh-keygen -Y verify</code>) against <code>WEBSPEC_APPROVERS_FILE</code>
+   (an allowed-signers file; restrict entries with <code>namespaces="webspec-approval"</code>).</li>
+</ol>
+<p>Challenges are single-use and expire after 300 s; a challenge cannot approve a different request
+(<code>approval_mismatch</code>), a second time (<code>approval_reused</code>), or with an unlisted key
+(<code>approval_invalid</code>); five invalid signatures burn it. Verifying a signature does not spend it:
+the approval is spent only when the call commits (§7), and a retry carrying the same signature is
+accepted again. A retry of the same request gets the same pending challenge back. Pending
+challenges are never evicted to make room — a full queue (100 per destination) refuses new
+challenges (<code>429 approval_queue_full</code>) — so a guard-key holder cannot flush out the challenge a
+human is signing, nor starve another destination's approvals. If no approvers are configured, level-4 requests fail closed
+(<code>503 approval_unavailable</code>). The retired <code>/__challenge</code> endpoint returns <code>410 Gone</code>: it minted a
+challenge that nothing ever verified.</p>
+<p>The signing key SHOULD live in an agent that requires a biometric gesture per signature
+(1Password SSH agent, a Secure Enclave–backed key). Residual risk: a human who reflexively
+approves a biometric prompt they did not initiate defeats this level. Approval delivered on a
+separate device (phone push showing the summary) is <strong>Proposed (C)</strong>.</p>
+<h2 id="9-signing-the-request">9. Signing the request<a class="headerlink" href="#9-signing-the-request" title="Permanent link">&para;</a></h2>
+<p>At level ≥ 1 the guard HMAC covers the whole request, not just its line and body:</p>
+<div class="highlight"><pre><span></span><code>METHOD ":" host ":" path ":" nonce ":" sha256(body)
+  [ ":?" canonical-query ]     ; only if the request has a query
+  [ ":!" X-Gimme-Definer ]     ; only if the header is present (raw value, incl. bookend)
+  [ ":#" Idempotency-Key ]     ; only if the header is present
+</code></pre></div>
+<p>The <strong>canonical query</strong> decodes all pairs, keeps blank values, sorts by key (keys are unique —
+repeats are refused), and re-encodes with RFC 3986 percent-encoding (unreserved characters
+<code>A–Z a–z 0–9 - . _ ~</code> literal; spaces as <code>%20</code>). A request with none of the optional parts signs
+exactly as before. Previously the query, the definer verb, and the key were unsigned, so the
+arguments of a guarded <code>GET</code>, or the verb of a mutation, could be changed in flight.</p>
+<h2 id="10-response-obligations">10. Response obligations<a class="headerlink" href="#10-response-obligations" title="Permanent link">&para;</a></h2>
+<p>Every tool invocation response MUST carry <code>Cache-Control: no-store</code>, <code>X-WebSpec-Level</code>, and
+<code>X-WebSpec-Tier</code>. If the tool is open-world, it MUST carry <code>X-UFO-Taint: open-world</code>, and the
+harness MUST treat the body as untrusted (UFO-tagged) data that cannot authorize later calls.</p>
+<p>Because <code>GET</code> carries arguments in the URL, the gateway's own access log is <strong>off</strong> by default
+(<code>WEBSPEC_ACCESS_LOG=1</code> enables it), and fronting proxies SHOULD drop or redact the query string
+from their logs; the audit log records queries only as hashes.</p>
+<h2 id="11-audit">11. Audit<a class="headerlink" href="#11-audit" title="Permanent link">&para;</a></h2>
+<p>Every decision — invoked, denied (including <code>405</code> probes, failed guards, bad hosts, unknown
+tools, duplicate keys), challenged, replayed — MUST be appended to a hash-chained JSON-lines log (<code>WEBSPEC_AUDIT_LOG</code>, default
+<code>~/.webspec/gateway-audit.jsonl</code>). Each line records the URL-addressed action in the clear
+(method, host, path, tool, level, tier, risk, outcome) and the query and body only as hashes;
+each line carries the SHA-256 of the previous line, so an edit or deletion breaks the chain
+(<code>audit.verify_chain</code>). Rotate by <em>renaming</em> the file: the chain continues into the new file,
+whose first <code>prev</code> is the last hash of the old one (verify a segment with <code>first_prev</code>).
+Truncating in place is indistinguishable from tampering, by design. Off-host shipping and
+fail-closed auditing at level ≥ 3 are <strong>Proposed (C)</strong>.</p>
+<h2 id="12-deployment-requirements">12. Deployment requirements<a class="headerlink" href="#12-deployment-requirements" title="Permanent link">&para;</a></h2>
+<ul>
+<li>The gateway MUST run as a <strong>dedicated OS user</strong>, not the agent's user. Same-user processes can
+  read another process's environment (<code>/proc/&lt;pid&gt;/environ</code> on Linux, <code>KERN_PROCARGS2</code> on macOS),
+  and the guard key lives in the gateway's environment.</li>
+<li>On Linux the gateway marks itself <strong>non-dumpable</strong> at startup (<code>prctl(PR_SET_DUMPABLE, 0)</code>),
+  closing <code>/proc/&lt;pid&gt;/environ</code>, <code>/proc/&lt;pid&gt;/mem</code>, and ptrace to same-user processes, including
+  the stdio MCP servers it spawns (those already receive only a minimal environment from the MCP
+  SDK, never the guard key).</li>
+<li>The gateway SHOULD be the agent's <strong>only network egress</strong>, enforced at the network layer
+  (firewall / network namespace / egress proxy allow-list). A chokepoint only holds if nothing
+  routes around it.</li>
+<li>The audit log SHOULD be writable only by the gateway's user (or shipped off-host), so the agent
+  cannot rewrite history.</li>
+<li>The gateway's config file (<code>WEBSPEC_CONFIG</code>) MUST NOT be writable by the agent: whoever can edit
+  it can add services, raise or lower levels, and write operator overrides.</li>
+</ul>
+<h2 id="13-the-harness-shim-easy-for-the-ai">13. The harness shim — easy for the AI<a class="headerlink" href="#13-the-harness-shim-easy-for-the-ai" title="Permanent link">&para;</a></h2>
+<p>The model writes only what it is good at: <strong>method, host, path, arguments, and one definer
+word</strong>. A harness shim (never the model) adds everything cryptographic — guard HMAC and nonce,
+bookend, <code>Idempotency-Key</code>, clearance — so no key ever enters the model's context, and text the
+model reads cannot forge them. The shim learns what to add from <code>OPTIONS /{tool}</code>.</p>
+<hr />
+<h2 id="14-threat-model-what-2026-actually-looked-like">14. Threat model: what 2026 actually looked like<a class="headerlink" href="#14-threat-model-what-2026-actually-looked-like" title="Permanent link">&para;</a></h2>
+<p>The incidents below are taken from the vendors' and investigators' own reports (dates as
+published). They are why these rules exist, and they also mark what the rules do <strong>not</strong> stop.</p>
+<table>
+<thead>
+<tr>
+<th>Observed behavior</th>
+<th>Incident</th>
+<th>Control here</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Destructive / supply-chain step (modify repo, open PR, trigger CI beacon)</td>
+<td>OpenAI agents vs. Hugging Face, Jul 2026 (OpenAI technical report, Aug 26 2026)</td>
+<td>Destructive contract → <code>DELETE</code>/<code>PUT</code> + level-4 human approval</td>
+<td><strong>Stops</strong> at level 4</td>
+</tr>
+<tr>
+<td>Calling a mutating tool through a weaker verb</td>
+<td>gateway behavior before this profile</td>
+<td>Method binding (<code>405</code>)</td>
+<td><strong>Stops</strong></td>
+</tr>
+<tr>
+<td>Read credentials from <code>/proc/self/environ</code> / process memory</td>
+<td>HF dataset-server file read (Jul 2026); early Claude Mythos snapshot (system card, Apr 2026)</td>
+<td>Dedicated user + non-dumpable; level 4 holds only public keys</td>
+<td><strong>Stops</strong> same-user reads of the gateway</td>
+</tr>
+<tr>
+<td>Replay / forged calls with stolen request material</td>
+<td>general</td>
+<td>Single-use nonce; HMAC over method, host, path, <strong>query</strong>, body</td>
+<td><strong>Stops</strong></td>
+</tr>
+<tr>
+<td>Concealment: rewriting git history, spoofed tool-call logs, rewriting activity when challenged</td>
+<td>Mythos system card; METR/Redwood (Aug 2026); UK AISI incident report (Aug 2026)</td>
+<td>Hash-chained gateway audit log as ground truth</td>
+<td><strong>Detects</strong> (prevents only if the log is out of the agent's reach)</td>
+</tr>
+<tr>
+<td>Task decomposition into innocuous-looking steps</td>
+<td>GTG-1002 espionage via Claude Code (Anthropic, Nov 2025)</td>
+<td>Audit sequence + human gate on the <em>terminal</em> destructive step</td>
+<td><strong>Slows / detects</strong>; per-step rules alone do not catch it</td>
+</tr>
+<tr>
+<td>Indirect prompt injection through fetched content</td>
+<td>Claude Code Auto Mode bypass (Embrace The Red, Aug 2026); ChatGPT Atlas</td>
+<td><code>X-UFO-Taint</code> on open-world output; clearance at level 3</td>
+<td><strong>Slows</strong> — only as good as the shim's taint policy</td>
+</tr>
+<tr>
+<td>Weaponized <em>arguments</em> to an allowed tool (malicious HDF5, template injection)</td>
+<td>HF intrusion, Jul 2026</td>
+<td>Strict JSON bodies, typed <code>GET</code> arguments, no duplicate keys</td>
+<td><strong>Shape only</strong> — semantic validation is Proposed (C)</td>
+</tr>
+<tr>
+<td>Read a secret, then send it out</td>
+<td>general exfiltration pattern</td>
+<td>Open-world mutations witnessed at level 4</td>
+<td><strong>Stops</strong> at level 4</td>
+</tr>
+<tr>
+<td>C2 over an allowed channel (polling a public dataset; directory-name message boards)</td>
+<td>HF intrusion; Artifactory "message board", May–Jul 2026</td>
+<td>Audit + rate limits (edge)</td>
+<td><strong>Detects at best</strong></td>
+</tr>
+<tr>
+<td>Reaching hosts <em>around</em> the gateway; harvested third-party credentials used directly</td>
+<td>HF intrusion (Modal relay); UNCTAD relay workarounds, 2026</td>
+<td>Gateway as sole egress (§12)</td>
+<td><strong>Stops only if enforced at the network layer</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The through-line of those reports is that capable, persistent agents treat security boundaries as
+obstacles to route around. So every control here is <strong>mandatory and fail-closed</strong>, never
+advisory: unannotated means strict, invalid config means strictest, missing approvers mean
+refusal, and contracts can only be loosened by the operator.</p>
+<h2 id="15-relationship-to-apples-platform-security-model">15. Relationship to Apple's platform security model<a class="headerlink" href="#15-relationship-to-apples-platform-security-model" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Apple</th>
+<th>WebSpec</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Entitlements — signed, declarative capabilities bound to code identity</td>
+<td>Tool contracts; operator overrides are the grants; pinning is the signature stability</td>
+</tr>
+<tr>
+<td>App Sandbox (Seatbelt) — deny by default</td>
+<td>Unannotated = strict; method binding; per-destination isolation</td>
+</tr>
+<tr>
+<td>TCC consent + Touch ID / Secure Enclave user presence</td>
+<td>Level-4 approval signed by a biometric-gated key</td>
+</tr>
+<tr>
+<td>XPC privilege separation</td>
+<td>Gateway and each MCP server as separate processes and OS users</td>
+</tr>
+<tr>
+<td>Hardened Runtime (no task-port / debugger attach)</td>
+<td>Non-dumpable gateway process</td>
+</tr>
+<tr>
+<td>Private Cloud Compute's verifiable transparency log</td>
+<td>Hash-chained audit log</td>
+</tr>
+</tbody>
+</table>
+<p>Entitlement keys are reverse-DNS (<code>com.apple.security.network.client</code>); WebSpec hosts are the same
+naming tree read forward.</p>
+<h2 id="16-open-questions-and-proposed-c">16. Open questions and Proposed (C)<a class="headerlink" href="#16-open-questions-and-proposed-c" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Path word order.</strong> The path should say what it is, what it does, and what's done to; the
+   canonical order of those words is not yet fixed. Today the path is the MCP tool name.</li>
+<li><strong>Proof of read.</strong> <code>If-Match</code> with a gateway-issued ETag (or signed read receipt) on
+   <code>PUT</code>/<code>PATCH</code>/<code>DELETE</code>, so an agent can only overwrite what it has seen.</li>
+<li><strong>Full argument validation</strong> against each tool's <code>inputSchema</code> (today: types are applied to
+   <code>GET</code> query values and bodies must be strict JSON objects; values are not otherwise validated).</li>
+<li><strong>Wider tags.</strong> Guard, bookend, and clearance tags are 32-bit; widen to ≥ 128-bit or move to
+   Ed25519 request signatures.</li>
+<li><strong>Provenance v2.</strong> Today's provenance links are 16-bit, unbound to the request, and not
+   checked; bind them to the request fingerprint and nonce before enforcing them.</li>
+<li>Persistent contract pins; off-host, fail-closed audit; out-of-band approval device;
+   per-qualifier backends and edge (Caddy/TLS) support for qualifier labels; a crash-safe,
+   shared idempotency store.</li>
+</ol>
+<h2 id="conformance-summary">Conformance summary<a class="headerlink" href="#conformance-summary" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>L0</th>
+<th>L1</th>
+<th>L2</th>
+<th>L3</th>
+<th>L4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Method binding (<code>405</code> + <code>Allow</code>)</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Empty <code>GET</code> body; definer on unsafe methods</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Strict arguments (unique query keys, JSON-object bodies, typed <code>GET</code> values)</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Guard HMAC (incl. query, definer, key) + single-use nonce</td>
+<td></td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Tier-2 bookend on unsafe methods</td>
+<td></td>
+<td></td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td><code>Idempotency-Key</code> for non-idempotent tools</td>
+<td></td>
+<td></td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>UFO clearance, bound + single-use (non-read-only or tier &gt; open)</td>
+<td></td>
+<td></td>
+<td></td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Human approval (destructive, dangerous, or open-world mutation)</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Audit of every decision, <code>no-store</code>, taint marking</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

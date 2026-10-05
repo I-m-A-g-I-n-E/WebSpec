@@ -23,9 +23,10 @@ jobs:
 
       # Installs both packages (webspec + webspec_registry) and their runtime deps.
       - run: pip install ./gateway
-      # PyYAML lets the optional verb-atlas enrichment tests run instead of skip;
-      # it is NOT a runtime dependency (the gateway degrades gracefully without it).
-      - run: pip install pyyaml
+      # Test-only tools (not runtime deps of the gateway). PyYAML lets the optional
+      # verb-atlas enrichment tests run instead of skip; the gateway degrades
+      # gracefully without it.
+      - run: pip install pytest pyyaml
 
       - name: Run gateway + registry test suite
         working-directory: gateway

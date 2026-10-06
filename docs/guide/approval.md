@@ -31,8 +31,8 @@ ana@example.com namespaces="webspec-approval" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AA
 
 Point the gateway at the file with `WEBSPEC_APPROVERS_FILE=/etc/webspec/allowed_signers`.
 Anyone who can add a line to this file can approve, so the agent must not be able to write it
-([DP-4](../spec/audit-deployment.md#deployment)). If the variable is unset, level-4 calls fail
-closed with `503 approval_unavailable`.
+([DP-4](../spec/audit-deployment.md#deployment)). If the variable is unset, calls that need
+approval are refused with `503 approval_unavailable`, and no challenge is issued.
 
 ## 3. Raise the destination to level 4
 
@@ -46,7 +46,7 @@ closed with `503 approval_unavailable`.
 When a call needs approval, the gateway answers `428 Precondition Required`. The body is a
 challenge that describes exactly that request ([walkthrough](walkthrough.md#level-4-witnessed)).
 The harness hands the challenge to a person, for example by saving it as `challenge.json`.
-The person runs:
+The person runs the following. The challenge here is the one from the walkthrough:
 
 ```console
 $ webspec-ctl approve challenge.json --key ~/.ssh/webspec-approver.pub
@@ -86,10 +86,13 @@ The key can also come from `WEBSPEC_APPROVER_KEY`. A different signer that accep
 
 ## 5. Retry
 
-Within 300 seconds, the harness retries the *identical* request with the printed header. With
-the reference shim, reuse the same `Idempotency-Key` so that the retry is the same operation:
+Within 300 seconds, the harness retries the same request: the same method, path, arguments,
+and body, with a fresh nonce and guard, a clearance minted within the last 30 seconds, and the
+printed header. The reference shim does all of this. Reuse the same `Idempotency-Key` so that
+the retry is the same operation:
 
 ```python
+note = {"id": "welcome", "to": "ana@example.com"}
 first = notes.call("POST", "send_note", note, "SEND", idempotency_key="k-91c2")    # 428
 header = "…"   # the X-WebSpec-Approval value from webspec-ctl approve
 notes.call("POST", "send_note", note, "SEND", approval=header, idempotency_key="k-91c2")  # 200
@@ -106,7 +109,9 @@ once.
 | `403 approval_reused` | The approval was already spent |
 | `403 approval_invalid` | The signature isn't from a listed key, in the `webspec-approval` namespace. Five failures burn the challenge |
 | `403 approval_expired` / `approval_unknown` | More than 300 seconds have passed, or the challenge was burned. Start over |
-| `429 approval_queue_full` | 100 challenges are already pending for this destination. Try again later |
+| `403 approval_malformed` | The header isn't `<challenge>:<base64 signature>` |
+| `403 approval_in_progress` | The same challenge is being verified by another request. Retry in a moment |
+| `429 approval_queue_full` | 100 challenges were issued for this destination in the last 300 seconds. Try again later |
 | `503 approval_unavailable` | No approvers are configured |
 
 A retry of the same request that carries no approval gets the same pending challenge back, so

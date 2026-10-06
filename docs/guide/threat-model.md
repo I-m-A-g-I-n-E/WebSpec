@@ -15,9 +15,10 @@
    arguments, and one verb. A shim adds the signatures ([SH-1](../spec/levels.md#the-harness-shim)).
    Text the model reads, including a prompt injection, cannot forge what the model never
    holds.
-4. **One-time credentials are spent only when the call runs.** The gateway checks early,
-   claims the idempotency key, and spends at commit ([CO-1](../spec/levels.md#commit)). Retries
-   are safe, and a refusal never burns the credential that the next attempt needs.
+4. **One-time credentials are spent only when the call is attempted.** The gateway checks
+   early, claims the idempotency key, and spends at commit ([CO-1](../spec/levels.md#commit)).
+   Retries are safe, and a refusal by the gateway never burns the credential that the next
+   attempt needs. A failure after commit does spend it, so the next attempt needs a new one.
 5. **Every rule is mandatory.** Capable agents treat advisory boundaries as obstacles to route
    around. Nothing in WebSpec is a hint to the agent.
 
@@ -28,15 +29,15 @@ published). They are why the rules exist. They also mark what the rules do **not
 
 | Observed behavior | Incident | Control | Effect |
 |---|---|---|---|
-| A destructive or supply-chain step (modify a repo, open a PR, trigger a CI beacon) | OpenAI agents vs. Hugging Face, July 2026 (OpenAI technical report, Aug 26, 2026) | Destructive contract → `DELETE`/`PUT`, plus a person's approval at level 4 | **Stops** at level 4 |
+| A destructive or supply-chain step (modify a repo, open a PR, trigger a CI beacon) | OpenAI agents vs. Hugging Face, July 2026 (OpenAI technical report, Aug 26, 2026) | Destructive contract → `DELETE`, `PUT` or `POST`, plus a person's approval at level 4 | **Stops** at level 4 |
 | Calling a mutating tool through a weaker verb | WebSpec's own gateway before method profiles | Method binding (`405`) | **Stops** |
 | Reading credentials from `/proc/self/environ` or process memory | HF dataset-server file read (July 2026); an early Claude Mythos snapshot (system card, April 2026) | A dedicated OS user and a non-dumpable process. Level 4 holds only public keys | **Stops** same-user reads of the gateway |
 | Replaying or forging calls with stolen request material | General | Single-use nonce; HMAC over method, host, path, query, and body | **Stops** |
-| Concealment: rewriting git history, spoofing tool-call logs, rewriting activity when challenged | Mythos system card; METR/Redwood (Aug 2026); UK AISI incident report (Aug 2026) | The hash-chained gateway audit log as ground truth | **Detects** (prevents only if the log is out of the agent's reach) |
+| Concealment: rewriting git history, spoofing tool-call logs, rewriting activity when challenged | Mythos system card; METR/Redwood (Aug 2026); UK AISI incident report (Aug 2026) | The hash-chained gateway audit log as ground truth | **Detects**, but only if the log, or at least its latest hash, is out of the agent's reach |
 | Splitting a task into innocuous-looking steps | GTG-1002 espionage via Claude Code (Anthropic, Nov 2025) | The audit sequence, plus a person's gate on the final destructive step | **Slows or detects**. Rules on single steps don't catch it |
 | Indirect prompt injection through fetched content | Claude Code Auto Mode bypass (Embrace The Red, Aug 2026); ChatGPT Atlas | `X-UFO-Taint` on open-world output; clearance at level 3 | **Slows**. Only as good as the shim's taint policy |
-| Weaponized *arguments* to an allowed tool (a malicious HDF5 file, template injection) | HF intrusion, July 2026 | Strict JSON bodies, typed `GET` arguments, unique keys | **Shape only**. Semantic validation is proposed |
-| Reading a secret, then sending it out | General exfiltration pattern | Open-world changes need a person at level 4 | **Stops** at level 4 |
+| Weaponized *arguments* to an allowed tool (a malicious HDF5 file, template injection) | HF intrusion, July 2026 | Strict JSON bodies, JSON-decoded `GET` arguments, unique query keys | **Shape only**. Schema and semantic validation are proposed |
+| Reading a secret, then sending it out | General exfiltration pattern | Open-world changes need a person at level 4 | **Stops** at level 4 for tools that change something. A read-only open-world tool (a fetcher) is a gap unless raised to `dangerous` |
 | Command and control over an allowed channel (polling a public dataset; directory names used as a message board) | HF intrusion; the Artifactory "message board", May–July 2026 | Audit, plus rate limits at the edge | **Detects at best** |
 | Reaching hosts *around* the gateway; using harvested third-party credentials directly | HF intrusion (Modal relay); UNCTAD relay workarounds, 2026 | The gateway as the only egress ([DP-3](../spec/audit-deployment.md#deployment)) | **Stops only if enforced at the network layer** |
 
@@ -54,6 +55,8 @@ someone to discover.
   safe for the tool.
 - **It doesn't contain a compromised harness below level 4.** The guard key signs everything
   that levels 1 to 3 require.
+- **It doesn't gate open-world reads.** A read-only tool that reaches the open world, such as a
+  URL fetcher, can carry data out in its arguments. Raise such tools to `dangerous`.
 - **It doesn't help if traffic can bypass it.** The gateway must be the only way out.
 
 ## WebSpec and MCP
@@ -79,7 +82,7 @@ WebSpec arrived at roughly the same shape as Apple's platform security:
 | Entitlements: signed, declarative capabilities bound to the code's identity | Tool contracts. Operator overrides are the grants, and pinning keeps them stable |
 | App Sandbox (Seatbelt): deny by default | Unannotated means strict; method binding; isolation per destination |
 | TCC consent, with Touch ID and the Secure Enclave proving the user is present | Level-4 approval, signed by a biometric-gated key |
-| XPC privilege separation | The gateway and each MCP server as separate processes and OS users |
+| XPC privilege separation | The gateway and each MCP server as separate processes, with the gateway as its own OS user |
 | Hardened Runtime (no task-port or debugger attach) | A non-dumpable gateway process |
 | Private Cloud Compute's verifiable transparency log | The hash-chained audit log |
 

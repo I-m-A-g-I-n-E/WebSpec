@@ -6,7 +6,7 @@ it ([RQ-1](methods.md#requirements)), and none removes any.
 | Level | Name | Adds |
 |---|---|---|
 | 0 | local | Method binding, definers, strict arguments. Loopback only |
-| 1 | signed | Guard HMAC over the whole request, with a single-use nonce bound to the destination |
+| 1 | signed | Guard HMAC over the method, host, path, query, body, definer, and idempotency key, with a single-use nonce bound to the destination |
 | 2 | bound | Bookend on every unsafe method, and `Idempotency-Key` for every non-idempotent tool |
 | 3 | cleared | Single-use clearance for every tool that is not read-only and every tool above tier `open` |
 | 4 | witnessed | A person's signature over the exact request, for destructive tools, `dangerous` tools, and open-world mutations |
@@ -15,25 +15,31 @@ it ([RQ-1](methods.md#requirements)), and none removes any.
   absent, the level is 1 when `guard: true` is set and 0 otherwise. `guard: true` forces at
   least level 1, and every level of 1 or higher enables the guard. An invalid value MUST fail
   closed to level 4.
+
 A destination served on a public domain must be at level 1 or higher
 ([HG-7](addressing.md#host)).
 
 ## Processing order
 
 - **PO-1** A gateway SHOULD apply its checks in this order, so that a request is refused with
-  the most basic applicable error:
-    1. Host grammar ([HG-2, HG-3, HG-5](addressing.md#host)) and repeated query keys ([AR-1](addressing.md#arguments))
-    2. Public exposure ([HG-7](addressing.md#host)), then the guard ([GD-1](#level-1-signed))
-    3. Destination, then tool ([PA-1](addressing.md#path))
-    4. Method binding ([MB-2](methods.md#method-binding))
-    5. Method rules: empty `GET` body, definer, bookend ([DF-1, DF-2](methods.md#per-method-rules))
-    6. Arguments ([AR-2 to AR-5](addressing.md#arguments))
-    7. Idempotency replay ([ID-3](#level-2-bound))
-    8. Clearance ([CL-1](#level-3-cleared)), then approval ([AP-1](#level-4-witnessed))
-    9. Commit ([CO-1](#commit)), then the call
+  the most basic applicable error. The reference gateway does:
+    1. Host labels ([HG-2](addressing.md#host)), then repeated query keys ([AR-1](addressing.md#arguments))
+    2. Qualifiers ([HG-3, HG-5](addressing.md#host))
+    3. For a configured destination: public exposure ([HG-7](addressing.md#host)), then the guard
+       ([GD-1](#level-1-signed)). `GET /__nonce` and `GET /__challenge` are answered here.
+    4. Destination (`404 unknown_service`), tool path (`400 missing_tool`), the server's tool list
+       (`503 service_unavailable`), then the tool ([PA-1](addressing.md#path))
+    5. Method binding ([MB-2](methods.md#method-binding))
+    6. Method rules: empty `GET` body ([AR-2](addressing.md#arguments)), definer and bookend
+       ([DF-1, DF-2](methods.md#per-method-rules))
+    7. Arguments ([AR-3 to AR-5](addressing.md#arguments))
+    8. `Idempotency-Key` present and well formed ([ID-1](#level-2-bound)), then replay ([ID-3](#level-2-bound))
+    9. Clearance ([CL-1](#level-3-cleared)), then approval ([AP-7, AP-1](#level-4-witnessed))
+    10. Commit ([CO-1](#commit)): an in-flight key or a full store is detected here. Then the call.
+
 - **PO-2** Whatever its order, a gateway MUST NOT spend a clearance or an approval, or claim an
   idempotency key, before every check has passed ([CO-1](#commit)). A nonce, by contrast, is
-  consumed when the guard checks it, so every attempt needs a fresh one.
+  consumed as soon as its tag verifies, so every attempt needs a fresh one.
 
 ## Level 1: signed
 
@@ -58,29 +64,41 @@ A destination served on a public domain must be at level 1 or higher
 
     `host` is the `Host` header as the gateway receives it, port included. `path` is the decoded
     path with its surrounding slashes trimmed, prefixed by a single `/`.
+
 - **GD-3** The canonical query is built in three steps:
-    1. Decode every pair, keeping blank values.
-    2. Sort the pairs by key. Keys are unique ([AR-1](addressing.md#arguments)).
-    3. Re-encode with RFC 3986 percent-encoding. The unreserved characters `A–Z a–z 0–9 - . _ ~`
-       stay literal, and a space becomes `%20`.
+    1. Decode every pair as a form would (`+` is a space, percent-escapes are decoded as UTF-8),
+       keeping blank values.
+    2. Sort the pairs by key, then by value, comparing code points. Keys are unique
+       ([AR-1](addressing.md#arguments)).
+    3. Write each pair as `key=value` (a blank value gives `key=`), percent-encoding every
+       character except the unreserved `A–Z a–z 0–9 - . _ ~` (UTF-8, so a space becomes `%20`),
+       and join the pairs with `&`.
+
 - **GD-4** A nonce is issued by `GET /__nonce`, signed as in GD-2 with an empty nonce, giving the
   message `GET:{host}:/__nonce::{hex(sha256(""))}`. The response is `{"nonce", "audience",
   "expires_at", "ttl_seconds"}`, where `expires_at` is in Unix seconds. A nonce is bound to its
   destination, valid for 60 s, and usable once.
+
 - **GD-5** The guard key MUST be supplied from outside the gateway's code and configuration. The
   gateway MUST refuse to serve requests that need the key when it is absent. The reference
   gateway reads `WEBSPEC_GUARD_KEY`, which is either 64 hex digits or a passphrase hashed with
-  SHA-256, and is meant to be filled from a password manager when the gateway is launched.
+  SHA-256, and is meant to be filled from a password manager when the gateway is launched. It
+  needs the key for every unsafe request at every level, including level 0, because it
+  validates definers with it. Without the key it answers those requests with a plain-text
+  `500`.
 
 ## Level 2: bound
 
 Every unsafe method carries a bookend in its definer ([DF-2](methods.md#per-method-rules)).
+
 - **ID-1** Every unsafe request to a tool that is not idempotent MUST carry an
   `Idempotency-Key` (`400 idempotency_key_required`). That includes `DELETE`. The key is 1 to
   255 visible ASCII characters (`400 idempotency_key_invalid`). Below level 2, a key is honored
   on any unsafe method that sends one.
+
 - **ID-2** Keys are scoped per destination. A request's fingerprint is the SHA-256 of its
   method, path, canonical query, and body hash.
+
 - **ID-3** When a key has been seen before, the gateway answers:
 
     | The same key was used for … | Response |
@@ -93,11 +111,14 @@ Every unsafe method carries a bookend in its definer ([DF-2](methods.md#per-meth
 
 - **ID-4** A replay is answered *before* one-time credentials are checked, so a legitimate
   retry never needs a second clearance or a second human signature.
+
 - **ID-5** The gateway MUST NOT evict in-flight or unknown records to make room, because a
   forgotten record could let a side effect run twice. When only such records remain, it refuses
-  new keys for that destination with `503 idempotency_store_full`. Settled records are kept for
-  24 hours. An in-flight record older than 15 minutes becomes unknown. The reference store holds
-  2,000 keys per destination.
+  new keys for that destination with `503 idempotency_store_full`. The reference store holds
+  2,000 keys per destination. When it is full, the oldest *completed* records are evicted
+  first, and a retry whose record was evicted runs the tool again. Settled records (completed or
+  unknown) are kept for up to 24 hours, and an in-flight record older than 15 minutes becomes
+  unknown.
 
 ## Level 3: cleared
 
@@ -109,11 +130,16 @@ Every unsafe method carries a bookend in its definer ([DF-2](methods.md#per-meth
     HMAC-SHA256(key, "ufo2:" destination ":" METHOD ":" tool ":" canonical-args ":" ts)
     ```
 
-    `canonical-args` is the arguments object serialized as JSON, with keys sorted, no
-    whitespace, and ASCII escapes.
+    `canonical-args` is the arguments object as the gateway derives it from the request (decoded
+    query values merged with the body), serialized as *canonical JSON*. That means keys sorted,
+    `,` and `:` as separators with no whitespace, every non-ASCII character escaped as `\uXXXX`,
+    and numbers written as Python's `json` module writes them (for example `1e-07`). A client in
+    another language must reproduce this serialization exactly.
+
 - **CL-2** A clearance is valid for 30 s on either side of `ts` and can be spent once. The
   errors are `403 clearance_missing`, `clearance_malformed`, `clearance_expired`,
   `clearance_invalid`, and `clearance_reused`.
+
 - **CL-3** The gateway checks a clearance early but spends it only at commit
   ([CO-1](#commit)). A request refused later, for example by a level-4 challenge, therefore does
   not burn the clearance that its approved retry needs.
@@ -145,17 +171,23 @@ not a separate cryptographic boundary. Independent signers per level are
     }
     ```
 
-    The `fingerprint` is the SHA-256 of the summary serialized as canonical JSON. It binds the
-    challenge to exactly this request.
+    The `fingerprint` is the SHA-256 of the summary serialized as canonical JSON (as in
+    [CL-1](#level-3-cleared)). It binds the challenge to this method, destination, host, path,
+    tool, arguments, and body. It does not cover the definer verb or the idempotency key.
+
 - **AP-2** An approval tool MUST do four things. It MUST re-derive the fingerprint from the
   summary it shows, and refuse on a mismatch (what you see is what you sign). It MUST show the
   summary with every control and non-ASCII character escaped. It MUST read the confirmation from
   the controlling terminal, never from stdin. And it MUST sign `sign_message` in the SSH
   signature namespace `webspec-approval`. The reference tool is `webspec-ctl approve`.
+
 - **AP-3** The client retries the identical request with
   `X-WebSpec-Approval: <challenge>:<base64 SSH signature>`. The gateway verifies the signature
   with OpenSSH (`ssh-keygen -Y verify`) against an allowed-signers file
-  (`WEBSPEC_APPROVERS_FILE`). The gateway holds only *public* keys.
+  (`WEBSPEC_APPROVERS_FILE`). The gateway holds only *public* keys. The retry is the same
+  method, path, arguments, and body, with a fresh nonce and guard, a clearance minted within the
+  last 30 s, and the approval header.
+
 - **AP-4** A challenge is valid for 300 s and is single-use. The gateway answers `403` when an
   approval:
 
@@ -169,43 +201,51 @@ not a separate cryptographic boundary. Independent signers per level are
     | `approval_in_progress` | arrives while the same challenge is being verified |
 
     Five invalid signatures burn the challenge.
+
 - **AP-5** Verifying a signature does not spend it. The approval is spent at commit
   ([CO-1](#commit)). A retry that carries the same signature is accepted again until then. A
   retry of the same request without a signature gets the same pending challenge back.
-- **AP-6** Pending challenges MUST NOT be evicted to make room. A full queue, which in the
-  reference gateway is 100 per destination, refuses new challenges with `429
-  approval_queue_full`. Otherwise anyone holding the guard key could flush out the challenge a
-  person is in the middle of signing.
-- **AP-7** If no approvers are configured, requests that need approval MUST fail closed with
-  `503 approval_unavailable`.
 
-The signing key SHOULD live in an agent that demands a biometric gesture for every signature,
-such as the 1Password SSH agent or a key backed by the Secure Enclave. The remaining risk is a
-person who approves a prompt they did not initiate.
+- **AP-6** Pending challenges MUST NOT be evicted to make room. When the queue is full, new
+  challenges are refused with `429 approval_queue_full`. In the reference gateway, the queue
+  holds at most 100 challenges issued for the destination in the last 300 s, whatever their
+  state. Otherwise anyone holding the guard key could flush out the challenge a person is in the
+  middle of signing.
+
+- **AP-7** If no approvers are configured, a request that needs approval MUST be refused with
+  `503 approval_unavailable`, before any challenge is issued.
+
+The signing key should live in an agent that asks for a biometric gesture before it signs, such
+as the 1Password SSH agent or a key backed by the Secure Enclave. The remaining risk is a person
+who approves a prompt they did not initiate.
 
 ## Commit
 
-- **CO-1** One-time credentials are never consumed unless the call runs. Once every check has
-  passed, the gateway runs these steps with nothing interleaved until the tool call starts:
+- **CO-1** One-time credentials are spent at commit, immediately before the call is attempted,
+  and never earlier. Once every check has passed, the gateway runs these steps with nothing
+  interleaved until the call is attempted:
     1. Confirm that the clearance and the approval are still unspent.
     2. Claim the idempotency key.
     3. Spend the clearance and the approval.
 
     If the claim fails because another attempt holds the key, nothing has been spent, and the
-    approved retry still works.
+    approved retry still works. A failure *after* commit leaves the clearance and the approval
+    spent, even when the tool did not run, so the retry needs new ones.
+
 - **CO-2** After the call, the gateway settles the idempotency key:
 
     | Outcome | Key |
     |---|---|
     | A result is returned | stored for replay |
-    | The server refused the call (a JSON-RPC error, so the tool did not run) | released |
-    | Timeout, broken connection, or a failure after the call | marked *outcome unknown* |
+    | The server answered with a JSON-RPC error, so the tool did not run | released |
+    | A timeout, a connection that closed during the call, or a failure after the call | marked *outcome unknown* |
 
 ## The harness shim
 
 - **SH-1** The model SHOULD write only the method, host, path, arguments, and definer verb.
   Keys, nonces, tags, idempotency keys, and clearances SHOULD be added by a harness component
   whose secrets the model cannot read and whose behavior text cannot instruct.
+
 - **SH-2** The shim SHOULD learn what to add from `OPTIONS /{tool}`
   ([DS-1](methods.md#discovery)).
 

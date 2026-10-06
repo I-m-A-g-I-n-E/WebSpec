@@ -25,7 +25,7 @@ have their own slot. Each slot is checked by something that already knows how to
 | What kind of act | HTTP method | `POST` | HTTP semantics (safe, idempotent), CORS, edge policy, and the gateway's method binding |
 | Which act exactly | Path (the tool) | `/send_email` | The gateway: the tool's contract |
 | The verb, said aloud | `X-Gimme-Definer` | `SEND` | The gateway: the method's verb family |
-| With what | Query (`GET`) or JSON body | `{"to": …}` | The gateway: strict JSON and typed arguments |
+| With what | Query (`GET`) or JSON body | `{"to": …}` | The gateway: strict JSON, unique keys |
 | On whose authority | Signed headers | guard, clearance, approval | The gateway, at the destination's security level |
 
 The higher a part sits in this table, the more of the existing web enforces it for free.
@@ -57,8 +57,8 @@ requirements, and the model's part of the request stays the same at every level.
 
 | Level | Name | Adds | Holds against |
 |---|---|---|---|
-| 0 | local | Method binding, definer verbs, strict arguments; loopback only | Confused or careless agents reaching the wrong kind of act |
-| 1 | signed | Guard HMAC over the whole request; single-use nonce bound to the destination | Forged, altered, or replayed requests from anyone without the key |
+| 0 | local | Method binding, definer verbs, strict arguments; served only under loopback names | Confused or careless agents reaching the wrong kind of act |
+| 1 | signed | Guard HMAC over the method, host, path, query, body, definer, and idempotency key; single-use nonce bound to the destination | Forged, altered, or replayed requests from anyone without the key |
 | 2 | bound | Payload bookend; `Idempotency-Key` for non-idempotent tools | Duplicate side effects from retries |
 | 3 | cleared | A single-use clearance bound to destination, method, tool, and arguments | Sensitive calls that the harness's policy did not vouch for |
 | 4 | witnessed | A person's signature over the exact request, for destructive, dangerous, and open-world mutating calls | A fully compromised agent harness, for the calls it witnesses |

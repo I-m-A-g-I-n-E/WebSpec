@@ -13,7 +13,7 @@ WebSpec monorepo — protocol specification + reference implementation for tool 
 - **services/op-auth/** — FastMCP server wrapping 1Password CLI (`op`) for per-secret access (guard-protected)
 - **plugins/protonmail/** — Claude Code plugin: email skill
 - **plugins/webspec-red-team/** — Claude Code plugin: 10 red-team pentesting agents
-- **webspector/** — Claude Code plugin: WebSpec protocol validator (5 agents, 5 skills, 2 commands)
+- **plugins/webspector/** — Claude Code plugin: WebSpec protocol validator (5 agents, 5 skills, 2 commands; predates the rewritten spec)
 - **docs/** — The published spec site (MkDocs Material → https://i-m-a-g-i-n-e.github.io/WebSpec/). `docs/spec/` is normative and every requirement has a rule ID (`MB-1`, `GD-2`, …); `docs/guide/` is how-to and rationale. Long-form essays, the tier-C vision, retired designs, and article drafts live in Notion, not here.
 - **gateway/examples/** — Demo MCP server, reference harness shim (stdlib only, written from the spec), and the walkthrough generator whose output is `docs/guide/walkthrough.md` (`tests/test_examples.py` replays it)
 - **design/** — Design notes and implementation plans (not published)

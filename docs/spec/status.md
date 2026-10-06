@@ -3,9 +3,10 @@
 ## Implementation
 
 The reference gateway (`gateway/` in the
-[repository](https://github.com/I-m-A-g-I-n-E/WebSpec)) implements every rule in this spec.
-Its tests run in CI on Python 3.11 and 3.12. They drive the real HTTP application, and an
-integration suite runs it against a real MCP server over stdio.
+[repository](https://github.com/I-m-A-g-I-n-E/WebSpec)) implements the rules in this spec,
+with the deviations listed under [Known limits](#known-limits). Its tests run in CI on Python
+3.11 and 3.12. They drive the real HTTP application, and an integration suite runs it against
+real MCP servers over stdio, including one that crashes in the middle of a call.
 
 | Area | State |
 |---|---|
@@ -15,7 +16,7 @@ integration suite runs it against a real MCP server over stdio.
 | Audit chain, process hardening | **Implemented** |
 | Everything under [Roadmap](#roadmap) | **Proposed** |
 
-Code marks each extension point for proposed work with a `TODO(C)` comment.
+Some extension points for proposed work are marked in the code with a `TODO(C)` comment.
 
 ## Conformance
 
@@ -27,7 +28,7 @@ A gateway conforms at level *n* when it meets every rule that applies at levels 
 | Contracts and binding: TC-1 to TC-6, MB-1 to MB-3, RQ-1, RQ-2 | at every level |
 | Definers: DF-1, DF-3, and DF-2 whenever a bookend is sent | at every level |
 | Responses and discovery: RS-1 to RS-4, DS-1 to DS-3 | at every level |
-| Processing and commit: PO-1, PO-2, CO-1, CO-2 | at every level |
+| Levels, processing, and commit: LV-1, PO-1, PO-2, CO-1, CO-2 | at every level |
 | Audit: AU-1 to AU-4 | at every level |
 | Guard: GD-1 to GD-5 | from level 1 |
 | Required bookend (DF-2) and required `Idempotency-Key` (ID-1) | from level 2 |
@@ -45,8 +46,11 @@ or to watch the roadmap.
 - **One symmetric key.** The guard, the bookend, and the clearance are all keyed with the guard
   key, so whoever holds it can produce everything that levels 1 to 3 require. Only level 4
   rests on a separate, asymmetric key that a person holds.
-- **Short tags.** Guard, bookend, and clearance tags are 32 bits. The single-use nonce and the
-  30–60 s lifetimes limit guessing online, but the tags should be wider.
+- **Short tags, cheap guesses.** Guard, bookend, and clearance tags are 32 bits. A failed guard
+  check does not consume its nonce. And the tag on `GET /__nonce` covers a constant message, so
+  whoever sees it once can mint nonces for that host indefinitely. Online guessing is therefore
+  limited only by request rate. Treat nonce-request tags as secrets, rate-limit at the edge, and
+  watch the roadmap.
 - **Clearances have one-second resolution.** A clearance carries no nonce of its own. Two
   clearances minted in the same second for the identical call are therefore the same token,
   and the second is refused as `clearance_reused`. A harness that really means to repeat a call
@@ -56,14 +60,33 @@ or to watch the roadmap.
 - **Memory-only state.** A restart forgets nonces, clearances, approvals, idempotency records
   (including "outcome unknown" ones), and contract pins. After a restart, the gateway trusts
   the first tool listing it sees again.
-- **Shape, not meaning.** Arguments are checked for form (strict JSON, typed `GET` values,
-  unique keys) but are not validated against the tool's full `inputSchema`. Nothing checks
-  that a call matches what the user asked for.
+- **Shape, not meaning.** Arguments are checked for form (strict JSON, JSON-decoded `GET`
+  values, unique query keys) but are not validated against the tool's `inputSchema`, and
+  duplicate keys inside a JSON body are not refused. Nothing checks that a call matches what the
+  user asked for.
+- **Open-world reads are not gated.** A read-only open-world tool (a fetcher, a search API) can
+  carry data out in its arguments with neither a clearance nor an approval, at any level, unless
+  it is raised to `dangerous` ([RQ-1](methods.md#requirements)).
 - **Taint is declared, not observed.** `X-UFO-Taint` marks open-world output, but the policy
   that acts on it lives in the harness shim. The gateway does not itself track which data
   steered a call.
-- **The bare domain lists destinations.** `GET /` on the domain itself returns every
-  destination and its level.
+- **Destinations are listed.** `GET /` on the domain itself returns every destination and its
+  level, and so does the `404 unknown_service` answer to a request for an unknown destination.
+  Neither needs the guard.
+- **Audit gaps.** Discovery, nonce issuance, and a few framework-level refusals are not audited,
+  and removing the tail of the log is not detectable from the file alone
+  ([AU-1, AU-3](audit-deployment.md#audit)).
+- **Idempotency is best effort under load.** When a destination's store is full, completed
+  records are evicted oldest first, and a retry whose record was evicted runs again
+  ([ID-5](levels.md#level-2-bound)).
+- **A key is needed even at level 0.** The reference gateway needs `WEBSPEC_GUARD_KEY` for every
+  unsafe request at every level ([GD-5](levels.md#level-1-signed)).
+- **The shipped deployment files fall short of DP-1 to DP-6.** `gateway/systemd` and
+  `gateway/launchd` run the gateway as the logged-in user, with the audit log in that user's home
+  (DP-1, DP-4). The Caddy configurations (the ones `webspec-ctl caddy-sync` writes, and
+  `docker/caddy/Caddyfile`) forward any `Host`,
+  including `*.localhost`, so a LAN client can reach level-0 destinations (DP-5). They also
+  write access logs that include query strings (DP-6). Treat them as development setups.
 
 ## Roadmap
 
@@ -74,7 +97,8 @@ All proposed.
 - Replace the guard with RFC 9421 HTTP Message Signatures, using an independent signer per
   level. The harness signs level 1, a policy service signs level 3, and a person signs level 4.
   The gateway would then hold only public keys.
-- Widen all tags to at least 128 bits.
+- Widen all tags to at least 128 bits. Consume a nonce on a failed guard check, and give
+  nonce requests a tag that expires.
 
 **State**
 
@@ -93,7 +117,8 @@ All proposed.
 - Proof of read: `If-Match` with a gateway-issued ETag on `PUT`, `PATCH`, and `DELETE`, so that
   an agent can only overwrite what it has seen.
 - Provenance v2: bind `X-UFO-Provenance` links to the request fingerprint and nonce, then
-  enforce them. Today they are parsed but not enforced.
+  enforce them. Today the gateway ignores the header; a validator exists but is not called.
+- Refuse duplicate keys in JSON bodies.
 
 **Addressing**
 
@@ -102,8 +127,10 @@ All proposed.
 
 **Audit and approval**
 
-- Off-host audit shipping, and failing closed at level 3 and above when the log cannot be
-  written.
+- Off-host audit shipping (or at least the latest hash), and failing closed at level 3 and
+  above when the log cannot be written.
+- Audit discovery and nonce issuance, and stop listing destinations to unauthenticated
+  callers.
 - An out-of-band approval device, such as a phone push that shows the summary.
 
 **Registry** (`gateway/webspec_registry`)
@@ -115,6 +142,11 @@ All proposed.
 - Ordering by noun containment.
 - Public exposure behind the guard.
 - A single-flight catalog cache.
+
+**Deployment**
+
+- Ship a system service that runs the gateway as its own user, and Caddy configurations that
+  forward only public hosts and keep query strings out of their logs.
 
 **Conformance**
 
@@ -131,6 +163,8 @@ service registration, and REST collection paths, is kept outside this spec until
 3. **Clearance key.** Until independent signers exist, should level 3 at least use a key
    separate from the guard key?
 4. **Public index.** Should the bare domain stop listing destinations?
+5. **Open-world reads.** Should a read-only open-world tool need a clearance at level 3 (and a
+   person at level 4) by default, rather than only when it is raised to `dangerous`?
 
 ## Versions
 

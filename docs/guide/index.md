@@ -35,7 +35,8 @@ With no `level` set, the destination runs at level 0, which is loopback only.
 ## 3. Start the gateway
 
 ```bash
-export WEBSPEC_GUARD_KEY=$(openssl rand -hex 32)   # in real use, read it from your password manager
+openssl rand -hex 32 > guard.key                    # in real use, keep the key in your password manager
+export WEBSPEC_GUARD_KEY=$(cat guard.key)
 WEBSPEC_CONFIG=$PWD/webspec.json python -m webspec
 ```
 
@@ -101,8 +102,15 @@ $ curl -s "http://notes.localhost:7001/read_note?id=welcome"
 ```
 
 From here on, a harness shim signs the requests. The reference shim
-(`gateway/examples/shim.py`) uses only the standard library. Point it at the gateway with the
-same key:
+(`gateway/examples/shim.py`) uses only the standard library. In the second terminal, from the
+repository root with the virtual environment active, load the same key and start Python:
+
+```bash
+export WEBSPEC_GUARD_KEY=$(cat guard.key)
+python
+```
+
+Then point the shim at the gateway:
 
 ```python
 import os, sys, httpx
@@ -121,7 +129,7 @@ notes.call("POST", "send_note", {"id": "welcome", "to": "ana@example.com"}, "SEN
 The calls are the same ones the model would write. The shim learned the level from
 `OPTIONS`, and added the nonce, the guard, the bookend, and the `Idempotency-Key`.
 
-Every decision is now in the audit log, `~/.webspec/gateway-audit.jsonl`, with each line
+Every call since step 4 is also in the audit log, `~/.webspec/gateway-audit.jsonl`, each line
 chained to the one before it.
 
 ## Next

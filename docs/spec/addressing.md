@@ -21,24 +21,31 @@ label       = [a-z0-9] ( [a-z0-9-]{0,61} [a-z0-9] )?
 
 - **HG-1** The destination, which is the label immediately left of the domain, is the only label
   that selects a service. Contracts, levels, nonce and clearance audiences, idempotency scopes,
-  and approval queues are all kept per destination.
+  and approval queues are all kept per destination. A destination that is not configured is
+  answered with `404 unknown_service`.
+
 - **HG-2** Every label MUST be a lowercase DNS label as defined above. Otherwise the gateway
   answers `404 invalid_host`.
+
 - **HG-3** Each qualifier MUST appear in its destination's allow-list (configuration key
   `labels`). A qualifier MUST appear at most once, qualifiers MUST follow allow-list order, and a
   host MUST carry at most four. Otherwise the gateway answers `404 unknown_qualifier`. The
   default allow-list is empty, so a destination with no `labels` is reachable only as
   `{destination}.{domain}`.
+
 - **HG-4** Qualifiers MAY change *where* a request lands. They MUST NOT change *what* it means
   (that is the path) or *who* is asking (that is the signed credentials). Labels MUST be safe to
   publish and MUST NOT carry tenant or user identity.
+
 - **HG-5** A gateway that cannot route a qualifier to a separate backend MUST refuse an
   allow-listed qualifier with `404 qualifier_not_routable`. It MUST NOT serve that qualifier
   from the destination's default backend. The reference gateway refuses every qualifier today:
   serving `eu.mail.example.com` from the same backend as `mail.example.com` would suggest a
   regional or data-residency routing that does not exist.
+
 - **HG-6** A gateway MUST NOT honor a nonce, clearance, approval, or idempotency key issued for a
   different destination.
+
 - **HG-7** A destination below level 1 MUST NOT be served on a public domain (`403
   unguarded_public`). It is reachable only under loopback names such as
   `{destination}.localhost`.
@@ -65,6 +72,7 @@ underscores and spaces into hyphens, and removes any other character (`MCP_DOCKE
   answers `404 tool_not_found`. In the reference gateway the path is the MCP tool name. A path
   that matches no tool is retried with `/` folded to `_`, so `/send/email` reaches
   `send_email`.
+
 - **PA-2** These paths are reserved:
 
     | Request | Meaning |
@@ -85,15 +93,21 @@ the tool's name.
 - **AR-1** A query key MUST NOT repeat (`400 duplicate_query_key`). If keys could repeat, the
   tool would see only one of the values, and no signature could bind the value the tool actually
   used. Encode lists as one JSON value.
+
 - **AR-2** A `GET` request carries its arguments only in the query string, and its body MUST be
   empty (`400 body_not_allowed`).
+
 - **AR-3** If a query parameter's schema type cannot be a string (integer, number, boolean,
-  array, or object), its value MUST be strict JSON, as in `?limit=5&ids=["a","b"]`. Every other
-  value is passed as a string. A value that doesn't parse is refused with `400
-  invalid_arguments`.
+  array, or object), its value MUST parse as strict JSON, as in `?limit=5&ids=["a","b"]`. A
+  value that doesn't parse is refused with `400 invalid_arguments`. Every other value is passed
+  as a string. The gateway does not check a parsed value against its type, so `?limit=true`
+  reaches the tool as `true`.
+
 - **AR-4** A non-empty body MUST be a single strict-JSON object: no `NaN`, no `Infinity`, and no
   numbers that overflow. Anything else is refused with `400 invalid_arguments` and never
-  silently ignored.
+  silently ignored. The reference gateway does not yet refuse duplicate keys inside the object;
+  the last one wins.
+
 - **AR-5** An argument MUST NOT appear in both the query and the body (`400
   invalid_arguments`).
 

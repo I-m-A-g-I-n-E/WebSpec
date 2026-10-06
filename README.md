@@ -15,7 +15,7 @@ Each part of the call sits in its own slot. The host says who handles it, the me
 kind of act it is, the path which act, the definer says the verb aloud, and the body says
 with what. The gateway refuses any request whose parts disagree. A *security level* from 0
 to 4 decides how much proof each call must carry. At the top, a person signs the exact
-request before anything destructive, dangerous, or open-world happens. WebSpec complements
+request before anything destructive, dangerous, or open-world and mutating happens. WebSpec complements
 MCP: it is the HTTP face and the firewall in front of unchanged MCP servers.
 
 **Read the spec:** <https://i-m-a-g-i-n-e.github.io/WebSpec/>. The **Spec** tab is normative;
@@ -30,13 +30,14 @@ the **Guide** tab has the quickstart, walkthroughs, and rationale.
 | `gateway/examples/` | A demo MCP server, a reference harness shim, and the walkthrough generator |
 | `gateway/webspec_registry/` | Tool registry and resolver (experimental) |
 | `services/` | MCP servers used in the reference deployment (`mail-proton`, `op-auth`) |
-| `plugins/`, `webspector/` | Claude Code plugins |
+| `plugins/` | Claude Code plugins (`webspector`, `webspec-red-team`, `protonmail`) |
 | `docker/` | Container setup for the gateway |
 | `design/` | Design notes and implementation plans (not published) |
 
 ## Try it
 
 ```bash
+python -m venv .venv && source .venv/bin/activate
 pip install ./gateway
 export WEBSPEC_GUARD_KEY=$(openssl rand -hex 32)
 echo '{"mcpServers": {"notes": {"command": "python", "args": ["gateway/examples/demo_server.py"]}}}' > webspec.json
@@ -50,11 +51,11 @@ Then follow the [quickstart](https://i-m-a-g-i-n-e.github.io/WebSpec/guide/).
 ## Develop
 
 ```bash
-cd gateway && python -m pytest -q             # gateway, registry, and walkthrough tests
-pip install -r requirements.txt
-mkdocs serve                                  # preview the site at http://localhost:8000
+pip install ./gateway pytest pyyaml -r requirements.txt
+(cd gateway && python -m pytest -q)           # gateway, registry, and walkthrough tests
+python -m pytest -q docs/tests                # rule IDs, rendering, nav, code-to-docs links
 mkdocs build --strict                         # what CI runs
-python -m pytest -q docs/tests                # rule IDs, nav, and code-to-docs links
+mkdocs serve                                  # preview the site at http://localhost:8000
 ```
 
 The site deploys from `main` through GitHub Actions (`.github/workflows/deploy-docs.yml`).

@@ -48,3 +48,7 @@ site/
 
 # Notion files
 notion/
+
+# Quickstart scratch files (docs/guide/index.md) — the key must never be committed
+guard.key
+webspec.json

@@ -3,8 +3,8 @@
 The gateway decides how each tool may be called from the tool's **contract**
 ([TC-1 to TC-6](../spec/methods.md#tool-contracts)). The contract comes from your server's MCP
 annotations, unless an operator overrides it. Good annotations give agents the right methods
-and keep sensitive tools behind the right gates. A tool with no annotations is treated as the
-most dangerous kind of tool.
+and keep sensitive tools behind the right gates. A tool with no annotations is treated as
+strictly as the annotations allow: destructive, non-idempotent, and open-world.
 
 ## What an unannotated tool costs
 
@@ -33,8 +33,10 @@ annotate it.
 Set `openWorldHint: false` only when the tool touches nothing outside your own system. Sending
 email, posting to chat, fetching a URL, and calling a third-party API are all open-world. An
 open-world tool's output is marked `X-UFO-Taint: open-world`, and at level 4 every open-world
-tool that is not read-only needs a person's signature. That is where a stolen secret would
-leave.
+tool that is not read-only needs a person's signature, because that is where a stolen secret
+would usually leave. A read-only open-world tool, such as a fetcher or a search API, can also
+carry data out in its arguments. If it can reach arbitrary destinations, raise it to
+`dangerous` (below).
 
 With FastMCP:
 
@@ -91,7 +93,7 @@ contract yourself in the gateway's configuration:
       "url": "https://mcp.tickets.example/mcp",
       "level": 3,
       "tools": {
-        "search_tickets": {"read_only": true, "open_world": false},
+        "search_tickets": {"read_only": true, "open_world": false, "tier": "open"},
         "close_ticket": {"destructive": true, "idempotent": true, "tier": "sensitive"}
       }
     }
@@ -107,14 +109,17 @@ deliberately. The gateway guards against mistakes in two ways:
   non-idempotent, open-world, and `dangerous`.
 - **Un-marking read-only starts from strict.** `"read_only": false` on a tool that the server
   marks read-only gives the strict defaults, not a read-only contract with one field flipped.
+- **The tier is not re-derived.** An override keeps the tier it starts from: an unannotated
+  tool overridden to read-only stays `sensitive`. Set `tier` whenever you change `read_only`, as
+  in the example above.
 
 ## When a server changes its annotations
 
 Servers can re-list their tools at any time. The gateway remembers, for each tool, the
 strictest contract it has seen ([TC-6](../spec/methods.md#tool-contracts)):
 
-- A server that **tightens** a tool, for example by marking it destructive, takes effect
-  immediately.
+- A server that **tightens** a tool, for example by marking it destructive, takes effect the
+  next time the gateway lists its tools: within 5 minutes, or on reconnect.
 - A server that **loosens** a tool, for example by suddenly marking it read-only so that
   `GET` would reach it, is ignored. The gateway logs `Contract loosening blocked …`.
 - Only an operator override loosens a contract. Removing a service from the configuration and

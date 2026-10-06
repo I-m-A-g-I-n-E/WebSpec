@@ -9,21 +9,22 @@ calls go to a demo MCP server with three tools:
 | `send_note` | not read-only, not destructive, open world | `POST`, `PATCH` |
 | `delete_note` | destructive, idempotent, closed world | `DELETE`, `PUT` |
 
-Every exchange below is real. The script `gateway/examples/walkthrough.py` runs the gateway in
-front of the demo server (`gateway/examples/demo_server.py`) at each level, and signs the
-requests with the reference shim (`gateway/examples/shim.py`). The shim is written from the
+Every exchange below is real; only the `428` bodies are trimmed to their main fields. The
+script `gateway/examples/walkthrough.py` runs the gateway in front of the demo server
+(`gateway/examples/demo_server.py`) at each level, and signs the requests with the reference
+shim (`gateway/examples/shim.py`). The shim is written from the
 [spec](../spec/levels.md) rather than from the gateway's code, so each accepted request also
 confirms that the two agree. To produce your own transcripts, run
 `cd gateway && python examples/walkthrough.py`. The test suite replays the same scenarios on
-every change.
+every change and checks their status codes.
 
 The model's side of every call is the same at every level: a method, a path, arguments, and
 one definer verb. Everything else is added by the shim.
 
 ## Level 0: local
 
-At level 0 there are no keys, and the destination is reachable only on loopback. The grammar
-is still enforced:
+At level 0 nothing is signed, and the destination is served only under loopback names. The
+grammar is still enforced:
 
 - The read goes through `GET`.
 - `GET` cannot reach the delete. The `405` answer lists the methods that can.
@@ -96,7 +97,8 @@ X-Gimme-Definer-Tier: 1
 
 ## Level 1: signed
 
-From level 1 on, every request carries a fresh nonce and an HMAC over the whole request. The
+From level 1 on, every request carries a fresh nonce and an HMAC over its method, host, path,
+query, body, definer, and idempotency key. The
 shim first fetches a nonce, signing that request with an empty nonce, and then signs the call
 itself. Sending exactly the same bytes a second time fails, because the nonce has been spent.
 From here on, the transcripts leave the nonce fetches out.
@@ -219,7 +221,8 @@ X-WebSpec-Guard: e90ae9b8
 ## Level 3: cleared
 
 At level 3 the send needs a clearance: the harness's policy vouching for exactly this call
-(destination, method, tool, and arguments) within the last 30 seconds. When the policy
+(destination, method, tool, and arguments), with a timestamp within 30 seconds of the
+gateway's clock. When the policy
 declines, the gateway refuses the call. A policy might decline, for example, because the
 recipient's address came from a web page the agent had just read. The read needs no clearance,
 because it is read-only and its tier is `open`.

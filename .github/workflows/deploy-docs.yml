@@ -1,5 +1,7 @@
-name: Deploy MkDocs to GitHub Pages
+name: Deploy docs to GitHub Pages
 
+# Builds the MkDocs site and publishes it with GitHub Pages' Actions source
+# (Settings → Pages → Build and deployment → Source: GitHub Actions).
 on:
   push:
     branches: [main]
@@ -7,18 +9,23 @@ on:
       - 'docs/**'
       - 'mkdocs.yml'
       - 'requirements.txt'
+      - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -27,6 +34,18 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - run: mkdocs gh-deploy --force
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: mkdocs build --strict
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

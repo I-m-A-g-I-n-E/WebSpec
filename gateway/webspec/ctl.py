@@ -372,7 +372,7 @@ def build_parser() -> argparse.ArgumentParser:
                        help="Display public URL with https:// (TLS via Cloudflare)")
     add_p.add_argument("--namespace", help="Namespace scheme (phase 2)")
     add_p.add_argument("--level", type=int, choices=range(0, 5),
-                       help="Security level 0-4 (docs/http-methods/method-profiles.md); "
+                       help="Security level 0-4 (docs/spec/levels.md); "
                             "with --force, an existing level is kept unless this is given")
     add_p.add_argument("--force", action="store_true",
                        help="Overwrite existing service")

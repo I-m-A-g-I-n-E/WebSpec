@@ -1,65 +1,63 @@
 # WebSpec
 
-**A protocol specification for tool invocation that meshes with web architecture rather than building on top of it.**
+**Every AI tool call as an ordinary HTTP request that says exactly what it does, so the web and
+a gateway in front of your MCP servers can enforce it.**
 
-## What is WebSpec?
+```http
+POST /send_email HTTP/1.1
+Host: mail.example.com
+X-Gimme-Definer: SEND
 
-WebSpec maps every protocol primitive directly to an existing web primitive — DNS for discovery, subdomains for isolation, HTTP methods for verbs, paths for nouns, and browser security for capability boundaries. The web IS the protocol.
+{"to": "ops@example.com", "subject": "Deploy finished"}
+```
 
-## Reading the Spec
+Each part of the call sits in its own slot. The host says who handles it, the method what
+kind of act it is, the path which act, the definer says the verb aloud, and the body says
+with what. The gateway refuses any request whose parts disagree. A *security level* from 0
+to 4 decides how much proof each call must carry. At the top, a person signs the exact
+request before anything destructive, dangerous, or open-world happens. WebSpec complements
+MCP: it is the HTTP face and the firewall in front of unchanged MCP servers.
 
-The specification is organized as a wiki under `docs/`. You can browse it directly on GitHub, or serve it locally with [MkDocs Material](https://squidfunk.github.io/mkdocs-material/):
+**Read the spec:** <https://i-m-a-g-i-n-e.github.io/WebSpec/>. The **Spec** tab is normative;
+the **Guide** tab has the quickstart, walkthroughs, and rationale.
+
+## What's here
+
+| Path | What it is |
+|---|---|
+| `docs/` | The published site: `spec/` (normative) and `guide/` (how-to) |
+| `gateway/` | The reference gateway (Starlette): method binding, levels 0–4, audit chain |
+| `gateway/examples/` | A demo MCP server, a reference harness shim, and the walkthrough generator |
+| `gateway/webspec_registry/` | Tool registry and resolver (experimental) |
+| `services/` | MCP servers used in the reference deployment (`mail-proton`, `op-auth`) |
+| `plugins/`, `webspector/` | Claude Code plugins |
+| `docker/` | Container setup for the gateway |
+| `design/` | Design notes and implementation plans (not published) |
+
+## Try it
 
 ```bash
-pip install mkdocs-material
-mkdocs serve
+pip install ./gateway
+export WEBSPEC_GUARD_KEY=$(openssl rand -hex 32)
+echo '{"mcpServers": {"notes": {"command": "python", "args": ["gateway/examples/demo_server.py"]}}}' > webspec.json
+WEBSPEC_CONFIG=$PWD/webspec.json python -m webspec &
+sleep 2
+curl -s "http://notes.localhost:7001/read_note?id=welcome"
 ```
 
-Then open `http://localhost:8000`.
+Then follow the [quickstart](https://i-m-a-g-i-n-e.github.io/WebSpec/guide/).
 
-## Structure
+## Develop
 
-```
-docs/
-├── index.md                          # Overview & meshing principle
-├── philosophy/                       # Non-normative conceptual foundations
-│   ├── permissions-as-love-grammar.md
-│   └── trust-gradients-philia-model.md
-├── url-grammar/                      # URL structure & formal grammar
-│   ├── core-syntax.md
-│   ├── object-type-system.md
-│   ├── type-resolution-inference.md
-│   └── complete-grammar-ebnf.md
-├── http-methods/                     # Verbs, permissions, security
-│   ├── method-semantics.md
-│   ├── permission-scoping.md
-│   ├── head-options-discovery.md
-│   ├── method-tokenization.md
-│   └── definer-verbs.md             # NEW: Definer Verbs & Payload Binding
-├── subdomain-architecture/           # Isolation & local bridge
-│   ├── isolation-model.md
-│   ├── cookie-token-scoping.md
-│   ├── local-bridge.md
-│   └── local-service-architecture.md
-├── auth/                             # OAuth, keychain, tokens
-│   ├── auth-flow-overview.md
-│   ├── keychain-integration.md
-│   ├── onboarding-subdomain-provisioning.md
-│   └── token-structure.md
-├── discovery/                        # NLP resolution & embeddings
-│   ├── nlp-driven-resolution.md
-│   ├── embedding-schema.md
-│   └── three-way-join.md
-├── registration/                     # Service registration & verification
-│   ├── registration-schema.md
-│   └── domain-verification.md
-└── reference/                        # Comparisons & appendices
-    └── comparison-with-mcp.md
+```bash
+cd gateway && python -m pytest -q             # gateway, registry, and walkthrough tests
+pip install -r requirements.txt
+mkdocs serve                                  # preview the site at http://localhost:8000
+mkdocs build --strict                         # what CI runs
+python -m pytest -q docs/tests                # rule IDs, nav, and code-to-docs links
 ```
 
-## Status
-
-All sections are in **Draft** status. The specification is under active development.
+The site deploys from `main` through GitHub Actions (`.github/workflows/deploy-docs.yml`).
 
 ## Authors
 

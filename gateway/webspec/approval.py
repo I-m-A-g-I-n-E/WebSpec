@@ -1,6 +1,6 @@
 """Level 4 ("witnessed") human approval: challenge issuance + Ed25519/SSHSIG verification.
 
-Flow (spec: docs/http-methods/method-profiles.md § Human approval):
+Flow (spec: docs/spec/levels.md § Level 4: witnessed):
 
 1. A request that needs approval arrives without ``X-WebSpec-Approval`` → the gateway
    answers ``428 Precondition Required`` with a challenge whose ``fingerprint`` is the

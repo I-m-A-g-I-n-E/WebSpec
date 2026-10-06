@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-WebSpec monorepo (`mono` branch) — protocol specification + infrastructure for tool invocation that maps to web primitives (DNS, subdomains, HTTP methods, paths, browser security). Everything lives here: the gateway, MCP services, Claude Code plugins, specification docs, and wiki.
+WebSpec monorepo — protocol specification + reference implementation for tool invocation that maps to web primitives (DNS, subdomains, HTTP methods, paths, browser security). Everything lives here: the gateway, MCP services, Claude Code plugins, and the specification site.
 
 ## Monorepo Layout
 
@@ -14,9 +14,9 @@ WebSpec monorepo (`mono` branch) — protocol specification + infrastructure for
 - **plugins/protonmail/** — Claude Code plugin: email skill
 - **plugins/webspec-red-team/** — Claude Code plugin: 10 red-team pentesting agents
 - **webspector/** — Claude Code plugin: WebSpec protocol validator (5 agents, 5 skills, 2 commands)
-- **docs/** — WebSpec specification (MkDocs Material → webspec.gimme.tools)
-- **wiki/** — Mirrored specification docs
-- **apple_proposal/** — Apple-specific proposal documents
+- **docs/** — The published spec site (MkDocs Material → https://i-m-a-g-i-n-e.github.io/WebSpec/). `docs/spec/` is normative and every requirement has a rule ID (`MB-1`, `GD-2`, …); `docs/guide/` is how-to and rationale. Long-form essays, the tier-C vision, retired designs, and article drafts live in Notion, not here.
+- **gateway/examples/** — Demo MCP server, reference harness shim (stdlib only, written from the spec), and the walkthrough generator whose output is `docs/guide/walkthrough.md` (`tests/test_examples.py` replays it)
+- **design/** — Design notes and implementation plans (not published)
 
 ## Live Infrastructure
 
@@ -41,7 +41,7 @@ The gateway reads `~/.claude.json` `mcpServers` to discover services, normalizes
 - **app.py** — Starlette Host() wildcard routing, config polling (30s), CORS, guard enforcement
 - **config.py** — Parses `~/.claude.json`, `normalize_name()` for subdomain labels, `ServiceRegistry` with mtime-based reload. `guard` field on ServiceEntry.
 - **guard.py** — Session-key HMAC authentication + audience-bound single-use nonces. Services opt in with `"guard": true` in config. `/__nonce` endpoint for nonce bootstrap. Also: UFO clearance token computation (`compute_clearance_token`), provenance chain validation (`validate_provenance_chain`), `/__challenge` is retired (410) — human confirmation is the level-4 approval flow.
-- **handlers.py** — HTTP method → MCP tool dispatch under **method profiles** (docs/http-methods/method-profiles.md). HEAD/OPTIONS discover and never invoke; GET/POST/PUT/PATCH/DELETE invoke only through a method the tool's contract admits (else 405 + Allow), then enforce the level's requirements (definer/bookend, Idempotency-Key, UFO clearance, level-4 human approval)
+- **handlers.py** — HTTP method → MCP tool dispatch under **method profiles** (docs/spec/methods.md, docs/spec/levels.md). HEAD/OPTIONS discover and never invoke; GET/POST/PUT/PATCH/DELETE invoke only through a method the tool's contract admits (else 405 + Allow), then enforce the level's requirements (definer/bookend, Idempotency-Key, UFO clearance, level-4 human approval)
 - **methods.py** — Tool contracts (operator override > MCP ToolAnnotations > strict MCP defaults), contract pinning (join; servers can tighten, never loosen), method binding, per-method requirements by level 0–4
 - **idempotency.py / approval.py / audit.py / hostgrammar.py / hardening.py** — Idempotency-Key store; level-4 Ed25519 approval verified with `ssh-keygen -Y verify` (`webspec-ctl approve` signs, using `WEBSPEC_APPROVER_KEY` / `WEBSPEC_APPROVAL_SIGNER`); hash-chained audit log (`WEBSPEC_AUDIT_LOG`); `{qualifier}*.{destination}.{domain}` host grammar; non-dumpable process on Linux
 - **pool.py** — Lazy FastMCP client pool with per-service locks, 5-min tool cache TTL, 30s timeout
@@ -82,12 +82,13 @@ Environment variables: `WEBSPEC_AUDIT_LOG` (audit chain path; empty disables), `
 ## Building Docs
 
 ```bash
-pip install mkdocs-material
-mkdocs serve        # local preview
-mkdocs gh-deploy    # push to GitHub Pages
+pip install -r requirements.txt
+mkdocs serve                     # local preview
+mkdocs build --strict            # what CI runs
+python -m pytest -q docs/tests   # rule IDs unique/resolvable, nav complete, code→docs links exist
 ```
 
-CI deploys on push to `main` when docs/, mkdocs.yml, or requirements.txt change.
+`.github/workflows/deploy-docs.yml` builds and deploys to GitHub Pages (source: GitHub Actions) on push to `main` when docs/, mkdocs.yml, requirements.txt, or the workflow change. When gateway behavior changes, update the matching rule in `docs/spec/` and regenerate the walkthrough (`cd gateway && python examples/walkthrough.py`).
 
 ## Marketplace
 

@@ -1,9 +1,12 @@
 site_name: WebSpec
-site_description: A protocol specification for tool invocation that meshes with web architecture
-site_url: https://webspec.gimme.tools
-repo_url: https://github.com/psentro/webspec
-repo_name: I-m-A-g-I-n-E/webspec
+site_description: Every AI tool call as an ordinary HTTP request that says exactly what it does — the HTTP face and firewall in front of MCP servers.
+site_url: https://i-m-a-g-i-n-e.github.io/WebSpec/
+repo_url: https://github.com/I-m-A-g-I-n-E/WebSpec
+repo_name: I-m-A-g-I-n-E/WebSpec
 edit_uri: edit/main/docs/
+
+exclude_docs: |
+  tests/
 
 theme:
   name: material
@@ -21,21 +24,19 @@ theme:
         icon: material/brightness-7
         name: Switch to dark mode
   features:
+    - navigation.tabs
     - navigation.sections
-    - navigation.expand
-    - navigation.indexes
     - navigation.top
     - toc.follow
     - search.suggest
     - content.action.edit
+    - content.code.copy
 
 markdown_extensions:
   - tables
   - admonition
   - pymdownx.highlight
   - pymdownx.superfences
-  - pymdownx.tabbed:
-      alternate_style: true
   - pymdownx.details
   - attr_list
   - def_list
@@ -43,47 +44,16 @@ markdown_extensions:
       permalink: true
 
 nav:
-  - Home: index.md
-  - Design Philosophy:
-    - philosophy/index.md
-    - Permissions as Love Grammar: philosophy/permissions-as-love-grammar.md
-    - Trust Gradients (Philia Model): philosophy/trust-gradients-philia-model.md
-  - URL Grammar:
-    - url-grammar/index.md
-    - Core Syntax: url-grammar/core-syntax.md
-    - Object Type System: url-grammar/object-type-system.md
-    - Type Resolution & Inference: url-grammar/type-resolution-inference.md
-    - Complete Grammar (EBNF): url-grammar/complete-grammar-ebnf.md
-  - HTTP Methods:
-    - http-methods/index.md
-    - Method Semantics: http-methods/method-semantics.md
-    - Permission Scoping: http-methods/permission-scoping.md
-    - HEAD & OPTIONS Discovery: http-methods/head-options-discovery.md
-    - METHOD Tokenization: http-methods/method-tokenization.md
-    - Definer Verbs & Payload Binding: http-methods/definer-verbs.md
-    - Method Profiles: http-methods/method-profiles.md
-  - Subdomain Architecture:
-    - subdomain-architecture/index.md
-    - Isolation Model: subdomain-architecture/isolation-model.md
-    - Cookie & Token Scoping: subdomain-architecture/cookie-token-scoping.md
-    - "local.gimme.tools Bridge": subdomain-architecture/local-bridge.md
-    - Local Service Architecture: subdomain-architecture/local-service-architecture.md
-  - Authentication:
-    - auth/index.md
-    - Auth Flow Overview: auth/auth-flow-overview.md
-    - Keychain Integration: auth/keychain-integration.md
-    - Onboarding & Provisioning: auth/onboarding-subdomain-provisioning.md
-    - Token Structure: auth/token-structure.md
-  - Service Discovery:
-    - discovery/index.md
-    - NLP-Driven Resolution: discovery/nlp-driven-resolution.md
-    - Embedding Schema: discovery/embedding-schema.md
-    - The Three-Way Join: discovery/three-way-join.md
-  - Service Registration:
-    - registration/index.md
-    - Registration Schema: registration/registration-schema.md
-    - Domain Verification: registration/domain-verification.md
-  - Reference:
-    - reference/index.md
-    - Comparison with MCP: reference/comparison-with-mcp.md
-    - "MoltBook Case Study": reference/moltbook-case-study.md
+  - Spec:
+    - Overview: index.md
+    - Addressing: spec/addressing.md
+    - Methods and contracts: spec/methods.md
+    - Security levels: spec/levels.md
+    - Audit and deployment: spec/audit-deployment.md
+    - Status and roadmap: spec/status.md
+  - Guide:
+    - Quickstart: guide/index.md
+    - A request at every level: guide/walkthrough.md
+    - Annotating MCP servers: guide/annotating.md
+    - Human approval: guide/approval.md
+    - Threat model and rationale: guide/threat-model.md

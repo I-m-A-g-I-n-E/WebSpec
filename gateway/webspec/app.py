@@ -189,7 +189,7 @@ async def _handle_challenge(request: Request, service: str) -> Response:
         {"error": "gone",
          "detail": "/__challenge is retired. Level-4 services answer the real request with "
                    "428 Precondition Required and an approval challenge; see "
-                   "docs/http-methods/method-profiles.md (Human approval)."},
+                   "docs/spec/levels.md (Level 4: witnessed)."},
         status_code=410,
     )
 

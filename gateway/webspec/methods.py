@@ -1,6 +1,6 @@
 """Per-method profiles: tool contracts, method binding, and level-gated request rules.
 
-Normative spec: docs/http-methods/method-profiles.md
+Normative spec: docs/spec/methods.md and docs/spec/levels.md
 
 Three ideas live here:
 
@@ -233,7 +233,7 @@ class ContractPins:
     # Pins live for the process lifetime and deliberately survive a service being
     # removed from config and re-added (otherwise editing the config would be a way to
     # reset them). TODO(C): persist pins across restarts (operator-approved contract
-    # snapshot file); see docs/ROADMAP-C.md. Until then a restart re-trusts the first
+    # snapshot file); see docs/spec/status.md. Until then a restart re-trusts the first
     # tools/list.
 
 

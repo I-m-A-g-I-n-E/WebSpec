@@ -10,7 +10,7 @@
 .worktrees/
 node_modules/
 *.log
-# Docs/wiki/plugins are not COPYed by docker/Dockerfile (it copies gateway/ only);
+# Docs and design notes are not COPYed by docker/Dockerfile (it copies gateway/ only);
 # excluding them keeps the context small and builds fast.
-wiki/
-apple_proposal/
+docs/
+design/

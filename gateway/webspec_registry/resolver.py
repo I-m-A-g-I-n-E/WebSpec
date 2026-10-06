@@ -32,4 +32,4 @@ def resolve(query, catalog, status_of=None, matcher: Matcher | None = None, top_
     ranked.sort(key=lambda r: r.score, reverse=True)
     return ranked[:top_k]
 
-# TODO(C): recency_boost, preference_boost, per-user history — see docs/discovery/three-way-join.md.
+# TODO(C): recency_boost, preference_boost, per-user history — see docs/spec/status.md (Roadmap: Registry).

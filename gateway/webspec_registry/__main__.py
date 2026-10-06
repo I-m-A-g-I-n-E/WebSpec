@@ -20,7 +20,7 @@ CATALOG_TTL = 60
 # TODO(C): _cached_default_catalog has no lock (concurrent cache-miss requests
 # can each re-harvest — thundering herd), and _default_catalog does blocking
 # urllib inside async endpoints (blocks the event loop). Move harvest
-# off-loop / add a single-flight lock. See docs/ROADMAP-C.md.
+# off-loop / add a single-flight lock. See docs/spec/status.md (Roadmap).
 
 # Module-level cache state for _cached_default_catalog. Deliberately simple
 # (stdlib only, single-process): a (value, timestamp) pair guarded by TTL.

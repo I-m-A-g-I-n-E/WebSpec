@@ -21,7 +21,7 @@ def create_registry_app(catalog_fn, accounts_fn=lambda: []) -> Starlette:
         # No status_of is passed here, so resolve() falls back to "available" (0.5) for every
         # tool and the connected/keychain three-way-join weighting is inert in production.
         # TODO(C): wire a production status_of (connected via the gateway pool, keychain via
-        # op-auth). See docs/ROADMAP-C.md.
+        # op-auth). See docs/spec/status.md (Roadmap).
         results = resolve(q, catalog_fn())
         return JSONResponse({"query": q, "results": [
             {"service": r.record.service, "tool": r.record.tool, "verb": r.record.verb,

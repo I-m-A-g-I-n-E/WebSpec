@@ -30,7 +30,7 @@ def test_tier_default_by_verb():
     assert tier_of("some-svc", "get_thing", "read") == "open"
 
 
-# --- Verb Atlas enrichment (docs/http-methods/verb-atlas.yaml) -------------
+# --- Verb Atlas enrichment (webspec_registry/verb-atlas.yaml) --------------
 
 
 def test_seed_wins_over_atlas_on_conflict():
@@ -45,7 +45,7 @@ def test_seed_wins_over_atlas_on_conflict():
 def test_atlas_enriches_create_family_rotation_candidates():
     pytest.importorskip("yaml")
     # FABRICATE and SYNTHESIZE are rotation_candidates under POST/CREATE in
-    # docs/http-methods/verb-atlas.yaml and are NOT present in the seed
+    # webspec_registry/verb-atlas.yaml and are NOT present in the seed
     # VERB_CANON, so they can only resolve via atlas enrichment.
     assert normalize("fabricate_report")[0] == "create"
     assert normalize("synthesize_data")[0] == "create"

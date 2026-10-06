@@ -32,10 +32,20 @@ jobs:
         working-directory: gateway
         run: python -m pytest -q
 
-      - name: Run docs consistency guard (if present)
-        run: |
-          if [ -f docs/tests/test_docs_consistency.py ]; then
-            python -m pytest -q docs/tests/test_docs_consistency.py
-          else
-            echo "docs consistency test not on this branch — skipping"
-          fi
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - run: pip install -r requirements.txt pytest pyyaml
+
+      # Fails on broken links and anything else MkDocs warns about.
+      - run: mkdocs build --strict
+
+      # Rule IDs unique and resolvable, nav complete, docs paths cited in code exist.
+      - run: python -m pytest -q docs/tests/test_docs_consistency.py

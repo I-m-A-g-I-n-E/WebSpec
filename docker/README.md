@@ -97,7 +97,7 @@ purpose** — not because it's unbuilt, but because of its security posture:
   metadata, so it must not be network-exposed without an auth layer in front of it.
 - Unlike `gateway`, there is **no Caddy route** to the registry yet — safely exposing it
   (a ported guard middleware / Caddy front) is tracked as a `TODO(C)` in
-  `docs/ROADMAP-C.md`. Enabling the commented compose block as-is would start a service
+  `docs/spec/status.md`. Enabling the commented compose block as-is would start a service
   nothing in the stack can reach.
 
 **For tier B, run the registry on the host**, alongside the gateway, and reach it over

@@ -36,7 +36,7 @@ class ServiceEntry:
     guard: bool = False
     # Phase 2: namespace scheme (e.g. "user", "project")
     namespace: str | None = None
-    # Security level 0-4 (docs/http-methods/method-profiles.md). Raw config value in;
+    # Security level 0-4 (docs/spec/levels.md). Raw config value in;
     # normalized to an int by __post_init__ (absent → 1 if guard else 0; invalid → 4).
     level: int | None = None
     # Operator per-tool contract overrides: {tool_name: {read_only, destructive, idempotent,

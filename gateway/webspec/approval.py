@@ -1,6 +1,6 @@
 """Level 4 ("witnessed") human approval: challenge issuance + Ed25519/SSHSIG verification.
 
-Flow (spec: docs/http-methods/method-profiles.md § Human approval):
+Flow (spec: docs/spec/levels.md § Level 4: witnessed):
 
 1. A request that needs approval arrives without ``X-WebSpec-Approval`` → the gateway
    answers ``428 Precondition Required`` with a challenge whose ``fingerprint`` is the
@@ -52,6 +52,13 @@ APPROVED = "approved"  # signature verified, not yet spent (spent only when the 
 USED = "used"
 
 
+
+
+def approvers_available() -> bool:
+    """True if level-4 approvals can be verified: an allowed-signers file and ssh-keygen."""
+    approvers = os.environ.get("WEBSPEC_APPROVERS_FILE", "")
+    keygen = os.environ.get("WEBSPEC_SSH_KEYGEN") or shutil.which("ssh-keygen")
+    return bool(approvers) and Path(approvers).is_file() and bool(keygen)
 
 
 def request_summary(
@@ -179,11 +186,11 @@ class ApprovalStore:
             # Bound to the signature that approved it.
             return None if secrets.compare_digest(ch.signature_sha256, blob_sha) else "approval_invalid"
 
-        approvers = os.environ.get("WEBSPEC_APPROVERS_FILE", "")
-        keygen = os.environ.get("WEBSPEC_SSH_KEYGEN") or shutil.which("ssh-keygen")
-        if not approvers or not Path(approvers).is_file() or not keygen:
+        if not approvers_available():
             logger.error("Level-4 approval requested but WEBSPEC_APPROVERS_FILE/ssh-keygen unavailable")
             return "approval_unavailable"
+        approvers = os.environ["WEBSPEC_APPROVERS_FILE"]
+        keygen = os.environ.get("WEBSPEC_SSH_KEYGEN") or shutil.which("ssh-keygen")
 
         ch.state = VERIFYING  # exclusive: a concurrent retry can't double-spend this challenge
         ok = False

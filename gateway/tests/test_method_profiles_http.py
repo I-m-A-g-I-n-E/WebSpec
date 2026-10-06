@@ -300,12 +300,14 @@ def test_level4_rejects_a_signature_from_an_unlisted_key(monkeypatch, tmp_path):
 
 
 def test_level4_without_approvers_fails_closed(monkeypatch):
+    # Refused up front: a 428 challenge that nobody could ever approve would only mislead.
     monkeypatch.delenv("WEBSPEC_APPROVERS_FILE", raising=False)
     client, pool = make_client(monkeypatch, [entry(level=4)], _tools())
     hdrs = {"X-Gimme-Definer": bookend("DELETE", "REMOVE", b""),
             "X-UFO-Clearance": clearance("delete_thing", {"id": "1"}, method="DELETE")}
-    ch = request(client, "DELETE", H, "/delete_thing", query="id=1", guarded=True, headers=hdrs).json()
-    hdrs["X-WebSpec-Approval"] = f"{ch['challenge']}:U1NIU0lH"  # base64("SSHSIG")
+    r = request(client, "DELETE", H, "/delete_thing", query="id=1", guarded=True, headers=hdrs)
+    assert r.status_code == 503 and r.json()["error"] == "approval_unavailable"
+    hdrs["X-WebSpec-Approval"] = "0123abcd:U1NIU0lH"  # base64("SSHSIG")
     r = request(client, "DELETE", H, "/delete_thing", query="id=1", guarded=True, headers=hdrs)
     assert r.status_code == 503 and r.json()["error"] == "approval_unavailable"
     assert pool.calls == []

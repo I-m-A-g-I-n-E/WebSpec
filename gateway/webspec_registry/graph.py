@@ -65,4 +65,4 @@ def poset(catalog) -> dict[tuple[str, str], int]:
     return out
 
 # TODO(C): noun-containment ordering (message ⊑ channel ⊑ workspace) for a richer poset —
-# requires the noun hierarchy sketched in docs/url-grammar/object-type-system.md.
+# requires the noun hierarchy of the proposed REST collection paths (docs/spec/status.md).

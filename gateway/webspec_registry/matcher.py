@@ -36,4 +36,4 @@ class LexicalMatcher(Matcher):
         return min(1.0, overlap + bonus)
 
 # TODO(C): EmbeddingMatcher — local small model or API backend, multi-vector
-# (canonical/predicate/object) search. See docs/discovery/embedding-schema.md.
+# (canonical/predicate/object) search. See docs/spec/status.md (Roadmap: Registry).

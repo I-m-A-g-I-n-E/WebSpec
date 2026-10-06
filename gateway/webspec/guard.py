@@ -220,7 +220,8 @@ def generate_nonce(audience: str) -> dict:
     return {
         "nonce": nonce.value,
         "audience": nonce.audience,
-        "expires_at": nonce.created_at + NONCE_TTL,
+        # Wall-clock Unix time for clients; the store itself ages nonces on the monotonic clock.
+        "expires_at": round(time.time() + NONCE_TTL, 3),
         "ttl_seconds": NONCE_TTL,
     }
 

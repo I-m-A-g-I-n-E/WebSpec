@@ -97,8 +97,10 @@ def test_clearance_is_bound_and_single_use(monkeypatch):
 
 # ── A6: level 4 witnesses open-world mutations (the exfiltration step) ──
 
-def test_level4_challenges_an_open_world_send(monkeypatch):
-    monkeypatch.delenv("WEBSPEC_APPROVERS_FILE", raising=False)
+def test_level4_challenges_an_open_world_send(monkeypatch, tmp_path):
+    (tmp_path / "allowed").write_text("")
+    monkeypatch.setenv("WEBSPEC_APPROVERS_FILE", str(tmp_path / "allowed"))
+    monkeypatch.setenv("WEBSPEC_SSH_KEYGEN", "ssh-keygen")
     client, pool = make_client(monkeypatch, [entry(level=4)], _tools())
     body = b'{"to":"attacker@example.com"}'
     r = request(client, "POST", H, "/send_mail", body=body, guarded=True, headers={
@@ -203,6 +205,30 @@ def test_unserializable_result_marks_the_key_unknown(monkeypatch, tmp_path):
     assert r.status_code == 409 and r.json()["error"] == "idempotency_outcome_unknown"
     assert len(pool.calls) == 1
     assert any(e["reason"] == "result_unserializable" and e["outcome"] == "invoked" for e in _audit_lines(tmp_path))
+
+
+def test_a_closed_connection_is_outcome_unknown_not_a_rejection(monkeypatch):
+    # A server that dies mid-call surfaces as McpError(CONNECTION_CLOSED): the tool may have
+    # run, so the key must not be freed (a retry would run it twice).
+    from mcp.types import CONNECTION_CLOSED
+    client, pool = make_client(monkeypatch, [entry(level=2)], _tools())
+    body = b'{"to":"x"}'
+    hdrs = {"X-Gimme-Definer": bookend("POST", "SEND", body), "Idempotency-Key": "c-1"}
+    pool.raise_on_call = McpError(ErrorData(code=CONNECTION_CLOSED, message="Connection closed"))
+    r = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
+    assert r.status_code == 503 and r.json()["error"] == "service_unavailable"
+    pool.raise_on_call = None
+    r = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
+    assert r.status_code == 409 and r.json()["error"] == "idempotency_outcome_unknown"
+    assert len(pool.calls) == 1
+
+
+def test_head_survives_a_non_ascii_description(monkeypatch):
+    t = tool("say_hi", read_only=True)
+    t.description = "Says hi 👋 — très bien"
+    client, _ = make_client(monkeypatch, [entry(level=0)], [t])
+    r = client.head("/say_hi", headers={"Host": H})
+    assert r.status_code == 200 and r.headers["x-webspec-description"] == "Says hi ? ? tr?s bien"
 
 
 def test_a_protocol_rejection_frees_the_key(monkeypatch):
@@ -385,3 +411,44 @@ def test_idempotency_audit_entries_have_status(monkeypatch, tmp_path):
     assert [(e["outcome"], e["status"]) for e in idem_entries] == [
         ("idempotency:replay", 200), ("idempotency:mismatch", 422)]
     assert idem_entries[1]["reason"] == "idempotency_mismatch"
+
+
+def test_pool_drops_a_client_whose_tool_listing_fails(monkeypatch):
+    # Documented mock exception (fault injection): a stub client whose first tool listing fails
+    # the way a dead stdio connection does. A real crash mid-call is covered without mocks in
+    # test_stdio_integration.py.
+    import anyio
+    from tests._gateway import FakeRegistry
+    from webspec.pool import ConnectionPool
+
+    made = []
+
+    class StubClient:
+        def __init__(self):
+            made.append(self)
+            self.broken = len(made) == 1
+
+        def is_connected(self):
+            return True  # a dead stdio client still claims to be connected
+
+        async def __aenter__(self):
+            return self
+
+        async def close(self):
+            pass
+
+        async def list_tools(self):
+            if self.broken:
+                raise anyio.ClosedResourceError()
+            return []
+
+    pool = ConnectionPool(FakeRegistry([entry("svc")]))
+    monkeypatch.setattr(pool, "_create_client", lambda e: StubClient())
+
+    async def scenario():
+        with pytest.raises(anyio.ClosedResourceError):
+            await pool.list_tools("svc")
+        assert await pool.list_tools("svc") == []
+
+    asyncio.run(scenario())
+    assert len(made) == 2  # the dead client was dropped and a fresh one connected

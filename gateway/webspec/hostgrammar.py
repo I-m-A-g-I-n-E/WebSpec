@@ -11,7 +11,7 @@
   for deeper labels are public in CT logs — so labels must be safe to be public and
   safe to share a trust zone with their destination.)
 
-Spec: docs/http-methods/method-profiles.md § Host grammar
+Spec: docs/spec/addressing.md § Host
 """
 
 from __future__ import annotations

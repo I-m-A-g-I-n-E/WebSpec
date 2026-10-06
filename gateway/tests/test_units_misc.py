@@ -8,7 +8,7 @@ import sys
 import pytest
 
 from webspec import audit
-from webspec.guard import canonical_query, compute_guard_hmac
+from webspec.guard import canonical_query, compute_guard_hmac, generate_nonce
 from webspec.hardening import harden_process
 from webspec.hostgrammar import qualifiers_allowed, split_labels
 from webspec.idempotency import IdempotencyStore, StoredResponse, request_fingerprint, valid_key
@@ -193,3 +193,11 @@ def test_approve_signs_and_gateway_verifies(monkeypatch, tmp_path, capsys):
     assert rc == 0
     header = capsys.readouterr().out.strip().removeprefix("X-WebSpec-Approval: ")
     assert asyncio.run(approval_mod.store.verify(header, ch["fingerprint"])) is None
+
+
+def test_nonce_expires_at_is_wall_clock():
+    import time
+    before = time.time()
+    issued = generate_nonce("mail")
+    assert issued["audience"] == "mail" and issued["ttl_seconds"] == 60
+    assert before + 59 <= issued["expires_at"] <= time.time() + 61

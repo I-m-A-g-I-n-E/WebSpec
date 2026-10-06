@@ -4,7 +4,7 @@ import os
 import re
 from pathlib import Path
 
-# Canonical verb map (seeded from docs/discovery predicate tables).
+# Canonical verb map (seeded from the predicate tables of the former discovery docs).
 VERB_CANON = {
     "send": "send", "post": "send", "notify": "send", "ping": "send", "dm": "send",
     "fire": "send", "shoot": "send", "drop": "send", "email": "send",
@@ -47,7 +47,7 @@ def _find_atlas_path() -> Path | None:
 
     Priority: WEBSPEC_VERB_ATLAS env var if set (used exclusively -- if it
     points nowhere, that's a definitive "not found", no fallback); otherwise
-    the repo-root-relative default, then a cwd-relative default.
+    the copy shipped inside this package.
 
     Never raises: all existence checks go through _exists_safe(), which
     absorbs PermissionError/OSError from a bad or inaccessible path.
@@ -57,20 +57,15 @@ def _find_atlas_path() -> Path | None:
         p = Path(env_path)
         return p if _exists_safe(p) else None
 
-    for candidate in (
-        # gateway/webspec_registry/normalize.py -> repo root is parents[2]
-        Path(__file__).resolve().parents[2] / "docs" / "http-methods" / "verb-atlas.yaml",
-        Path.cwd() / "docs" / "http-methods" / "verb-atlas.yaml",
-    ):
-        if _exists_safe(candidate):
-            return candidate
-    return None
+    # Shipped inside the package, so enrichment also works in a minimal container.
+    bundled = Path(__file__).resolve().parent / "verb-atlas.yaml"
+    return bundled if _exists_safe(bundled) else None
 
 
 def _load_atlas_verb_map() -> dict[str, str]:
     """Load an optional verb -> canonical map from the Verb Atlas.
 
-    The atlas (docs/http-methods/verb-atlas.yaml) is a curated 302-verb
+    The atlas (webspec_registry/verb-atlas.yaml) is a curated 302-verb
     vocabulary organized as families -> canonical verbs -> rotation
     candidates. This enrichment is strictly optional: normalize() must work
     with only the stdlib and the hand-seeded VERB_CANON. Any reason the
@@ -106,7 +101,6 @@ def _load_atlas_verb_map() -> dict[str, str]:
         return {}
 
 
-# TODO(C): bundle verb-atlas.yaml as package data so enrichment works in a minimal container that doesn't ship docs/.
 # Merged lookup used by normalize(): atlas entries first, seed VERB_CANON
 # last so it always wins on conflict. Built once at import time.
 _EFFECTIVE_VERB_CANON = {**_load_atlas_verb_map(), **VERB_CANON}

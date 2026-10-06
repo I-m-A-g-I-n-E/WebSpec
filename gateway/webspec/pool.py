@@ -9,7 +9,8 @@ from dataclasses import dataclass, field
 
 from fastmcp.client import Client
 from fastmcp.client.transports import StdioTransport, StreamableHttpTransport
-from mcp.types import Tool
+from mcp.shared.exceptions import McpError
+from mcp.types import CONNECTION_CLOSED, Tool
 
 from .config import ServiceEntry, ServiceRegistry
 
@@ -98,7 +99,13 @@ class ConnectionPool:
             if pooled.tools and (now - pooled.tools_fetched_at) < TOOL_CACHE_TTL:
                 return pooled.tools
 
-            pooled.tools = await client.list_tools()
+            try:
+                pooled.tools = await client.list_tools()
+            except Exception:
+                # A dead connection would otherwise keep failing until a restart: drop it, and
+                # let the next request reconnect.
+                await self._teardown(name)
+                raise
             pooled.tools_fetched_at = now
             return pooled.tools
 
@@ -119,9 +126,16 @@ class ConnectionPool:
             # Teardown the connection on timeout (F2)
             await self._teardown(name)
             raise
-        except (ConnectionError, OSError) as e:
-            logger.warning("Connection error calling %s/%s: %s", name, tool_name, e)
-            # Teardown on connection error (F1)
+        except McpError as e:
+            if e.error.code == CONNECTION_CLOSED:
+                # The server went away mid-call (e.g. a stdio server crashed): this client is dead.
+                logger.warning("Connection to %s closed during %s", name, tool_name)
+                await self._teardown(name)
+            raise
+        except Exception as e:
+            # Connection errors, closed or broken streams, anything else: the client may be
+            # unusable, so drop it and let the next call reconnect (F1).
+            logger.warning("Error calling %s/%s: %s", name, tool_name, e)
             await self._teardown(name)
             raise
 

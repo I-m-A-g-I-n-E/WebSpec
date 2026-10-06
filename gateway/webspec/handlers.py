@@ -13,7 +13,9 @@ import asyncio
 import logging
 import os
 
+import anyio
 from mcp.shared.exceptions import McpError
+from mcp.types import CONNECTION_CLOSED
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
@@ -218,8 +220,8 @@ async def handle_service_head(request: Request, service: str, pool: ConnectionPo
     headers["X-WebSpec-Tier"] = contract.tier
     headers["Allow"] = allow_header(contract)
     # Sanitize description for HTTP header (no newlines, control chars)
-    desc = (tool.description or "")[:200]
-    headers["X-WebSpec-Description"] = " ".join(desc.split())
+    desc = " ".join((tool.description or "")[:200].split())
+    headers["X-WebSpec-Description"] = desc.encode("ascii", "replace").decode("ascii")
     return Response(status_code=200, headers=headers)
 
 
@@ -361,6 +363,9 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
                                   f"{method} {tool_name} on {service}")
 
     if reqs.approval:
+        if not approval_mod.approvers_available():
+            return deny(503, "approval_unavailable",
+                        f"Level {level} requires human approval, and no approvers are configured")
         summary = approval_mod.request_summary(method, service, host, "/" + path, tool_name, args, body)
         approval_header = request.headers.get("X-WebSpec-Approval")
         if not approval_header:
@@ -394,6 +399,14 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
     try:
         result = await pool.call_tool(service, tool_name, args)
     except McpError as e:
+        if e.error.code == CONNECTION_CLOSED:
+            # The connection closed mid-call (e.g. the server crashed): the tool may have run.
+            if use_idem:
+                idem.store.mark_unknown(service, idem_key)
+            audit.record(audit_ctx, outcome="error", status=503, reason="connection_closed")
+            return _error(503, "service_unavailable",
+                          f"{service} closed the connection during the call; the tool may have run",
+                          tool=tool_name)
         # A JSON-RPC error *response*: the server refused the call, so it did not run.
         if use_idem:
             idem.store.abandon(service, idem_key)
@@ -407,7 +420,7 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
     except BaseException as e:
         if use_idem:
             idem.store.mark_unknown(service, idem_key)
-        if isinstance(e, (ConnectionError, OSError)):
+        if isinstance(e, (ConnectionError, OSError, anyio.ClosedResourceError, anyio.BrokenResourceError)):
             audit.record(audit_ctx, outcome="error", status=503, reason="service_unavailable")
             return _error(503, "service_unavailable", f"Could not connect to {service}: {e}")
         audit.record(audit_ctx, outcome="error", status=500, reason="internal_error")

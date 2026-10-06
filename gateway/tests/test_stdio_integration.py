@@ -54,3 +54,30 @@ def test_index_reports_the_public_port(client, monkeypatch):
     services = client.get("/", headers={"Host": "localhost"}).json()["services"]
     assert services == [{"name": "notes", "url": "notes.localhost:7411", "transport": "stdio",
                          "level": 0, "connected": services[0]["connected"]}]
+
+
+CRASHY = Path(__file__).parent / "fixtures" / "crashy_server.py"
+
+
+def test_a_crash_mid_call_is_outcome_unknown_and_the_gateway_reconnects(tmp_path, monkeypatch):
+    marker = tmp_path / "sent.txt"
+    cfg = tmp_path / "claude.json"
+    cfg.write_text(json.dumps({"mcpServers": {"crashy": {
+        "command": sys.executable, "args": [str(CRASHY)], "env": {"CRASHY_MARKER": str(marker)}}}}))
+    monkeypatch.setenv("WEBSPEC_CONFIG", str(cfg))
+    monkeypatch.setenv("WEBSPEC_GUARD_KEY", "22" * 32)
+    monkeypatch.delenv("WEBSPEC_DOMAIN", raising=False)
+    host = "crashy.localhost"
+    send = {"Host": host, "X-Gimme-Definer": "SEND", "Idempotency-Key": "crash-1",
+            "Content-Type": "application/json"}
+    with TestClient(appmod.create_app()) as client:
+        r = client.post("/send_and_crash", headers=send, content=b'{"to":"ana"}')
+        assert r.status_code == 503 and r.json()["error"] == "service_unavailable"
+        assert marker.read_text() == "ana\n"  # it ran before the server died
+
+        r = client.post("/send_and_crash", headers=send, content=b'{"to":"ana"}')
+        assert r.status_code == 409 and r.json()["error"] == "idempotency_outcome_unknown"
+        assert marker.read_text() == "ana\n"  # and the retry did not run it again
+
+        r = client.get("/alive", headers={"Host": host})
+        assert r.status_code == 200 and r.json()["result"] == "yes"  # the gateway reconnected

@@ -47,3 +47,10 @@ def test_real_server_contracts_drive_method_binding(client):
     r = client.delete("/wipe?id=1", headers={"Host": H, "X-Gimme-Definer": "REMOVE"})
     assert r.status_code == 200 and r.json()["result"] == "wiped"
     assert client.get("/read_note?id=1", headers={"Host": H}).json()["result"] == ""
+
+
+def test_index_reports_the_public_port(client, monkeypatch):
+    monkeypatch.setenv("WEBSPEC_PORT", "7411")
+    services = client.get("/", headers={"Host": "localhost"}).json()["services"]
+    assert services == [{"name": "notes", "url": "notes.localhost:7411", "transport": "stdio",
+                         "level": 0, "connected": services[0]["connected"]}]

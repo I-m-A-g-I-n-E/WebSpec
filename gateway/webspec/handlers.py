@@ -4,13 +4,14 @@ HEAD / OPTIONS discover (never invoke). GET / POST / PUT / PATCH / DELETE invoke
 but only through a method the tool's *contract* admits, and only after the request
 carries everything the method + contract + tier require at the service's level.
 
-Spec: docs/http-methods/method-profiles.md
+Spec: docs/spec/methods.md (binding, contracts) and docs/spec/levels.md (requirements)
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
+import os
 
 from mcp.shared.exceptions import McpError
 from starlette.requests import Request
@@ -435,12 +436,13 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
 
 
 async def handle_index(request: Request, registry: ServiceRegistry, pool: ConnectionPool) -> Response:
-    """GET localhost:7001/ → list all registered services."""
+    """GET localhost:{port}/ → list all registered services."""
+    port = os.environ.get("WEBSPEC_PORT", "7001")
     services = []
     for name, entry in registry.services.items():
         services.append({
             "name": name,
-            "url": f"{name}.localhost:7001",
+            "url": f"{name}.localhost:{port}",
             "transport": entry.transport_type,
             "level": entry.level,
             "connected": name in pool.connected_services(),

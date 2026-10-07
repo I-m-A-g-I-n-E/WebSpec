@@ -1,16 +1,81 @@
-# Static Caddyfile for the docker compose stack.
+# Caddyfile for the docker compose stack: Caddy is the stack's only published port
+# (127.0.0.1:7001 and [::1]:7001), and it forwards to the gateway on the compose network.
 #
-# This is distinct from the per-service site blocks the bare-metal `ctl`
-# tooling generates under /etc/caddy/conf.d (see gateway/webspec/caddy.py) —
-# those proxy to `localhost:7002`, which is correct only when Caddy and the
-# gateway share a network namespace (bare-metal / systemd deploy). Inside the
-# compose network, "localhost" means the caddy container itself, so this file
-# proxies to the `gateway` service by its compose DNS name instead.
+# This file is not the per-service site blocks that `webspec-ctl caddy-sync` writes under
+# /etc/caddy/conf.d (gateway/webspec/caddy.py). Those dial the gateway at 127.0.0.1:7002,
+# which is right only when Caddy and the gateway share a network namespace (bare-metal,
+# systemd). Inside the compose network, 127.0.0.1 is the caddy container itself, so this file
+# proxies to the `gateway` service by its compose DNS name. It imports nothing: in the
+# compose stack, this file is Caddy's whole configuration.
+#
+# DP-5 (docs/spec/audit-deployment.md): forward only WebSpec host names, Host untouched.
+#   - Loopback names: localhost and *.localhost. The gateway treats them as local, and
+#     only this host can send them, because the port is published on loopback only. One
+#     exception: a request that came through the Cloudflare tunnel gets 421 for them.
+#   - Destinations under the public domain: *.{$WEBSPEC_DOMAIN}, only when WEBSPEC_DOMAIN
+#     is set. With it unset or empty, only loopback names are forwarded.
+#   - Everything else gets 421 Misdirected Request.
+# A wildcard matches exactly one label and the port is ignored, so notes.localhost and
+# notes.localhost:7001 both match. Qualifier labels (eu.notes.localhost) are not forwarded:
+# the gateway does not route them yet.
+#
+# reverse_proxy passes the client's Host header through unchanged, port included. The
+# guard signs that header, so never add `header_up Host` here.
+#
+# DP-6: the site has no `log` directive, so there is no access log. The global `log` option
+# below configures Caddy's own log: it deletes the request (its URI, query string included,
+# and its headers) from the entries Caddy writes when a request fails, because GET arguments
+# travel in URLs.
 {
-    auto_https off
-    admin off
+	admin off
+	auto_https off
+	persist_config off
+	# Plain HTTP/1.1, as on bare metal (gateway/webspec/caddy.py). Caddy would otherwise also
+	# accept HTTP/2 without TLS (h2c) on :7001. TLS ends at Cloudflare.
+	servers {
+		protocols h1
+	}
+	log {
+		format filter {
+			fields {
+				request delete
+			}
+		}
+	}
 }
 
 :7001 {
-    reverse_proxy gateway:7002
+	# DP-5: a loopback host never comes through the public tunnel. Cloudflare adds Cf-Ray to
+	# every request it sends through it, and a local client never sends that header. Such a
+	# request had its Host rewritten on the way (cloudflared's httpHostHeader, for example),
+	# and the gateway would treat it as local and serve level-0 destinations to it. Handles
+	# are tried in order and only the first match runs, so this one must stay first.
+	@tunneled_loopback {
+		host localhost *.localhost
+		header Cf-Ray *
+	}
+	handle @tunneled_loopback {
+		respond "Loopback hosts are not served through the tunnel" 421 {
+			close
+		}
+	}
+
+	@loopback host localhost *.localhost
+	handle @loopback {
+		reverse_proxy gateway:7002
+	}
+
+	# Caddy substitutes an unset or empty WEBSPEC_DOMAIN as "", which leaves the pattern
+	# `*.` (it matches "notes."), so the expression switches this matcher off then.
+	@public {
+		host *.{$WEBSPEC_DOMAIN}
+		expression `"{$WEBSPEC_DOMAIN}" != ""`
+	}
+	handle @public {
+		reverse_proxy gateway:7002
+	}
+
+	handle {
+		respond "Misdirected Request: not a WebSpec host" 421
+	}
 }

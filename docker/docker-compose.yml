@@ -1,43 +1,135 @@
+# WebSpec self-hosting stack. Caddy, the only published port, forwards WebSpec host names to
+# the gateway on the compose network. Hardened for DP-1 to DP-9
+# (docs/spec/audit-deployment.md); docker/README.md explains each setting.
+name: webspec
+
 services:
   caddy:
     image: caddy:2
+    # Both services come back after a crash, an exit, a daemon restart or a reboot;
+    # `docker compose stop` and `down` stop them for good (docker/README.md, "Restarts").
+    restart: unless-stopped
+    # `docker compose stop` stops Caddy first, which then waits for the answers it is passing on,
+    # the gateway's tool calls among them (see the gateway's stop_grace_period).
+    stop_grace_period: 40s
+    # DP-5: loopback only, so nothing off this host reaches the stack directly. Both loopback
+    # addresses, so that no other local user can listen on [::1]:7001 and receive the requests
+    # of clients that try ::1 first for *.localhost (Python, Node, Go). Docker holds them only
+    # while this container runs, though, and lets them go whenever it is down (DP-9: run
+    # cloudflared as a service of the stack, see docker/README.md, "Ports"). Docker cannot bind
+    # [::1] on a host whose loopback has no IPv6, and then this container does not start: add
+    # `-f docker/ipv4-only.yml`. For public access, put cloudflared in front. See
+    # docker/README.md, "Ports" and "Exposing the stack publicly".
     ports:
-      - "7001:7001"
+      - "127.0.0.1:7001:7001"
+      - "[::1]:7001:7001"
+    environment:
+      # The Caddyfile forwards *.{$WEBSPEC_DOMAIN} only when this is set.
+      WEBSPEC_DOMAIN: "${WEBSPEC_DOMAIN:-}"
     volumes:
+      # Caddy's whole configuration, read once at startup. It runs as 10002, so the file must
+      # stay readable by that uid (docker/README.md, "Service configuration").
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./caddy/conf.d:/etc/caddy/conf.d:ro
+    user: "10002:10002"            # unprivileged, and distinct from the gateway's 10001
+    read_only: true
+    tmpfs:
+      # Caddy's storage stamps. Nothing here is worth keeping: TLS ends at Cloudflare.
+      - /data:rw,noexec,nosuid,nodev,size=8m,uid=10002,gid=10002,mode=0700
+    cap_drop: [ALL]
+    # caddy:2 ships /usr/bin/caddy with the file capability cap_net_bind_service=ep, and the
+    # kernel refuses to exec such a binary when that capability is outside the bounding set
+    # ("exec /usr/bin/caddy: operation not permitted"). Adding it back grants nothing here:
+    # Caddy listens on 7001, and Docker already lets any user bind any port inside the
+    # container's own network namespace (net.ipv4.ip_unprivileged_port_start=0).
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
     depends_on: [gateway]
 
+  # DP-7: one gateway process. Do not scale this service.
   gateway:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    # Stopped, the gateway waits up to 35 seconds for the tool calls in progress before it exits
+    # (webspec/__main__.py, GRACEFUL_SHUTDOWN_SECONDS). Docker's default wait, 10 seconds or less,
+    # would cut them short.
+    stop_grace_period: 40s
+    user: "10001:10001"            # DP-1: the image's `webspec` user, never root
+    # DP-2: never Docker's init. docker-init would be PID 1, running as uid 10001 and dumpable,
+    # so the stdio MCP servers (same user) could read the container's environment, guard key
+    # and service secrets included, from /proc/1/environ. `false`, not just no `init:` key: a
+    # missing key takes the daemon's default, which daemon.json can set to "init": true. The
+    # image brings its own init (docker/init.py): PID 1 reaps the processes stdio servers leave
+    # behind, forwards signals to the gateway, and makes itself non-dumpable, as the gateway
+    # does. It refuses to start under another PID 1 whose environment its user can read.
+    init: false
+    read_only: true                # DP-4: the code and the image cannot change at runtime
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m,uid=10001,gid=10001,mode=0700
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
     environment:
+      WEBSPEC_PORT: "7001"
       WEBSPEC_INTERNAL_PORT: "7002"
-      WEBSPEC_HOST: "0.0.0.0"          # inside the compose network, fronted by caddy
+      # All interfaces of the gateway container, which sit on the compose network only;
+      # caddy is the stack's only published port (DP-8).
+      WEBSPEC_HOST: "0.0.0.0"
       WEBSPEC_CONFIG: "/config/claude.json"
+      # Retired: earlier versions mounted the file this named. Passed on only so that
+      # docker/entrypoint.sh refuses to start while it is set, instead of serving the
+      # checkout's docker/config/ in place of that file (DP-4).
+      WEBSPEC_CONFIG_HOST: "${WEBSPEC_CONFIG_HOST:-}"
+      WEBSPEC_AUDIT_LOG: "/var/lib/webspec/gateway-audit.jsonl"
       WEBSPEC_GUARD_KEY: "${WEBSPEC_GUARD_KEY:-}"
       OP_GUARD_KEY_REF: "${OP_GUARD_KEY_REF:-}"
-      # Set to activate the public-guard 403 layer (only guarded services are
-      # reachable on this domain); leave empty for localhost-only operation.
+      # Set to serve {destination}.{domain}. A destination on the public domain must be at
+      # level 1 or higher (HG-7); level 0 answers 403 unguarded_public there. Leave empty
+      # for localhost-only operation.
       WEBSPEC_DOMAIN: "${WEBSPEC_DOMAIN:-}"
     volumes:
-      - ${WEBSPEC_CONFIG_HOST:-./claude.json}:/config/claude.json:ro
+      # DP-4: the directory that holds claude.json, read-only. Point WEBSPEC_CONFIG_DIR at a
+      # directory the agent cannot write, holding nothing else (docker/README.md). A
+      # directory, not the file: a file mount does not show a file that an edit replaced
+      # (webspec-ctl, sed -i, mv) until the container restarts, so the change would not reach
+      # the gateway.
+      - ${WEBSPEC_CONFIG_DIR:-./config}:/config:ro
+      # HOME and state directory (uid 10001, 0700), where the audit log lives.
+      - webspec-state:/var/lib/webspec
     expose:
       - "7002"
 
   # The webspec_registry package IS built — this block is commented out on PURPOSE:
-  # the registry is localhost-only by design (exposes the full tool inventory) and has
-  # no Caddy route yet, so enabling it here starts a service nothing can reach. For tier
-  # B, run it on the host: `python -m webspec_registry` (see README "The registry service").
-  # Safe in-stack exposure (guard middleware / Caddy front) is a TODO(C); see docs/spec/status.md.
+  # the registry is experimental, localhost-only by design (it exposes the full tool
+  # inventory) and has no Caddy route yet, so enabling it here starts a service nothing can
+  # reach. To try it, run it on the host without the guard key (README "The registry
+  # service"). Safe in-stack exposure (guard middleware / Caddy front) is a TODO(C); see
+  # docs/spec/status.md. If you enable it, keep the gateway's hardening below, and never give
+  # it the guard key.
   # registry:
   #   build:
   #     context: ..
   #     dockerfile: docker/Dockerfile
   #   command: ["python", "-m", "webspec_registry"]
+  #   init: false                    # DP-2, as for the gateway
+  #   user: "10001:10001"
+  #   read_only: true
+  #   cap_drop: [ALL]
+  #   security_opt: [no-new-privileges:true]
   #   environment:
-  #     WEBSPEC_INTERNAL_PORT: "7003"
+  #     WEBSPEC_REGISTRY_PORT: "7004"
   #     WEBSPEC_GATEWAY_URL: "http://gateway:7002"
   #   expose:
-  #     - "7003"
+  #     - "7004"
+
+volumes:
+  # The audit log. `docker compose down` keeps it; `down -v` deletes it.
+  webspec-state:
+
+networks:
+  # IPv4 only, whatever the Docker daemon's default for new networks. With a global IPv6 prefix,
+  # Docker's DNS would also give Caddy the gateway's IPv6 address, which Caddy dials first, and
+  # where the gateway does not listen (docker/README.md, "Ports"). Both services stay on this
+  # network alone.
+  default:
+    enable_ipv6: false

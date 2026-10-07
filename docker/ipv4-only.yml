@@ -1,0 +1,13 @@
+# Override for a host whose loopback interface has no IPv6 address (IPv6 disabled). Docker
+# cannot bind [::1]:7001 there, so docker-compose.yml's caddy container would not start
+# ("failed to bind host port [::1]:7001/tcp: cannot assign requested address"). This keeps
+# the 127.0.0.1 publish alone:
+#
+#   docker compose -f docker/docker-compose.yml -f docker/ipv4-only.yml up -d
+#
+# DP-5 loses nothing: clients cannot reach ::1 on such a host and fall back to 127.0.0.1.
+# `!override` replaces the list instead of adding to it (Docker Compose 2.24.4 or later).
+services:
+  caddy:
+    ports: !override
+      - "127.0.0.1:7001:7001"

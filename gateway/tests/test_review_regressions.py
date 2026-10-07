@@ -3,6 +3,7 @@
 import asyncio
 import json
 import os
+import shlex
 import sys
 from unittest.mock import patch
 
@@ -15,9 +16,13 @@ from webspec import audit, handlers
 from webspec.guard import compute_guard_hmac, loads_strict
 from webspec.idempotency import IdempotencyStore, StoredResponse, snapshot_response
 
-from tests._gateway import KEY, bookend, clearance, entry, make_client, request, tool
+from tests._gateway import (GUARD_KEY_HEX, HAVE_SSH_KEYGEN, KEY, bookend, clearance, entry, make_client,
+                            request, tool)
 
 H = "svc.localhost"
+# One allowed-signers entry. The tests that use it never reach ssh-keygen (they stop at the
+# challenge, or stub out the signature check); they only need an approver to be configured.
+SIGNER = 'approver@test namespaces="webspec-approval" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPlaceholderNotARealKey\n'
 
 
 def _tools():
@@ -98,7 +103,7 @@ def test_clearance_is_bound_and_single_use(monkeypatch):
 # ── A6: level 4 witnesses open-world mutations (the exfiltration step) ──
 
 def test_level4_challenges_an_open_world_send(monkeypatch, tmp_path):
-    (tmp_path / "allowed").write_text("")
+    (tmp_path / "allowed").write_text(SIGNER)
     monkeypatch.setenv("WEBSPEC_APPROVERS_FILE", str(tmp_path / "allowed"))
     monkeypatch.setenv("WEBSPEC_SSH_KEYGEN", "ssh-keygen")
     client, pool = make_client(monkeypatch, [entry(level=4)], _tools())
@@ -106,6 +111,28 @@ def test_level4_challenges_an_open_world_send(monkeypatch, tmp_path):
     r = request(client, "POST", H, "/send_mail", body=body, guarded=True, headers={
         "X-Gimme-Definer": bookend("POST", "SEND", body), "Idempotency-Key": "m-1",
         "X-UFO-Clearance": clearance("send_mail", {"to": "attacker@example.com"}, method="POST")})
+    assert r.status_code == 428 and pool.calls == []
+
+
+def test_level4_with_an_allowed_signers_file_that_names_nobody_fails_closed(monkeypatch, tmp_path):
+    # AP-7: install.sh creates allowed_signers with comments only. That configures nobody, so
+    # no challenge may be issued: no listed key could ever sign it.
+    signers = tmp_path / "allowed"
+    signers.write_text("# approvers, one per line:\n#   ana@example.com ssh-ed25519 AAAA...\n\n   \n")
+    monkeypatch.setenv("WEBSPEC_APPROVERS_FILE", str(signers))
+    monkeypatch.setenv("WEBSPEC_SSH_KEYGEN", "ssh-keygen")
+    assert not approval_mod.approvers_available()
+    client, pool = make_client(monkeypatch, [entry(level=4)], _tools())
+    body = b'{"to":"ana@example.com"}'
+    hdrs = {"X-Gimme-Definer": bookend("POST", "SEND", body), "Idempotency-Key": "m-2",
+            "X-UFO-Clearance": clearance("send_mail", {"to": "ana@example.com"}, method="POST")}
+    r = request(client, "POST", H, "/send_mail", body=body, guarded=True, headers=hdrs)
+    assert r.status_code == 503 and r.json()["error"] == "approval_unavailable" and pool.calls == []
+
+    signers.write_text(signers.read_text() + SIGNER)  # name someone, and the challenge is issued
+    assert approval_mod.approvers_available()
+    hdrs["X-UFO-Clearance"] = clearance("send_mail", {"to": "ana@example.com"}, method="POST")
+    r = request(client, "POST", H, "/send_mail", body=body, guarded=True, headers=hdrs)
     assert r.status_code == 428 and pool.calls == []
 
 
@@ -123,8 +150,9 @@ def test_approval_queue_never_evicts_pending_challenges():
 
 def test_failed_signatures_burn_a_challenge(monkeypatch, tmp_path):
     signers = tmp_path / "allowed"
-    signers.write_text("")
+    signers.write_text(SIGNER)
     monkeypatch.setenv("WEBSPEC_APPROVERS_FILE", str(signers))
+    monkeypatch.setenv("WEBSPEC_SSH_KEYGEN", "ssh-keygen")  # never run: _ssh_verify is stubbed below
     store = approval_mod.ApprovalStore()
     ch = store.issue(approval_mod.request_summary("DELETE", "svc", H, "/p", "p", {}, b""))
 
@@ -139,8 +167,9 @@ def test_failed_signatures_burn_a_challenge(monkeypatch, tmp_path):
 
 def test_cancelled_verification_does_not_strand_the_challenge(monkeypatch, tmp_path):
     signers = tmp_path / "allowed"
-    signers.write_text("")
+    signers.write_text(SIGNER)
     monkeypatch.setenv("WEBSPEC_APPROVERS_FILE", str(signers))
+    monkeypatch.setenv("WEBSPEC_SSH_KEYGEN", "ssh-keygen")  # never run: _ssh_verify is stubbed below
     store = approval_mod.ApprovalStore()
     ch = store.issue(approval_mod.request_summary("DELETE", "svc", H, "/p", "p", {}, b""))
 
@@ -452,3 +481,66 @@ def test_pool_drops_a_client_whose_tool_listing_fails(monkeypatch):
 
     asyncio.run(scenario())
     assert len(made) == 2  # the dead client was dropped and a fresh one connected
+
+
+# ── Linux deployment review: ssh-keygen never sees the guard key (DP-1, DP-2) ──
+#
+# ssh-keygen used to inherit the gateway's whole environment, and a child process is dumpable
+# again after exec: while it ran, every process of the gateway's user (the stdio MCP servers
+# among them) could read WEBSPEC_GUARD_KEY from its /proc/<pid>/environ. Real processes, no
+# mocks: a wrapper records the environment it was started with, then exits or runs the real
+# ssh-keygen.
+
+def _recording_keygen(tmp_path, then: str):
+    record = tmp_path / "keygen.env"
+    keygen = tmp_path / "keygen-wrapper"
+    keygen.write_text(f"#!/bin/sh\nenv >> {shlex.quote(str(record))}\n{then}\n")
+    keygen.chmod(0o755)
+    return keygen, record
+
+
+def _assert_nothing_leaked(record, secrets):
+    seen = record.read_text()
+    names = {line.split("=", 1)[0] for line in seen.splitlines() if "=" in line}
+    assert "PATH" in names  # what finds a bare WEBSPEC_SSH_KEYGEN
+    assert not {n for n in names if n.startswith("WEBSPEC_")}
+    assert "SOME_TOKEN" not in names
+    for secret in secrets:
+        assert secret not in seen
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX shell wrapper")
+def test_ssh_keygen_gets_only_path_and_the_locale(monkeypatch, tmp_path):
+    keygen, record = _recording_keygen(tmp_path, "exit 1")
+    monkeypatch.setenv("WEBSPEC_GUARD_KEY", GUARD_KEY_HEX)
+    monkeypatch.setenv("WEBSPEC_GUARD_KEY_FILE", str(tmp_path / "guard.key"))
+    monkeypatch.setenv("SOME_TOKEN", "tok-must-not-leak")
+    monkeypatch.setenv("LANG", "C.UTF-8")
+    (tmp_path / "allowed").write_text(SIGNER)
+    ok = asyncio.run(approval_mod._ssh_verify(str(keygen), str(tmp_path / "allowed"), "U1NIU0lH", "msg"))
+    assert ok is False  # the wrapper refuses every signature
+    _assert_nothing_leaked(record, [GUARD_KEY_HEX, "tok-must-not-leak"])
+    assert "LANG=C.UTF-8" in record.read_text().splitlines()
+
+
+@pytest.mark.skipif(not HAVE_SSH_KEYGEN or sys.platform == "win32", reason="ssh-keygen not installed")
+def test_a_level4_approval_verifies_in_that_minimal_environment(monkeypatch, tmp_path):
+    from webspec.approval import sign_message
+    from tests._gateway import make_approver, ssh_sign
+
+    key, signers = make_approver(tmp_path)
+    keygen, record = _recording_keygen(tmp_path, 'exec ssh-keygen "$@"')  # found through PATH
+    monkeypatch.setenv("WEBSPEC_APPROVERS_FILE", str(signers))
+    monkeypatch.setenv("WEBSPEC_SSH_KEYGEN", str(keygen))
+    monkeypatch.setenv("SOME_TOKEN", "tok-must-not-leak")
+    client, pool = make_client(monkeypatch, [entry(level=4)], _tools())  # sets WEBSPEC_GUARD_KEY
+    hdrs = {"X-Gimme-Definer": bookend("DELETE", "PURGE", b""), "Idempotency-Key": "p-1",
+            "X-UFO-Clearance": clearance("purge", {"days": "30"}, method="DELETE")}
+    ch = request(client, "DELETE", H, "/purge", query="days=30", guarded=True, headers=hdrs).json()
+    hdrs["X-WebSpec-Approval"] = f"{ch['challenge']}:{ssh_sign(key, sign_message(ch['challenge'], ch['fingerprint']))}"
+    r = request(client, "DELETE", H, "/purge", query="days=30", guarded=True, headers=hdrs)
+    assert r.status_code == 200, r.text
+    assert pool.calls == [("svc", "purge", {"days": "30"})]
+    # Both runs (find-principals, then verify) got the minimal environment.
+    assert sum(line.startswith("PATH=") for line in record.read_text().splitlines()) == 2
+    _assert_nothing_leaked(record, [GUARD_KEY_HEX, "tok-must-not-leak"])

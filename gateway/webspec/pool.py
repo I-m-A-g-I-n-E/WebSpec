@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import sys
 import time
 from dataclasses import dataclass, field
 
@@ -18,6 +19,78 @@ logger = logging.getLogger("webspec.pool")
 
 TOOL_CACHE_TTL = 300  # 5 minutes
 DEFAULT_TIMEOUT = 30  # seconds
+
+# Set for a stdio server, unless its entry's ``env`` sets the same name, when the gateway
+# itself ignores user site-packages. The MCP client passes a stdio server only HOME, PATH and
+# a few other variables plus the entry's env, so the gateway's own PYTHONNOUSERSITE (or
+# ``python -I``) does not reach it. A stdio server's HOME can be writable by the other stdio
+# servers (in the Docker stack it is the state volume; on the hardened units, the
+# gateway's HOME), and Python runs any .pth file or usercustomize module in HOME's user
+# site-packages at startup: one server could plant code that then runs, at each start, in
+# every Python stdio server, next to that server's secrets. Defense in depth next to DP-4.
+# An entry that needs user site-packages sets "PYTHONNOUSERSITE": "" (empty means unset).
+STDIO_ENV_DEFAULTS = {"PYTHONNOUSERSITE": "1"}
+
+
+def _ignores_user_site() -> bool:
+    """Whether this gateway ignores user site-packages: ``python -I`` or ``-s``, or PYTHONNOUSERSITE.
+
+    Every shipped production launcher starts the gateway with ``-I`` (and the Docker image
+    sets PYTHONNOUSERSITE too). A development gateway started without them, as the units in
+    gateway/systemd and gateway/launchd do, may itself need user site-packages, and so may
+    its stdio servers (``pip install --user``); their HOME is the agent's own, which the
+    agent can write anyway.
+    """
+    return bool(sys.flags.no_user_site)
+
+
+def stdio_env(env):
+    """The ``env`` a stdio server is spawned with.
+
+    When the gateway ignores user site-packages, STDIO_ENV_DEFAULTS, then the entry's own env;
+    otherwise the entry's env alone, as before. A malformed env (not a mapping) is passed on
+    unchanged, so that server fails when it is spawned, as before: configuration is
+    validated shallowly.
+    """
+    if not env:
+        env = {}
+    if not isinstance(env, dict):
+        return env
+    if _ignores_user_site():
+        return {**STDIO_ENV_DEFAULTS, **env}
+    return env or None
+
+
+# A stdio server's working directory when the gateway keeps its own off sys.path. The MCP
+# client starts a server in the gateway's working directory, and ``python -m`` and
+# ``python -c`` put that directory first on sys.path. The hardened units run the gateway in
+# its HOME, /var/lib/webspec, which every stdio server can write (they all run as the
+# gateway's user): one server could plant a module there that then runs, at each start,
+# inside every ``python -m`` server, next to that server's secrets. Only root can write /,
+# the usual working directory of a daemon. Defense in depth next to DP-4. PYTHONSAFEPATH
+# would not do: it also drops a script's own directory from sys.path, and servers import
+# their own modules from there (services/op-auth does).
+STDIO_ISOLATED_CWD = "/"
+
+
+def _ignores_working_directory() -> bool:
+    """Whether this gateway keeps its working directory off sys.path: ``python -I`` or ``-P``, or PYTHONSAFEPATH.
+
+    Every shipped production launcher starts the gateway with ``-I``; the development units
+    in gateway/systemd and gateway/launchd do not. sys.flags.safe_path is new in Python 3.11:
+    a development unit's python3 may be older, and before 3.11 nothing keeps the working
+    directory off sys.path, so such a gateway starts its stdio servers as before.
+    """
+    return bool(getattr(sys.flags, "safe_path", False))
+
+
+def stdio_cwd() -> str | None:
+    """The working directory a stdio server is spawned in.
+
+    STDIO_ISOLATED_CWD when the gateway keeps its own working directory off sys.path;
+    otherwise None, the gateway's own, as before.
+    """
+    return STDIO_ISOLATED_CWD if _ignores_working_directory() else None
 
 
 @dataclass
@@ -49,7 +122,8 @@ class ConnectionPool:
             transport = StdioTransport(
                 command=entry.command,
                 args=entry.args,
-                env=entry.env or None,
+                env=stdio_env(entry.env),
+                cwd=stdio_cwd(),
                 keep_alive=True,
             )
         return Client(transport, name=f"webspec-{entry.name}")

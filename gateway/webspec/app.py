@@ -14,7 +14,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 from starlette.routing import Host, Route
 
-from .config import ServiceRegistry, get_session_key
+from .config import GuardKeyError, ServiceRegistry, get_session_key, is_public_host
 from . import audit
 from .guard import GuardError, duplicate_query_keys, generate_nonce, validate_guard
 from .handlers import (
@@ -23,6 +23,7 @@ from .handlers import (
     handle_service_invoke,
     handle_service_list,
     handle_service_options,
+    refuse_without_guard_key,
 )
 from .hostgrammar import qualifiers_allowed, split_labels
 from .methods import ALL_METHODS
@@ -37,15 +38,6 @@ def cors_origins() -> list[str]:
     return [o.strip() for o in raw.split(",") if o.strip()]
 
 
-def _is_public_host(host: str) -> bool:
-    """True if the Host header targets the configured public domain (not localhost)."""
-    public_domain = os.environ.get("WEBSPEC_DOMAIN")
-    if not public_domain:
-        return False
-    hostname = host.split(":")[0]
-    return hostname == public_domain or hostname.endswith("." + public_domain)
-
-
 # Module-level singletons (initialized in create_app)
 registry: ServiceRegistry | None = None
 pool: ConnectionPool | None = None
@@ -55,7 +47,13 @@ CONFIG_POLL_INTERVAL = 30  # seconds
 
 
 async def _config_reload_loop() -> None:
-    """Periodically check ~/.claude.json for changes (F4)."""
+    """Periodically check ~/.claude.json for changes (F4).
+
+    A file that cannot be loaded is rejected by the registry, which warns once and keeps the
+    last good services (ServiceRegistry.reload). Anything else that fails here is logged as a
+    WARNING, never below what the gateway logs by default: an edit that silently does not
+    apply, a revocation included, looks applied to the operator.
+    """
     while True:
         await asyncio.sleep(CONFIG_POLL_INTERVAL)
         try:
@@ -75,7 +73,7 @@ async def _config_reload_loop() -> None:
                         logger.info("Config reload: new service available: %s", added)
                     logger.info("Config reloaded. Services: %s", registry.names())
         except Exception:
-            logger.debug("Config reload check failed", exc_info=True)
+            logger.warning("Config reload check failed", exc_info=True)
 
 
 # ── Route handlers that pull service from Host() match ──
@@ -118,7 +116,7 @@ async def _service_dispatch(request: Request) -> Response:
             # region/residency routing).
             return _deny(request, service, 404, "qualifier_not_routable",
                          "Qualifier labels are recognized but do not route to a separate backend yet.")
-        if entry is not None and not entry.guard and _is_public_host(host_header):
+        if entry is not None and not entry.guard and is_public_host(host_header):
             return _deny(request, service, 403, "unguarded_public",
                          "Unguarded services are not exposed on the public domain.")
         if entry is not None and entry.guard:
@@ -133,8 +131,12 @@ async def _service_dispatch(request: Request) -> Response:
             # Enforce guard on all other requests. It signs the request line, body, query,
             # definer verb and Idempotency-Key, so none can be swapped in flight.
             body = await request.body()
+            try:
+                session_key = get_session_key()
+            except GuardKeyError as exc:
+                return refuse_without_guard_key(request, service, exc)
             guard_result = validate_guard(
-                session_key=get_session_key(),
+                session_key=session_key,
                 method=method,
                 host=host_header,
                 path=f"/{path}" if path else "/",
@@ -162,8 +164,13 @@ async def _service_dispatch(request: Request) -> Response:
 async def _handle_nonce(request: Request, service: str) -> Response:
     """Handle GET /__nonce — bootstrap a nonce with HMAC-only auth."""
     host = request.headers.get("host", "")
+    try:
+        session_key = get_session_key()
+    except GuardKeyError as exc:
+        # Audited like a failed guard on this endpoint (issued nonces are not audited, AU-1).
+        return refuse_without_guard_key(request, service, exc)
     guard_result = validate_guard(
-        session_key=get_session_key(),
+        session_key=session_key,
         method="GET",
         host=host,
         path="/__nonce",
@@ -215,6 +222,20 @@ index_routes = Starlette(
 )
 
 
+def _report_guard_key() -> None:
+    """GD-5: say once, at startup, that requests needing the guard key will be refused.
+
+    The gateway still starts: the key is read again for each request that needs it, so a
+    key file fixed later takes effect at once. Without this, the only sign of a missing key
+    was the 500 for each such request. GuardKeyError names the variable or the file only.
+    """
+    try:
+        get_session_key()
+    except GuardKeyError as exc:
+        logger.warning("No usable guard key, so every guarded request and every unsafe request is "
+                       "refused with a plain-text 500 until there is one (GD-5): %s", exc)
+
+
 def create_app() -> Starlette:
     """Create the Starlette application with Host-based routing."""
     global registry, pool
@@ -223,6 +244,7 @@ def create_app() -> Starlette:
     pool = ConnectionPool(registry)
 
     logger.info("Registered services: %s", registry.names())
+    _report_guard_key()
 
     @asynccontextmanager
     async def lifespan(app):

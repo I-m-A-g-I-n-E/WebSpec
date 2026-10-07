@@ -27,11 +27,14 @@ the **Guide** tab has the quickstart, walkthroughs, and rationale.
 |---|---|
 | `docs/` | The published site: `spec/` (normative) and `guide/` (how-to) |
 | `gateway/` | The reference gateway (Starlette): method binding, levels 0–4, audit chain |
+| `gateway/deploy/` | Production deployments: a Linux system service and a macOS LaunchDaemon, each running the gateway as its own user |
+| `gateway/tools/setup-caddy.sh` | Caddy in front of the Linux gateway: loopback listeners held by systemd, filtered logs |
 | `gateway/examples/` | A demo MCP server, a reference harness shim, and the walkthrough generator |
 | `gateway/webspec_registry/` | Tool registry and resolver (experimental) |
 | `services/` | MCP servers used in the reference deployment (`mail-proton`, `op-auth`) |
 | `plugins/` | Claude Code plugins (`webspector`, `webspec-red-team`, `protonmail`) |
-| `docker/` | Container setup for the gateway |
+| `docker/` | A hardened compose stack: the gateway behind Caddy |
+| `gateway/systemd/`, `gateway/launchd/` | Development units that run the gateway as your login user; don't expose them |
 | `design/` | Design notes and implementation plans (not published) |
 
 ## Try it
@@ -46,7 +49,9 @@ sleep 2
 curl -s "http://notes.localhost:7001/read_note?id=welcome"
 ```
 
-Then follow the [quickstart](https://i-m-a-g-i-n-e.github.io/WebSpec/guide/).
+Then follow the [quickstart](https://i-m-a-g-i-n-e.github.io/WebSpec/guide/). To run the gateway
+for real, as its own user behind Caddy, see
+[Deploying](https://i-m-a-g-i-n-e.github.io/WebSpec/guide/deploy/).
 
 ## Develop
 
@@ -54,7 +59,7 @@ Then follow the [quickstart](https://i-m-a-g-i-n-e.github.io/WebSpec/guide/).
 pip install ./gateway pytest pyyaml -r requirements.txt
 (cd gateway && python -m pytest -q)           # gateway, registry, and walkthrough tests
 python -m pytest -q docs/tests                # rule IDs, rendering, nav, code-to-docs links
-mkdocs build --strict                         # what CI runs
+mkdocs build --strict                         # the docs build CI runs
 mkdocs serve                                  # preview the site at http://localhost:8000
 ```
 

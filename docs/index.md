@@ -78,6 +78,7 @@ What is built today:
 | Tool contracts, contract pinning, and method binding | **Implemented** |
 | Levels 0–4: guard, definers and bookend, `Idempotency-Key`, clearance, human approval | **Implemented** |
 | Hash-chained audit log and process hardening | **Implemented** |
+| Reference deployments for Linux, macOS, and Docker ([Deploying](guide/deploy.md)) | **Implemented** |
 | Independent signers per level (RFC 9421 signatures), durable state, intent checks | **Proposed** |
 | REST collection paths, format suffixes, hosted multi-tenant auth, discovery by meaning | **Proposed** (long-range vision, outside this spec) |
 

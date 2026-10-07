@@ -82,10 +82,16 @@ A destination served on a public domain must be at level 1 or higher
 - **GD-5** The guard key MUST be supplied from outside the gateway's code and configuration. The
   gateway MUST refuse to serve requests that need the key when it is absent. The reference
   gateway reads `WEBSPEC_GUARD_KEY`, which is either 64 hex digits or a passphrase hashed with
-  SHA-256, and is meant to be filled from a password manager when the gateway is launched. It
-  needs the key for every unsafe request at every level, including level 0, because it
-  validates definers with it. Without the key it answers those requests with a plain-text
-  `500`.
+  SHA-256, in both cases once the whitespace around it is trimmed, and is meant to be filled
+  from a password manager when the gateway is launched. A value of only whitespace or
+  invisible characters counts as unset. Failing that, it reads the file that
+  `WEBSPEC_GUARD_KEY_FILE` names, on every request. A byte order mark, and whitespace or
+  invisible format characters around the key, are trimmed. What remains must be one line of at
+  least 16 characters, with no control or format character, and anything else is refused. The gateway needs the key for every unsafe request at every level, including level
+  0, because it validates definers with it. Without a usable key it still starts, logs a
+  warning, and answers those requests with a plain-text `500`, which it audits. With
+  `WEBSPEC_REQUIRE_GUARD_KEY` set, as the Linux unit sets it, it does not start at all without a
+  usable key in `WEBSPEC_GUARD_KEY` itself.
 
 ## Level 2: bound
 

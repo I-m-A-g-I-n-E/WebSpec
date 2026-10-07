@@ -137,4 +137,6 @@ chained to the one before it.
 - [A request at every level](walkthrough.md) shows the same three calls at levels 0 to 4.
 - [Annotating MCP servers](annotating.md) explains how your tools get the right contract.
 - [Human approval](approval.md) sets up level 4.
+- [Deploying](deploy.md) runs the gateway as its own user on Linux, macOS, or Docker, behind
+  Caddy on Linux and in Docker.
 - [Threat model and rationale](threat-model.md) explains why the rules are what they are.

@@ -1,0 +1,20 @@
+{
+  "_comment": "The entry format of /etc/webspec/config.json: the installers put this file next to it as /etc/webspec/config.example.json, and the gateway never reads it. It uses the mcpServers format of ~/.claude.json plus the WebSpec keys level, labels and tools (docs/spec/audit-deployment.md, Configuration). notes runs the demo server of a checkout in /opt/webspec/src, where the installers suggest cloning one; tickets stands for a remote MCP server. Never write a secret here: put NAME=value in the gateway's environment (/etc/webspec/gateway.env) and write \"${NAME}\" in a stdio server's env or an http server's headers. A stdio server receives only the variables its env lists, plus HOME, LOGNAME, PATH, SHELL, TERM and USER, and PYTHONNOUSERSITE=1 unless its env sets that name (the installed gateway runs with python -I).",
+  "mcpServers": {
+    "notes": {
+      "command": "/opt/webspec/venv/bin/python",
+      "args": ["/opt/webspec/src/gateway/examples/demo_server.py"],
+      "env": {"SOME_TOKEN": "${SOME_TOKEN}"},
+      "level": 4,
+      "tools": {
+        "read_note": {"read_only": true, "open_world": false}
+      }
+    },
+    "tickets": {
+      "type": "http",
+      "url": "https://mcp.tickets.example/mcp",
+      "headers": {"Authorization": "Bearer ${TICKETS_TOKEN}"},
+      "level": 3
+    }
+  }
+}

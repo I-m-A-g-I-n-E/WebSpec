@@ -17,13 +17,13 @@ import anyio
 from mcp.shared.exceptions import McpError
 from mcp.types import CONNECTION_CLOSED
 from starlette.requests import Request
-from starlette.responses import JSONResponse, Response
+from starlette.responses import JSONResponse, PlainTextResponse, Response
 
 from . import approval as approval_mod
 from . import audit
 from . import guard as guard_mod
 from . import idempotency as idem
-from .config import ServiceRegistry, get_session_key
+from .config import GuardKeyError, ServiceRegistry, get_session_key, is_public_host
 from .definer import DefinerError, validate_definer
 from .guard import canonical_query, loads_strict, validate_clearance_token
 from .methods import (
@@ -49,6 +49,37 @@ contract_pins = ContractPins()
 def _error(status: int, error_type: str, detail: str, headers: dict | None = None, **extra) -> JSONResponse:
     body = {"error": error_type, "detail": detail, **extra}
     return JSONResponse(body, status_code=status, headers=headers)
+
+
+GUARD_KEY_UNAVAILABLE = "guard_key_unavailable"
+
+
+def refuse_without_guard_key(request: Request, service: str, exc: GuardKeyError,
+                             ctx: audit.Context | None = None) -> Response:
+    """GD-5: while the guard key is unavailable, a request that needs it gets a plain-text 500.
+
+    AU-1: the refusal is audited, with outcome ``error`` (``ctx`` once the tool is resolved).
+    The log gets one line per refusal and no traceback. It never holds the key: a
+    GuardKeyError names the variable or the file, never their content.
+    """
+    if ctx is None:
+        audit.record_request(request, service=service, outcome="error", status=500, reason=GUARD_KEY_UNAVAILABLE)
+    else:
+        audit.record(ctx, outcome="error", status=500, reason=GUARD_KEY_UNAVAILABLE)
+    logger.error("Refused %s on %s with 500, the guard key is unavailable (GD-5): %s", request.method.upper(),
+                 service, exc)
+    return PlainTextResponse("Internal Server Error", status_code=500)
+
+
+def _unknown_service(request: Request, service: str, registry: ServiceRegistry) -> dict:
+    """Arguments of a ``404 unknown_service`` (HG-1). The destination list is for local callers.
+
+    On the public domain it is left out: it would name every destination, level-0 ones
+    included, which HG-7 keeps off the public domain, to anyone asking for one that is not
+    configured.
+    """
+    extra = {} if is_public_host(request.headers.get("host", "")) else {"available": registry.names()}
+    return {"status": 404, "error_type": "unknown_service", "detail": f"Unknown service: {service}", **extra}
 
 
 def _resolve_tool_name(path: str, tool_names: list[str]) -> str | None:
@@ -188,7 +219,7 @@ async def handle_service_head(request: Request, service: str, pool: ConnectionPo
     path = request.path_params.get("path", "").strip("/")
     entry = registry.get(service)
     if entry is None:
-        return _error(404, "unknown_service", f"Unknown service: {service}", available=registry.names())
+        return _error(**_unknown_service(request, service, registry))
 
     headers = {"X-WebSpec-Service": service, "X-WebSpec-Level": str(entry.level)}
 
@@ -230,7 +261,7 @@ async def handle_service_options(request: Request, service: str, pool: Connectio
     path = request.path_params.get("path", "").strip("/")
     entry = registry.get(service)
     if entry is None:
-        return _error(404, "unknown_service", f"Unknown service: {service}", available=registry.names())
+        return _error(**_unknown_service(request, service, registry))
 
     try:
         tools = await pool.list_tools(service)
@@ -255,7 +286,7 @@ async def handle_service_list(request: Request, service: str, pool: ConnectionPo
     """GET / → tool names, descriptions, and the methods each admits."""
     entry = registry.get(service)
     if entry is None:
-        return _error(404, "unknown_service", f"Unknown service: {service}", available=registry.names())
+        return _error(**_unknown_service(request, service, registry))
     try:
         tools = await pool.list_tools(service)
     except Exception as e:
@@ -282,7 +313,7 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
 
     entry = registry.get(service)
     if entry is None:
-        return early(404, "unknown_service", f"Unknown service: {service}", available=registry.names())
+        return early(**_unknown_service(request, service, registry))
     if not path:
         return early(400, "missing_tool", f"{method} requires a tool path")
     if not authorize(LOCAL_ALLOW_ALL, method, f"{service}.localhost", path):
@@ -325,7 +356,11 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
 
     definer_tier, canonical_definer = 0, ""
     if reqs.definer:
-        result = validate_definer(method, request.headers.get("X-Gimme-Definer"), body, get_session_key())
+        try:
+            session_key = get_session_key()
+        except GuardKeyError as exc:
+            return refuse_without_guard_key(request, service, exc, audit_ctx)
+        result = validate_definer(method, request.headers.get("X-Gimme-Definer"), body, session_key)
         if isinstance(result, DefinerError):
             return deny(result.status_code, result.error_type, result.detail)
         if reqs.bookend and result.tier < 2:
@@ -356,7 +391,11 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
     # 4. Contract + tier rules (clearance is checked here, spent only at commit — step 5)
     clearance_header = request.headers.get("X-UFO-Clearance")
     if reqs.clearance:
-        err = validate_clearance_token(get_session_key(), tool_name, args, clearance_header,
+        try:
+            session_key = get_session_key()
+        except GuardKeyError as exc:
+            return refuse_without_guard_key(request, service, exc, audit_ctx)
+        err = validate_clearance_token(session_key, tool_name, args, clearance_header,
                                        service=service, method=method, spend=False)
         if err:
             return deny(403, err, f"Level {level} requires a valid, unspent X-UFO-Clearance token for "

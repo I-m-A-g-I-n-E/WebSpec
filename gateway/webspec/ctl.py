@@ -274,6 +274,9 @@ def cmd_health(args: argparse.Namespace) -> int:
         # Registry check
         try:
             registry = ServiceRegistry()
+            # A config that cannot be read, or is not a registry, gives an empty registry.
+            if not registry.reload():
+                raise ValueError("the config was rejected")
             entry = registry.get(name)
             print(f"  Registry:     {'found' if entry else 'not found'}")
             if entry:
@@ -318,6 +321,12 @@ def cmd_rm(args: argparse.Namespace) -> int:
 def cmd_caddy_sync(args: argparse.Namespace) -> int:
     """Regenerate all Caddy configs from current registry."""
     registry = ServiceRegistry()
+    # A config that cannot be read, or is not a registry, gives an empty registry: a sync
+    # from it would remove every site block.
+    if not registry.reload():
+        print("Error: the config cannot be read, or is not a registry; no Caddy config was changed",
+              file=sys.stderr)
+        return 1
     added, removed = sync_caddy_config(
         registry, domain=DOMAIN,
         gateway_port=GATEWAY_PORT, caddy_port=CADDY_PORT,

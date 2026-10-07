@@ -54,11 +54,23 @@ USED = "used"
 
 
 
+def _names_an_approver(path: Path) -> bool:
+    """True if the allowed-signers file has an entry: a line that is neither blank nor a
+    ``#`` comment (OpenSSH ignores those). An installer creates the file with comments only,
+    and a challenge that no listed key could sign must not be issued (AP-7)."""
+    try:
+        with path.open(encoding="utf-8", errors="replace") as f:
+            return any(line.strip() and not line.lstrip().startswith("#") for line in f)
+    except OSError:
+        return False
+
+
 def approvers_available() -> bool:
-    """True if level-4 approvals can be verified: an allowed-signers file and ssh-keygen."""
+    """True if level-4 approvals can be verified: ssh-keygen, and an allowed-signers file
+    that names at least one approver."""
     approvers = os.environ.get("WEBSPEC_APPROVERS_FILE", "")
     keygen = os.environ.get("WEBSPEC_SSH_KEYGEN") or shutil.which("ssh-keygen")
-    return bool(approvers) and Path(approvers).is_file() and bool(keygen)
+    return bool(approvers) and bool(keygen) and Path(approvers).is_file() and _names_an_approver(Path(approvers))
 
 
 def request_summary(
@@ -223,12 +235,24 @@ class ApprovalStore:
         return True
 
 
+# The only variables ssh-keygen gets: PATH, to find a bare WEBSPEC_SSH_KEYGEN, and the locale.
+# Non-dumpable (DP-2) protects only the gateway's own process, whose environment holds
+# WEBSPEC_GUARD_KEY. A child is dumpable again after exec, so while it runs, every process
+# of the service user, the stdio MCP servers among them, can read its /proc/<pid>/environ.
+KEYGEN_ENV = ("PATH", "LANG", "LC_ALL", "LC_CTYPE")
+
+
+def _keygen_env() -> dict[str, str]:
+    return {name: os.environ[name] for name in KEYGEN_ENV if name in os.environ}
+
+
 async def _run(argv: list[str], stdin: bytes | None = None) -> tuple[int, bytes]:
     proc = await asyncio.create_subprocess_exec(
         *argv,
         stdin=asyncio.subprocess.PIPE if stdin is not None else asyncio.subprocess.DEVNULL,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
+        env=_keygen_env(),
     )
     try:
         out, _err = await asyncio.wait_for(proc.communicate(stdin), timeout=SSH_KEYGEN_TIMEOUT)

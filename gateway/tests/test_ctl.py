@@ -207,20 +207,36 @@ def test_rm_with_clean_env(mock_reload, config_file, tmp_path, monkeypatch, caps
 
 @patch("webspec.ctl.reload_caddy", return_value=True)
 def test_caddy_sync(mock_reload, config_file, tmp_path, monkeypatch, capsys):
-    # Patch ServiceRegistry to use temp config
-    monkeypatch.setattr("webspec.ctl.ServiceRegistry.__init__",
-                        lambda self, **kw: (
-                            setattr(self, '_config_path', config_file) or
-                            setattr(self, '_services', {}) or
-                            setattr(self, '_mtime', 0.0) or
-                            self.reload()
-                        ))
+    # ServiceRegistry() reads the config WEBSPEC_CONFIG names
+    monkeypatch.setenv("WEBSPEC_CONFIG", str(config_file))
     conf_dir = tmp_path / "caddy"
     monkeypatch.setattr("webspec.caddy.CADDY_CONF_DIR", conf_dir)
 
     rc = main(["caddy-sync"])
     assert rc == 0
     assert (conf_dir / "existing-svc.caddy").exists()
+
+
+@pytest.mark.parametrize("content", [None, "{not json", '{"mcpServers": {"x": {"type": "http"}}}'])
+@patch("webspec.ctl.reload_caddy", return_value=True)
+def test_caddy_sync_changes_nothing_when_the_config_is_rejected(mock_reload, config_file, tmp_path,
+                                                                monkeypatch, capsys, content):
+    # A missing file, malformed JSON, or valid JSON that is not a registry (an http entry
+    # without url): the registry is empty, and a sync from it would remove every site block.
+    monkeypatch.setenv("WEBSPEC_CONFIG", str(config_file))
+    assert main(["caddy-sync"]) == 0
+    block = tmp_path / "caddy" / "existing-svc.caddy"
+    assert block.exists()
+    mock_reload.reset_mock()
+    if content is None:
+        config_file.unlink()
+    else:
+        config_file.write_text(content)
+
+    assert main(["caddy-sync"]) == 1
+    assert block.exists()
+    mock_reload.assert_not_called()
+    assert "no Caddy config was changed" in capsys.readouterr().err
 
 
 # ── parser ──

@@ -16,6 +16,8 @@ def _isolate_gateway_state(tmp_path, monkeypatch):
     from webspec import approval, guard, handlers, idempotency
     from webspec.methods import ContractPins
 
+    # Set by the Linux unit; in a test's environment it would stop main() without a key.
+    monkeypatch.delenv("WEBSPEC_REQUIRE_GUARD_KEY", raising=False)
     monkeypatch.setenv("WEBSPEC_AUDIT_LOG", str(tmp_path / "audit.jsonl"))
     monkeypatch.setenv("WEBSPEC_CONFIG", str(tmp_path / "no-such-claude.json"))
     monkeypatch.setattr(handlers, "contract_pins", ContractPins())

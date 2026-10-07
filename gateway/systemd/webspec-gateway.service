@@ -1,3 +1,10 @@
+# Single-user DEVELOPMENT setup: a systemd --user unit that runs the gateway as your own
+# login user, with its key file, config and log in your home directory. It does not meet
+# DP-1 or DP-4 (docs/spec/audit-deployment.md): an agent running as the same user can read
+# ~/.webspec/gateway.env (the guard key) and rewrite the gateway's configuration.
+# For production, use the hardened system unit and its installer in gateway/deploy/linux/
+# (sudo gateway/deploy/linux/install.sh). Stop this unit first: they share port 7002.
+
 [Unit]
 Description=WebSpec Local Gateway — REST interface to MCP servers
 After=network.target

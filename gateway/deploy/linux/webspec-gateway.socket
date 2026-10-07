@@ -1,0 +1,45 @@
+# webspec-gateway.socket: the listening socket of webspec-gateway.service (DP-8, DP-9,
+# docs/spec/audit-deployment.md).
+#
+#   cloudflared -> Caddy 127.0.0.1:7001 -> 127.0.0.1:7002 (this unit) -> the gateway
+#
+# Installed to /etc/systemd/system/ by install.sh in this directory, which enables and starts
+# it on every run, with or without the guard key. systemd binds the port and keeps it bound
+# while the gateway restarts, crashes, is upgraded or waits for its key. If the gateway bound
+# it itself, the port would be free between one gateway process and the next, and any local
+# process, the agent's included, could take 127.0.0.1:7002 and receive everything Caddy
+# forwards (full URLs with GET arguments, bodies, guard tags, nonces, approvals) and keep the
+# gateway from starting. Connections that arrive while the gateway is down wait in the queue,
+# and a connection to a stopped gateway starts it (which, without the guard key, fails: GD-5).
+#
+# The gateway receives the socket as file descriptor 3 (webspec/activation.py) and binds
+# nothing itself. While this unit is stopped, 127.0.0.1:7002 is free for any local process to
+# bind, and it would receive whatever still arrives there. So to stop the gateway, stop what
+# forwards to it first, the tunnel and then Caddy, and the gateway's two units last:
+#   sudo systemctl stop cloudflared.service
+#   sudo systemctl stop caddy-webspec.socket caddy-webspec.service
+#   sudo systemctl stop webspec-gateway.socket webspec-gateway.service
+# Start them again in the reverse order: the gateway's units, Caddy's, then the tunnel. If the
+# socket does not start, another process holds the port: stop it before going on. Stopping
+# only webspec-gateway.service is no stop: the next connection to this socket, which any local
+# process can make, starts it again.
+
+[Unit]
+Description=Listening socket of the WebSpec gateway (loopback only)
+Documentation=https://i-m-a-g-i-n-e.github.io/WebSpec/guide/deploy/
+
+[Socket]
+ListenStream=127.0.0.1:7002
+# No SO_REUSEPORT: no other socket can bind the same address and port, whatever its user.
+ReusePort=no
+# Never give the port up. A socket unit that hits its trigger limit fails and closes its
+# socket; so does one whose service hits its start limit, which webspec-gateway.service
+# therefore disables (StartLimitIntervalSec=0).
+TriggerLimitIntervalSec=0
+# DP-5 and DP-8, enforced by the kernel: this socket talks to loopback peers only (Caddy). The
+# service's own settings do not cover sockets that systemd passes in, so the list is here.
+IPAddressDeny=any
+IPAddressAllow=localhost
+
+[Install]
+WantedBy=sockets.target

@@ -8,7 +8,9 @@ WebSpec monorepo — protocol specification + reference implementation for tool 
 
 ## Monorepo Layout
 
-- **gateway/** — Starlette REST-to-MCP bridge serving `*.i-a-m.live` via Cloudflare tunnel (port 7001)
+- **gateway/** — Starlette REST-to-MCP bridge serving `*.i-a-m.live` via Cloudflare tunnel → Caddy (7001) → gateway (7002)
+- **gateway/deploy/** — Production deployments: `linux/` (install.sh, systemd socket + service units for user `webspec`), `macos/` (install.sh, LaunchDaemon for `_webspec`), and `config.example.json`, the entry format both installers copy. `gateway/tools/setup-caddy.sh` sets up Caddy (user `caddy`, listeners held by `caddy-webspec.socket`). See docs/guide/deploy.md
+- **docker/** — Hardened compose stack (gateway uid 10001 behind Caddy; `docker/init.py` is PID 1 and holds the gateway's port)
 - **services/mail-proton/** — FastMCP server wrapping Protonmail Bridge SMTP (port 1025)
 - **services/op-auth/** — FastMCP server wrapping 1Password CLI (`op`) for per-secret access (guard-protected)
 - **plugins/protonmail/** — Claude Code plugin: email skill
@@ -16,7 +18,7 @@ WebSpec monorepo — protocol specification + reference implementation for tool 
 - **plugins/webspector/** — Claude Code plugin: WebSpec protocol validator (5 agents, 5 skills, 2 commands; predates the rewritten spec)
 - **docs/** — The published spec site (MkDocs Material → https://i-m-a-g-i-n-e.github.io/WebSpec/). `docs/spec/` is normative and every requirement has a rule ID (`MB-1`, `GD-2`, …); `docs/guide/` is how-to and rationale. Long-form essays, the tier-C vision, retired designs, and article drafts live in Notion, not here.
 - **gateway/examples/** — Demo MCP server, reference harness shim (stdlib only, written from the spec), and the walkthrough generator whose output is `docs/guide/walkthrough.md` (`tests/test_examples.py` replays it)
-- **design/** — Design notes and implementation plans (not published)
+- **design/** — Design notes and implementation plans (not published). `design/reviews/2026-10-06-deployment-findings.md` explains the review findings (F1–F56, P1–P20) and contracts (C1–C4) that comments in the deployment code cite
 
 ## Live Infrastructure
 
@@ -34,12 +36,13 @@ The systemd service (`webspec-gateway.service`) references `~/MCP/webspec-gatewa
 
 ## Gateway Architecture
 
-Traffic flow: `*.i-a-m.live` → Cloudflare tunnel → `localhost:7001` → gateway → MCP service
+Traffic flow: `*.i-a-m.live` → Cloudflare tunnel → Caddy on `127.0.0.1:7001` / `[::1]:7001` → gateway on `127.0.0.1:7002` → MCP service. Direct sites (`webspec-ctl add --direct`) bypass the gateway on Caddy's `:7003`. In the production layouts the service manager holds these ports (DP-9): systemd holds all of them on Linux, launchd the gateway's on macOS, and in Docker the init holds the gateway's while Docker publishes Caddy's only while its container runs. `webspec/activation.py` takes the inherited socket.
 
 The gateway reads `~/.claude.json` `mcpServers` to discover services, normalizes names to subdomain labels, and routes by `Host` header. Key modules:
 
 - **app.py** — Starlette Host() wildcard routing, config polling (30s), CORS, guard enforcement
-- **config.py** — Parses `~/.claude.json`, `normalize_name()` for subdomain labels, `ServiceRegistry` with mtime-based reload. `guard` field on ServiceEntry.
+- **config.py** — Parses the config (`WEBSPEC_CONFIG`, default `~/.claude.json`; `/etc/webspec/config.json` in production), `normalize_name()` for subdomain labels, `ServiceRegistry` that reloads when the file's identity, size, mtime or ctime changes. Guard key from `WEBSPEC_GUARD_KEY` or `WEBSPEC_GUARD_KEY_FILE`. `${VAR}` expansion in headers and stdio env, never for `WEBSPEC_GUARD_KEY*`.
+- **activation.py / caddy.py / ctl.py / config_writer.py** — Socket activation (systemd `LISTEN_FDS`, launchd `WEBSPEC_LAUNCHD_SOCKET`); Caddy site-block generation and transactional reloads; `webspec-ctl` (on a production host, i.e. when `/etc/webspec/config.json` exists, it edits `/etc/webspec/config.json` and `gateway.env`)
 - **guard.py** — Session-key HMAC authentication + audience-bound single-use nonces. Services opt in with `"guard": true` in config. `/__nonce` endpoint for nonce bootstrap. Also: UFO clearance token computation (`compute_clearance_token`), provenance chain validation (`validate_provenance_chain`), `/__challenge` is retired (410) — human confirmation is the level-4 approval flow.
 - **handlers.py** — HTTP method → MCP tool dispatch under **method profiles** (docs/spec/methods.md, docs/spec/levels.md). HEAD/OPTIONS discover and never invoke; GET/POST/PUT/PATCH/DELETE invoke only through a method the tool's contract admits (else 405 + Allow), then enforce the level's requirements (definer/bookend, Idempotency-Key, UFO clearance, level-4 human approval)
 - **methods.py** — Tool contracts (operator override > MCP ToolAnnotations > strict MCP defaults), contract pinning (join; servers can tighten, never loosen), method binding, per-method requirements by level 0–4
@@ -53,15 +56,23 @@ Tool name resolution: path segments use slash-to-underscore fallback (`/send/ema
 
 ## Running the Gateway Locally
 
-The gateway now **requires `WEBSPEC_GUARD_KEY`** in the environment and fails closed
-(`GuardKeyError`) without it — the old `~/.webspec/session.key` file is obsolete and can
-be deleted. Source the key from your password manager:
+The gateway takes its guard key from `WEBSPEC_GUARD_KEY`, or from the file that
+`WEBSPEC_GUARD_KEY_FILE` names. Without either it still starts, warns, and answers every
+request that needs the key with a plain-text 500 (`GuardKeyError`); with
+`WEBSPEC_REQUIRE_GUARD_KEY=1`, as the Linux unit sets it, it does not start at all. The old
+`~/.webspec/session.key` file is obsolete and can be deleted. For a development run on
+loopback, without Caddy and without a public domain, source the key from your password
+manager:
 
 ```bash
 cd ~/MCP/webspec-gateway
 WEBSPEC_GUARD_KEY=$(op read 'op://WebSpec/gateway-guard/key') \
-  WEBSPEC_DOMAIN=i-a-m.live WEBSPEC_PORT=7001 python -m webspec
+  WEBSPEC_INTERNAL_PORT=7002 python -m webspec
 ```
+
+It then serves `{name}.localhost:7002`. Behind Caddy (`gateway/tools/setup-caddy.sh`), on the
+`:7001` that systemd holds for it, the gateway listens on 7002 and `WEBSPEC_DOMAIN` names the
+public domain.
 
 For throwaway local dev where you don't need a real guard key, use the ephemeral
 escape hatch instead: `WEBSPEC_GUARD_KEY_DEV_EPHEMERAL=1 python -m webspec` (mints an
@@ -71,7 +82,9 @@ Or via systemd: `systemctl --user start webspec-gateway`. The unit sources
 `~/.webspec/gateway.env` (via `EnvironmentFile=-`) for `WEBSPEC_GUARD_KEY` — see
 `gateway/systemd/webspec-gateway.service` for how to populate it from your vault.
 
-Environment variables: `WEBSPEC_AUDIT_LOG` (audit chain path; empty disables), `WEBSPEC_APPROVERS_FILE` (ssh allowed-signers for level 4), `WEBSPEC_SSH_KEYGEN` (path of the `ssh-keygen` that verifies level-4 approvals; default from PATH), `WEBSPEC_ACCESS_LOG` (`1` enables uvicorn's access log — off by default because GET arguments live in URLs), `WEBSPEC_INTERNAL_PORT` (gateway listen port behind Caddy; falls back to `WEBSPEC_PORT`), `WEBSPEC_PORT` (default 7001), `WEBSPEC_HOST` (default 127.0.0.1), `WEBSPEC_DOMAIN` (public domain for Host routing), `WEBSPEC_LOG_LEVEL` (default info), `WEBSPEC_GUARD_KEY` (required — HMAC guard key, 64-hex or any passphrase), `WEBSPEC_GUARD_KEY_DEV_EPHEMERAL` (dev-only escape hatch, mints an insecure in-memory key).
+Production hosts don't run the gateway this way: see docs/guide/deploy.md (`gateway/deploy/linux/install.sh`, `gateway/deploy/macos/install.sh`, `docker/`).
+
+Environment variables: `WEBSPEC_CONFIG` (config path), `WEBSPEC_GUARD_KEY_FILE` (file holding the guard key, read per request), `WEBSPEC_REQUIRE_GUARD_KEY` (set by the Linux unit: no start without a usable `WEBSPEC_GUARD_KEY`), `WEBSPEC_LAUNCHD_SOCKET` (macOS socket activation), `WEBSPEC_AUDIT_LOG` (audit chain path; empty disables), `WEBSPEC_APPROVERS_FILE` (ssh allowed-signers for level 4), `WEBSPEC_SSH_KEYGEN` (path of the `ssh-keygen` that verifies level-4 approvals; default from PATH), `WEBSPEC_ACCESS_LOG` (`1` enables uvicorn's access log — off by default because GET arguments live in URLs), `WEBSPEC_INTERNAL_PORT` (gateway listen port behind Caddy; falls back to `WEBSPEC_PORT`), `WEBSPEC_PORT` (default 7001), `WEBSPEC_HOST` (default 127.0.0.1; empty counts as unset), `WEBSPEC_DOMAIN` (public domain for Host routing), `WEBSPEC_LOG_LEVEL` (default info), `WEBSPEC_GUARD_KEY` (the HMAC guard key, 64-hex or any passphrase; or `WEBSPEC_GUARD_KEY_FILE`), `WEBSPEC_GUARD_KEY_DEV_EPHEMERAL` (dev-only escape hatch, mints an insecure in-memory key).
 
 ## MCP Services
 
@@ -84,7 +97,7 @@ Environment variables: `WEBSPEC_AUDIT_LOG` (audit chain path; empty disables), `
 ```bash
 pip install -r requirements.txt
 mkdocs serve                     # local preview
-mkdocs build --strict            # what CI runs
+mkdocs build --strict            # the docs build CI runs
 python -m pytest -q docs/tests   # rule IDs unique/resolvable, nav complete, code→docs links exist
 ```
 

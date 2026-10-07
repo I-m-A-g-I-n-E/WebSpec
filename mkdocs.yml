@@ -63,4 +63,5 @@ nav:
     - A request at every level: guide/walkthrough.md
     - Annotating MCP servers: guide/annotating.md
     - Human approval: guide/approval.md
+    - Deploying: guide/deploy.md
     - Threat model and rationale: guide/threat-model.md

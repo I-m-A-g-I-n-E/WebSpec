@@ -31,8 +31,10 @@ ana@example.com namespaces="webspec-approval" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AA
 
 Point the gateway at the file with `WEBSPEC_APPROVERS_FILE=/etc/webspec/allowed_signers`.
 Anyone who can add a line to this file can approve, so the agent must not be able to write it
-([DP-4](../spec/audit-deployment.md#deployment)). If the variable is unset, calls that need
-approval are refused with `503 approval_unavailable`, and no challenge is issued.
+([DP-4](../spec/audit-deployment.md#deployment)). If the variable is unset, the file names
+nobody, or there is no `ssh-keygen` to verify with, calls that need approval are refused with
+`503 approval_unavailable`, and no challenge is issued. The reference installers create the file with no approver in it, so level 4 starts working only once
+you add a line.
 
 ## 3. Raise the destination to level 4
 

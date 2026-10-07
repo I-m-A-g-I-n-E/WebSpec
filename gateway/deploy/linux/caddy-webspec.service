@@ -1,0 +1,121 @@
+# caddy-webspec.service: Caddy as the loopback-only reverse proxy in front of the WebSpec gateway
+# (docs/spec/audit-deployment.md, DP-5 and DP-6).
+#
+#   cloudflared -> 127.0.0.1:7001 / [::1]:7001 (caddy-webspec.socket) -> Caddy
+#     -> gateway 127.0.0.1:7002
+#   cloudflared -> 127.0.0.1:7003 / [::1]:7003 (caddy-webspec.socket) -> Caddy
+#     -> direct sites (webspec-ctl add --direct), around the gateway
+#
+# gateway/tools/setup-caddy.sh installs this unit and caddy-webspec.socket to
+# /etc/systemd/system/. Caddy runs as the `caddy` system user with no capabilities. It opens no
+# listening socket: systemd holds its two listeners (caddy-webspec.socket) and passes them in,
+# so the ports stay bound while Caddy restarts. The gateway's services are on :7001, the only
+# port of Caddy's that the agent's egress allow-list may name; direct sites are on :7003, which
+# it must leave out (DP-3). The gateway has its own unit and installer
+# (gateway/deploy/linux/install.sh), and this unit does not depend on it. Caddy answers 502
+# until the gateway is up.
+#
+# /etc/caddy/Caddyfile comes from webspec.caddy.generate_global_caddyfile(). Its admin API
+# listens on the unix socket /run/caddy-webspec/admin.sock (mode 0200) in this unit's 0700
+# RuntimeDirectory, so only root and caddy can reconfigure Caddy. After the services in
+# /etc/webspec/config.json change, regenerate the site blocks and reload, as root. sudo drops
+# WEBSPEC_* variables: webspec-ctl then uses /etc/webspec/config.json (where that file exists)
+# and the public domain the Caddyfile records. It validates the change with caddy validate and
+# puts every file back if Caddy does not load it:
+#   sudo WEBSPEC_CONFIG=/etc/webspec/config.json /opt/webspec/venv/bin/webspec-ctl caddy-sync
+# To change the public domain, give it once to caddy-sync (sudo WEBSPEC_DOMAIN=<domain> ...),
+# set WEBSPEC_DOMAIN in /etc/webspec/gateway.env, and restart the gateway, which reads it only
+# when it starts: sudo systemctl restart webspec-gateway
+# To reload the files as they are: sudo systemctl reload caddy-webspec
+# To stop Caddy, stop both units; a connection to the socket starts the service again:
+#   sudo systemctl stop caddy-webspec.socket caddy-webspec.service
+#
+# Run setup-caddy.sh again after turning IPv6 on or off at boot (ipv6.disable=1): it writes the
+# configuration for the sockets that systemd can bind on this kernel. On a kernel without IPv6,
+# systemd ignores the socket unit's [::1] lines, and a configuration written while there was
+# IPv6 binds fd/5 and fd/6, which Caddy then never receives. ExecStartPre= then stops the start
+# with one line that says so, where Caddy would fail at every restart with "listening on fd/6:
+# socket operation on non-socket"; webspec-ctl health says so too. The other way round, booted
+# with IPv6 again, systemd holds [::1]:7001 and [::1]:7003, but a configuration written without
+# IPv6 does not serve them: connections there wait unanswered, and webspec-ctl health says so.
+
+[Unit]
+Description=Caddy reverse proxy for the WebSpec gateway (loopback only)
+Documentation=https://caddyserver.com/docs/ https://i-m-a-g-i-n-e.github.io/WebSpec/guide/deploy/
+Requires=caddy-webspec.socket
+After=caddy-webspec.socket network.target
+# No start limit. When a socket-activated service hits its start limit (by default 5 starts in
+# 10 s, which a few manual restarts reach), systemd fails the socket unit as well and closes
+# the sockets, and the port is free for any local process. Restarts are throttled by
+# RestartSec instead: a start that a connection triggers waits for the restart timer too.
+StartLimitIntervalSec=0
+
+[Service]
+Type=notify
+User=caddy
+Group=caddy
+# A Caddyfile that binds fd/5 or fd/6, the [::1] sockets, cannot start on a kernel without IPv6
+# (see above): say so in one line, and start nothing. /proc/self/net is /proc/net, which
+# ProcSubset=pid hides; it has if_inet6 exactly when the kernel has IPv6, which is what systemd
+# checks before it binds a [::1] line. Runs as caddy, in this unit's sandbox; the Caddyfile
+# holds no secrets.
+ExecStartPre=/bin/sh -c 'if grep -q "^[^#]*bind .*fd/[56]" /etc/caddy/Caddyfile \
+    && [ ! -e /proc/self/net/if_inet6 ]; then \
+    echo "caddy-webspec: /etc/caddy/Caddyfile binds the [::1] listeners, but this kernel has no IPv6; run gateway/tools/setup-caddy.sh again" >&2; \
+    exit 1; fi'
+ExecStart=/usr/local/bin/caddy run --config /etc/caddy/Caddyfile
+ExecReload=/usr/local/bin/caddy reload --config /etc/caddy/Caddyfile --force
+TimeoutStopSec=5s
+Restart=always
+RestartSec=3
+LimitNOFILE=65536
+
+# Caddy's data and config directories. With TLS and autosave off, little is written there.
+Environment=XDG_DATA_HOME=/var/lib/caddy-webspec/data
+Environment=XDG_CONFIG_HOME=/var/lib/caddy-webspec/config
+StateDirectory=caddy-webspec
+StateDirectoryMode=0700
+# Access logs: /var/log/caddy/<service>.log, 0600. The directory is 0750 caddy:caddy.
+LogsDirectory=caddy
+LogsDirectoryMode=0750
+# Holds the admin socket. Must match CADDY_ADMIN_SOCKET in gateway/webspec/caddy.py.
+RuntimeDirectory=caddy-webspec
+RuntimeDirectoryMode=0700
+UMask=0077
+
+# Hardening
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ReadWritePaths=/var/log/caddy /var/lib/caddy-webspec
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+ProcSubset=pid
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RemoveIPC=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+# DP-5, enforced by the kernel as well: Caddy exchanges IP traffic with loopback peers only
+# (the gateway and the apps of direct sites). caddy-webspec.socket repeats this for the
+# listening sockets, which this list does not cover.
+IPAddressDeny=any
+IPAddressAllow=localhost
+
+[Install]
+WantedBy=multi-user.target
+Also=caddy-webspec.socket

@@ -2,8 +2,20 @@
 malformed-index resilience in service discovery."""
 import json
 
+import pytest
+
 import webspec_registry.__main__ as registry_main
 from webspec_registry.__main__ import _discover_services, _resolve_registry_host
+
+
+@pytest.fixture(autouse=True)
+def _registry_env(monkeypatch):
+    # The registry reads these at call time: one exported in the developer's shell (such as
+    # WEBSPEC_GATEWAY_URL=http://localhost:7002, which it now refuses) must not change a result.
+    for var in ("WEBSPEC_GATEWAY_URL", "WEBSPEC_REGISTRY_HARVEST_GUARDED", "WEBSPEC_GUARD_KEY",
+                "WEBSPEC_GUARD_KEY_FILE", "WEBSPEC_GUARD_KEY_DEV_EPHEMERAL", "WEBSPEC_REGISTRY_HOST",
+                "WEBSPEC_REGISTRY_PORT"):
+        monkeypatch.delenv(var, raising=False)
 
 
 # --- FIX 1: registry must not share the gateway's WEBSPEC_HOST knob ---
@@ -49,14 +61,19 @@ def test_discover_services_skips_entries_missing_name(monkeypatch):
         {"notname": "oops"},  # malformed: no "name" key
         {"name": "op-auth"},
         "not-even-a-dict",  # malformed: not a dict at all
+        {"name": "Not A Label"},  # each name becomes a Host label, so it must be one
+        {"name": 7},
     ]}
+    requests = []
 
-    def fake_urlopen(req, timeout=5):
+    def fake_open_gateway(req, timeout=5):
+        requests.append(req)
         return _FakeResponse(payload)
 
-    monkeypatch.setattr(registry_main.urllib.request, "urlopen", fake_urlopen)
-    services = _discover_services("http://localhost:7002")
+    monkeypatch.setattr(registry_main, "open_gateway", fake_open_gateway)
+    services = _discover_services("http://127.0.0.1:7002")
     assert services == ["mail-proton", "op-auth"]
+    assert [(r.full_url, r.get_header("Host")) for r in requests] == [("http://127.0.0.1:7002/", "localhost")]
 
 
 # --- FIX 3: cache the default catalog so endpoints don't re-harvest every request ---

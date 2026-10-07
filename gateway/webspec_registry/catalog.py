@@ -20,6 +20,22 @@ except Exception:  # pragma: no cover - exercised only when webspec is absent
     compute_guard_hmac = None
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None  # the 3xx becomes an HTTPError
+
+
+# Every request to the gateway goes straight to the address in the URL: no proxy from the
+# environment (http_proxy would receive the Host headers and any guard tags) and no redirect
+# (urllib would carry the same headers to wherever it points). The gateway never redirects.
+_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}), _NoRedirect())
+
+
+def open_gateway(req: urllib.request.Request, timeout: float = 5):
+    """urlopen() for requests to the gateway, without proxies or redirects."""
+    return _OPENER.open(req, timeout=timeout)
+
+
 def harvest(services: list[str], fetch_tools) -> list[ToolRecord]:
     """Build ToolRecords for each service. fetch_tools(service) -> list[{name,description,inputSchema}]."""
     records: list[ToolRecord] = []
@@ -46,7 +62,7 @@ def _options_request(url: str, host: str, extra_headers: dict | None = None) -> 
     if extra_headers:
         headers.update(extra_headers)
     req = urllib.request.Request(url, method="OPTIONS", headers=headers)
-    with urllib.request.urlopen(req, timeout=5) as resp:
+    with open_gateway(req, timeout=5) as resp:
         payload = json.loads(resp.read())
     return payload.get("tools", [])
 
@@ -56,7 +72,7 @@ def _bootstrap_nonce(gateway_url: str, host: str, guard_key: bytes) -> str:
     nonce_url = gateway_url.rstrip("/") + "/__nonce"
     mac = compute_guard_hmac(guard_key, "GET", host, "/__nonce", "", b"")
     req = urllib.request.Request(nonce_url, method="GET", headers={"Host": host, "X-WebSpec-Guard": mac})
-    with urllib.request.urlopen(req, timeout=5) as resp:
+    with open_gateway(req, timeout=5) as resp:
         payload = json.loads(resp.read())
     return payload["nonce"]
 
@@ -71,6 +87,8 @@ def http_fetch_tools(gateway_url: str, guard_key: bytes | None = None):
 
     The gateway's index (GET {gateway_url}/) lists services; OPTIONS {service}.<host>/ lists tools.
     Here we hit the gateway index for the tool list per service via its JSON `tools` array.
+    ``gateway_url`` says only where to connect (dial a loopback gateway by IP, see
+    __main__._gateway_url); the Host header is always the loopback name ``{service}.localhost``.
 
     Guard-aware: if the unauthenticated OPTIONS is rejected with 401/403 and a
     guard_key is supplied (and webspec.guard is importable), retry via the

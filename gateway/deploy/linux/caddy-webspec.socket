@@ -1,0 +1,66 @@
+# caddy-webspec.socket: the listening sockets of caddy-webspec.service (DP-3, DP-5, DP-9,
+# docs/spec/audit-deployment.md).
+#
+#   cloudflared -> 127.0.0.1:7001 / [::1]:7001 (this unit) -> Caddy -> gateway 127.0.0.1:7002
+#   cloudflared -> 127.0.0.1:7003 / [::1]:7003 (this unit) -> Caddy -> direct sites (local apps)
+#
+# systemd binds the ports and keeps them bound while Caddy restarts, reloads, is upgraded or
+# crashes. If Caddy bound them itself, they would be free for a moment at every restart, and
+# any local process could take 127.0.0.1:7001, receive cloudflared's traffic (full URLs with
+# GET arguments, guard tags) and keep Caddy from starting. Connections that arrive while Caddy
+# is down wait in the queue, and a connection to a stopped Caddy starts it.
+#
+# Two listeners. :7001 serves the gateway's services, and is the only port of Caddy's that the
+# agent's egress allow-list may name (127.0.0.1:7001 and [::1]:7001). :7003 serves direct sites
+# (webspec-ctl add --direct), which proxy to local web apps around the gateway, its guard and its
+# audit log: keep it out of the agent's allow-list (DP-3). cloudflared sends each direct site's
+# public host to 127.0.0.1:7003 with an ingress rule of its own.
+#
+# Caddy receives the sockets as file descriptors 3 to 6, in the order of the ListenStream
+# lines, and binds nothing itself: the configuration that webspec.caddy generates binds fd/3 and
+# fd/5 for the gateway's services and fd/4 and fd/6 for direct sites (webspec.caddy.Listeners).
+# Keep the order: IPv4 first, so that the fds of 127.0.0.1 are 3 and 4 with or without IPv6.
+#
+# gateway/tools/setup-caddy.sh installs this unit to /etc/systemd/system/, as it is. On a kernel
+# without IPv6 (booted with ipv6.disable=1), systemd ignores the [::1] lines, and logs that it
+# does; it passes 127.0.0.1:7001 and 127.0.0.1:7003 as fds 3 and 4, and the configuration
+# binds those. webspec-ctl reads which sockets the installed unit passes from systemd
+# (systemctl show -p Listen caddy-webspec.socket).
+#
+# Run setup-caddy.sh again after turning IPv6 on or off at boot (ipv6.disable=1), so that the
+# configuration binds what systemd passes. On a kernel without IPv6, a configuration written
+# while there was IPv6 binds fd/5 and fd/6, which Caddy then never receives:
+# caddy-webspec.service does not start it, and says to run setup-caddy.sh again. Booted with
+# IPv6 again, this unit holds [::1]:7001 and [::1]:7003, so that no other process can take
+# them; a configuration written without IPv6 leaves them unanswered until setup-caddy.sh runs
+# again. Never drop the [::1] lines in a drop-in: on a kernel with IPv6, nothing would hold
+# those ports, and any local process could listen there (an earlier setup-caddy.sh wrote one on
+# a kernel without IPv6, which it now removes).
+
+[Unit]
+Description=Listening sockets of the WebSpec Caddy (loopback only)
+Documentation=https://caddyserver.com/docs/ https://i-m-a-g-i-n-e.github.io/WebSpec/guide/deploy/
+
+[Socket]
+ListenStream=127.0.0.1:7001
+ListenStream=127.0.0.1:7003
+ListenStream=[::1]:7001
+ListenStream=[::1]:7003
+# Binds [::1] even while the loopback interface has no IPv6 address, IPv6 being turned off with
+# sysctl (net.ipv6.conf.*.disable_ipv6): the ports are held all the same, and nothing needs to
+# change when it is turned on again. A kernel booted with ipv6.disable=1 has no IPv6 at all
+# (see above).
+FreeBind=yes
+# No SO_REUSEPORT: no other socket can bind the same address and port, whatever its user.
+ReusePort=no
+# Never give the ports up. A socket unit that hits its trigger limit fails and closes its
+# sockets; so does one whose service hits its start limit, which caddy-webspec.service
+# therefore disables (StartLimitIntervalSec=0).
+TriggerLimitIntervalSec=0
+# DP-5, enforced by the kernel: these sockets talk to loopback peers only. The service unit's
+# access list does not cover sockets that systemd passes in, so it is repeated here.
+IPAddressDeny=any
+IPAddressAllow=localhost
+
+[Install]
+WantedBy=sockets.target

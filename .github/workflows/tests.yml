@@ -6,13 +6,28 @@ on:
   pull_request:
   workflow_dispatch:
 
+# The jobs run downloaded code (pip packages, Go modules, Caddy): give them a read-only token.
+permissions:
+  contents: read
+
 jobs:
   pytest:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.11', '3.12']
+        # Every Python from the oldest that gateway/pyproject.toml admits (3.11, the Docker image's)
+        # to 3.13, Debian 13's python3, which the Linux installer builds with by default.
+        # Quoted: YAML reads 3.10 as 3.1.
+        python-version: ['3.11', '3.12', '3.13']
+    env:
+      # Where this job keeps the Caddy it builds: a fixed path (the cache needs one) right below
+      # /tmp, which belongs to root and is sticky on every runner. build-caddy.sh refuses a binary
+      # on a path that a user other than root and the runner user can change (DP-1), and on some
+      # runners RUNNER_TEMP lies below directories that others can write (larger runners run with
+      # umask 002; the runner's container image makes /home/runner 0777). If another user made
+      # the directory first, the job fails; the binary in it never runs.
+      CI_CADDY_DIR: /tmp/webspec-ci-caddy
     steps:
       - uses: actions/checkout@v4
 
@@ -28,9 +43,65 @@ jobs:
       # gracefully without it.
       - run: pip install pytest pyyaml
 
+      # The tests of the CI scripts and of this workflow: build-caddy.sh builds into, and runs,
+      # only a binary that no user but root and the caller can change (DP-1), and reads what it
+      # builds and requires from setup-caddy.sh; require-tests.py fails a run whose required
+      # tests skipped; the Caddy that the tests run is the one that was checked.
+      - name: Test the CI scripts
+        run: python -m pytest -q -p no:cacheprovider .github/scripts
+
+      # A real Caddy with the rate-limit plugin, for the tests that run `caddy validate`,
+      # `caddy fmt` and `caddy adapt` on webspec.caddy's output and serve it (DP-3, DP-5, DP-6).
+      # The versions are setup-caddy.sh's pins, read from the script, and they key the cache: bump
+      # a pin there and CI builds and tests the new Caddy. Every Python of the matrix shares the
+      # key, as no Python goes into the binary (a static Go build).
+      - name: Read the Caddy pins from gateway/tools/setup-caddy.sh
+        id: caddy-pins
+        run: bash .github/scripts/build-caddy.sh key >> "$GITHUB_OUTPUT"
+
+      - name: Restore Caddy
+        id: caddy-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ env.CI_CADDY_DIR }}
+          key: ${{ steps.caddy-pins.outputs.key }}
+
+      - name: Build Caddy
+        if: steps.caddy-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 15
+        run: bash .github/scripts/build-caddy.sh build "$CI_CADDY_DIR/caddy"
+
+      - name: Check Caddy
+        run: bash .github/scripts/build-caddy.sh check "$CI_CADDY_DIR/caddy"
+
+      # Saved once checked, so that a failing test run does not throw the build away.
+      - name: Save Caddy
+        if: steps.caddy-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.CI_CADDY_DIR }}
+          key: ${{ steps.caddy-pins.outputs.key }}
+
       - name: Run gateway + registry test suite
         working-directory: gateway
-        run: python -m pytest -q
+        env:
+          WEBSPEC_TEST_CADDY: ${{ env.CI_CADDY_DIR }}/caddy
+        run: python -m pytest -q -ra --junitxml="$RUNNER_TEMP/pytest-gateway.xml"
+
+      # pytest passes when a test skips: fail unless the real-Caddy tests ran and passed. They are
+      # test_caddy_limits.py's, which serve the generated configuration with Caddy (DP-3, DP-5,
+      # DP-6), and the test_real_caddy_* tests, one each in test_caddy.py,
+      # test_caddy_transaction.py and test_compose_config.py, which run caddy validate, fmt or
+      # adapt on the generated files, a staged copy and the compose Caddyfile. require-tests.py
+      # also fails when it finds no test by a name, so each module is required by a name of its
+      # own: one that skips whole, or drops out of the run (a rename, --ignore, --deselect, -k,
+      # collect_ignore), fails the job as a test that skips does. test_tests_workflow.py fails
+      # when a test that reads WEBSPEC_TEST_CADDY, or its module, has no name here.
+      - name: Check that the real-Caddy tests ran
+        run: >-
+          python .github/scripts/require-tests.py "$RUNNER_TEMP/pytest-gateway.xml"
+          --ran test_caddy_limits --ran test_real_caddy --ran test_caddy.test_real_caddy
+          --ran test_caddy_transaction.test_real_caddy --ran test_compose_config.test_real_caddy
 
   docs:
     runs-on: ubuntu-latest
@@ -47,5 +118,11 @@ jobs:
       # Fails on broken links and anything else MkDocs warns about.
       - run: mkdocs build --strict
 
-      # Rule IDs unique and resolvable, nav complete, docs paths cited in code exist.
-      - run: python -m pytest -q docs/tests/test_docs_consistency.py
+      # Every docs test: rule IDs unique and resolvable, every rule its own list item (rendering),
+      # nav complete, docs paths cited in code exist.
+      - run: python -m pytest -q -ra --junitxml="$RUNNER_TEMP/pytest-docs.xml" docs/tests
+
+      # The rendering tests must have run, and no test may skip (the rendering tests skip
+      # without Markdown and pymdown-extensions).
+      - name: Check that every docs test ran
+        run: python .github/scripts/require-tests.py "$RUNNER_TEMP/pytest-docs.xml" --no-skips --ran test_rendering

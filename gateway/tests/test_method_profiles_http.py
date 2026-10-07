@@ -120,6 +120,17 @@ def test_contract_rug_pull_is_blocked(l0):
     assert request(client, "GET", H, "/read_thing").status_code == 405
 
 
+def test_a_listed_tool_is_pinned_before_anything_asks_about_it(l0):
+    # TC-6 pins every contract observed. Serving read_thing lists delete_thing too, so a later
+    # listing cannot loosen it, though nothing has yet described or called it.
+    client, pool = l0
+    assert request(client, "GET", H, "/read_thing").status_code == 200
+    pool.tools = [tool("delete_thing", read_only=True) if t.name == "delete_thing" else t for t in pool.tools]
+    r = request(client, "GET", H, "/delete_thing")
+    assert r.status_code == 405 and r.headers["allow"] == "HEAD, OPTIONS, PUT, DELETE"
+    assert pool.calls == [("svc", "read_thing", {})]
+
+
 # ── discovery tells the AI exactly what to send ──
 
 def test_options_and_head_describe_the_profile(l0):

@@ -1,0 +1,205 @@
+# WebSpec gateway: production systemd SYSTEM unit (Linux).
+#
+# Installed to /etc/systemd/system/webspec-gateway.service, with webspec-gateway.socket, by
+# install.sh in this directory. Do not edit the installed copy: the next run replaces it.
+# Site settings and secrets go in /etc/webspec/gateway.env, which it never overwrites.
+# It meets docs/spec/audit-deployment.md and the guard-key rule GD-5 (docs/spec/levels.md):
+#   DP-1  runs as the dedicated system user webspec, never as the agent's user
+#   DP-2  the gateway makes itself non-dumpable at startup (webspec/hardening.py), so no
+#         other process of the webspec user can read its environment or memory or ptrace
+#         it; inside this sandbox (ProtectProc=invisible) the stdio servers cannot even see
+#         it in /proc.
+#   DP-4  code (/opt/webspec, root-owned) and config (/etc/webspec, root-owned) are read-only
+#         to the service, and the agent cannot read or write the state directory. The audit
+#         log lives there, so the stdio servers, which run as webspec too, can append to it
+#         or rewrite it; the agent cannot. If the stdio servers are not trusted, ship the log
+#         off the host, or run those servers as services of their own, under other users,
+#         and list them in config.json as http servers.
+#   DP-6  logs go to the journal only, and the uvicorn access log stays off
+#         (do not set WEBSPEC_ACCESS_LOG): GET arguments travel in URLs
+#   DP-7  one process: no workers, no template instances. Restart=always brings it back
+#         whatever ends it, and a shutdown waits at most 35 s for requests in flight before
+#         it exits (webspec/__main__.py), so one that never ends cannot keep it from coming
+#         back. The stdio servers it starts run as webspec too, so any of them can end it with
+#         a signal, and the restart clears what DP-7 keeps in memory: nonces, contract pins,
+#         clearances, approvals, idempotency records. One that stops it (SIGSTOP) leaves it
+#         hung, as no restart policy sees a stopped process (a watchdog would: WatchdogSec=
+#         with sd_notify). Only running such servers under other users (see DP-4) prevents
+#         both.
+#   DP-8  listens on loopback only, 127.0.0.1:7002, behind Caddy on 127.0.0.1:7001
+#   DP-9  systemd holds the gateway's port, 127.0.0.1:7002 (webspec-gateway.socket), and
+#         passes it in as file descriptor 3, so the port stays bound while the gateway
+#         restarts and no other process can take what Caddy forwards there
+#   GD-5  the guard key comes from /etc/webspec/gateway.env (root:root 0600), which systemd
+#         reads as root before it drops to webspec, so the service user cannot read the file.
+#         The unit does not start without a usable WEBSPEC_GUARD_KEY there, however it is
+#         started: by a connection to the socket, at boot or by hand. ExecStartPre= refuses an
+#         empty value, and the gateway itself exits before it serves when the value holds no
+#         key, such as invisible characters only (WEBSPEC_REQUIRE_GUARD_KEY=1, P8). Such a
+#         start fails visibly and is retried every RestartSec, so the gateway comes up once the
+#         key is added. Not WEBSPEC_GUARD_KEY_FILE: a file the gateway can read, every stdio
+#         server can read too. UnsetEnvironment= drops it, and the development-only
+#         WEBSPEC_GUARD_KEY_DEV_EPHEMERAL, even when gateway.env sets them, so that no other
+#         source of a key stands in. The key stays in the gateway's own environment. Its
+#         children are ordinary processes that every process of the webspec user can
+#         inspect, so none of them gets it: a stdio MCP server receives HOME, LOGNAME, PATH,
+#         SHELL, TERM, USER and the variables its config.json entry names (never
+#         ${WEBSPEC_GUARD_KEY}), and ssh-keygen, which verifies level-4 approvals, receives
+#         PATH and the locale.
+#
+# To stop the gateway, stop what forwards to it first, then both of its units, and start them
+# again in the reverse order (see webspec-gateway.socket: while it is stopped, any local
+# process can take 127.0.0.1:7002 and receive what still arrives there):
+#   sudo systemctl stop cloudflared.service
+#   sudo systemctl stop caddy-webspec.socket caddy-webspec.service
+#   sudo systemctl stop webspec-gateway.socket webspec-gateway.service
+# Stopping only this service is no stop: the next connection to the socket, which any local
+# process can make, starts it again. After changing gateway.env:
+#   sudo systemctl restart webspec-gateway.service (the socket stays bound).
+#
+# Do not use LoadCredential= for the key: the credential file would be readable by the
+# stdio MCP servers, which run as the gateway's user.
+#
+# Every setting below must stay compatible with the stdio MCP servers the gateway spawns
+# (Python, Node.js/npx, Go binaries such as the 1Password CLI), which inherit this
+# sandbox and keep their state under HOME=/var/lib/webspec.
+#
+# Needs systemd 247 or newer and Linux 5.8 or newer (ProtectProc=).
+
+[Unit]
+Description=WebSpec gateway (REST-to-MCP bridge)
+Documentation=https://i-m-a-g-i-n-e.github.io/WebSpec/guide/deploy/
+Requires=webspec-gateway.socket
+After=webspec-gateway.socket network.target
+# No start limit. When a socket-activated service hits its start limit (by default 5 starts in
+# 10 s), systemd fails the socket unit as well and closes the socket, and the port is free for
+# any local process. Restarts are throttled by RestartSec instead.
+StartLimitIntervalSec=0
+
+[Service]
+# exec: the start fails visibly if the interpreter cannot be executed.
+Type=exec
+User=webspec
+Group=webspec
+# GD-5: no start without the guard key from gateway.env, whatever starts the unit (the socket,
+# a boot, a restart). install.sh holds this unit to exactly this check; keep the two in step.
+# It is the fast check; the gateway's own follows (WEBSPEC_REQUIRE_GUARD_KEY, below).
+ExecStartPre=/bin/sh -c 'case "$${WEBSPEC_GUARD_KEY-}" in *[![:space:]]*) exit 0 ;; esac; echo "WEBSPEC_GUARD_KEY is empty or missing in /etc/webspec/gateway.env: not starting (GD-5)" >&2; exit 1'
+# -I (isolated mode): the working directory is writable by the stdio servers, so it must not
+# be on sys.path, and PYTHON* variables must not change what the gateway imports.
+ExecStart=/opt/webspec/venv/bin/python -I -m webspec
+
+# Required (no leading "-"): without it the unit refuses to start. Values in this file
+# override the Environment= lines below, so keep only secrets and WEBSPEC_DOMAIN there.
+EnvironmentFile=/etc/webspec/gateway.env
+# The gateway serves on the socket systemd passes in. WEBSPEC_HOST and WEBSPEC_INTERNAL_PORT
+# are what it would bind without one (python -m webspec run by hand); the ports also name
+# the Host headers it routes (localhost:7001, localhost:7002).
+Environment=HOME=/var/lib/webspec
+Environment=WEBSPEC_CONFIG=/etc/webspec/config.json
+Environment=WEBSPEC_AUDIT_LOG=/var/lib/webspec/gateway-audit.jsonl
+Environment=WEBSPEC_APPROVERS_FILE=/etc/webspec/allowed_signers
+Environment=WEBSPEC_HOST=127.0.0.1
+Environment=WEBSPEC_PORT=7001
+Environment=WEBSPEC_INTERNAL_PORT=7002
+# GD-5 (P8): the check in ExecStartPre= sees only ASCII whitespace. With this, the gateway
+# exits before it serves (status 3) when WEBSPEC_GUARD_KEY itself holds no key it can use, by
+# its own rule: nothing but whitespace or invisible characters (U+200B, U+00A0, U+FEFF...).
+# Without it, such a gateway would serve and refuse every request that needs the key. (A value
+# that is not UTF-8 never gets here: systemd does not start a unit whose environment file holds
+# one.) gateway.env must not set it: its values win over these lines. install.sh holds the
+# units to it and to the next line.
+Environment=WEBSPEC_REQUIRE_GUARD_KEY=1
+# No other source of a key stands in for WEBSPEC_GUARD_KEY, whatever gateway.env sets: not
+# WEBSPEC_GUARD_KEY_FILE (see GD-5 above), not the development-only
+# WEBSPEC_GUARD_KEY_DEV_EPHEMERAL. This is applied last, after EnvironmentFile=.
+UnsetEnvironment=WEBSPEC_GUARD_KEY_FILE WEBSPEC_GUARD_KEY_DEV_EPHEMERAL
+
+# /var/lib/webspec: HOME and the audit log, owned by webspec, closed to everyone else.
+StateDirectory=webspec
+StateDirectoryMode=0700
+WorkingDirectory=/var/lib/webspec
+UMask=0077
+
+# always, not on-failure: a gateway ended by SIGTERM or with status 0 (a stdio server can
+# send it the signal) would otherwise stay down. stop and restart still work: systemd never
+# restarts a unit it was asked to stop.
+Restart=always
+RestartSec=3
+# A stop or restart signals the gateway alone (mixed), so it can finish the calls in flight,
+# which its stdio servers are still answering. Whatever is left in the unit gets SIGKILL once
+# the gateway has exited, or after TimeoutStopSec, longer than the gateway's 35 s drain. With
+# control-group, systemd would SIGTERM the stdio servers at the same moment and cut those
+# calls, and a client retrying against the restarted gateway, whose idempotency records are
+# gone, could run a tool twice (ID-3, DP-7).
+KillMode=mixed
+TimeoutStopSec=40s
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=webspec-gateway
+
+# --- Sandbox -------------------------------------------------------------------
+# Never gain privileges: setuid/setgid bits and file capabilities are ignored on exec.
+# (So the 1Password CLI must use a service account token, not the setgid desktop-app link.)
+NoNewPrivileges=yes
+# No capabilities at all; the gateway binds an unprivileged port.
+CapabilityBoundingSet=
+# The whole file system is read-only except the state directory (and the private /tmp).
+ProtectSystem=strict
+# /home, /root and /run/user are empty: nothing here may read the agent's files.
+ProtectHome=yes
+# Private /tmp and /var/tmp, shared with no other service or user.
+PrivateTmp=yes
+# Only pseudo devices (null, zero, random, urandom, ...) in /dev.
+PrivateDevices=yes
+# /proc/sys and /sys are read-only.
+ProtectKernelTunables=yes
+# No kernel module loading.
+ProtectKernelModules=yes
+# No access to the kernel log buffer.
+ProtectKernelLogs=yes
+# The cgroup tree is read-only.
+ProtectControlGroups=yes
+# No changes to the system clock.
+ProtectClock=yes
+# No changes to the host name.
+ProtectHostname=yes
+# Processes it may not inspect are invisible in /proc: other users' processes, and to the
+# stdio servers the non-dumpable gateway itself. The gateway's children stay visible to
+# each other (same user, dumpable), which is why none of them gets the guard key.
+ProtectProc=invisible
+# Not ProcSubset=pid: it hides /proc/meminfo, /proc/stat, /proc/cpuinfo and friends, which
+# Node.js, Go and Python runtimes read; the secrets are already covered by ProtectProc=,
+# the separate user and the non-dumpable gateway.
+# No new setuid/setgid files.
+RestrictSUIDSGID=yes
+# No new namespaces, so a stdio server cannot build its own sandbox inside this one
+# (a headless-browser server must run with its own sandbox disabled).
+RestrictNamespaces=yes
+# No realtime scheduling.
+RestrictRealtime=yes
+# No switching to another execution domain (personality(2)).
+LockPersonality=yes
+# Only native system calls (no 32-bit compat entry points).
+SystemCallArchitectures=native
+# systemd's baseline allow-list for services: no ptrace, mount, module, reboot, swap or
+# raw I/O calls. Not narrower (~@privileged, ~@resources): the stdio servers are arbitrary
+# programs, and privileged calls already fail without capabilities.
+SystemCallFilter=@system-service
+# A call outside the list fails with EPERM instead of killing the process, so a runtime
+# that probes an optional call (V8's pkey_alloc, for example) falls back cleanly.
+SystemCallErrorNumber=EPERM
+# Unix and IP sockets only. AF_NETLINK is excluded: glibc's getaddrinfo falls back without
+# it; only interface listings (Node's os.networkInterfaces()) fail.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+# No core dumps: a stdio server's memory holds the secrets its config entry names.
+LimitCORE=0
+# SysV and POSIX IPC objects of the service user are removed when the service stops.
+RemoveIPC=yes
+# Not MemoryDenyWriteExecute=: stdio servers may be Node.js, whose JIT needs memory that
+# is writable and executable.
+
+[Install]
+# Not Also=webspec-gateway.socket: disabling the gateway must not disable its socket, which
+# holds the port whether the gateway runs or not (install.sh enables it on every run).
+WantedBy=multi-user.target

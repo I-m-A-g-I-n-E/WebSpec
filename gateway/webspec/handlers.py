@@ -32,6 +32,7 @@ from .methods import (
     ToolContract,
     admissible_methods,
     allow_header,
+    contract_from_tool,
     describe,
     effective_contract,
     requirements,
@@ -156,6 +157,16 @@ def _arguments(request: Request, body: bytes, input_schema) -> dict:
     return {**query_args, **body_args}
 
 
+async def _list_tools(pool: ConnectionPool, service: str) -> list:
+    """The service's tools, every one's contract pinned (TC-6). Pinning only the tool a request
+    names would let a later listing loosen a tool the gateway has listed but nothing has yet
+    described or called: a server could then re-list a destructive tool as read-only."""
+    tools = await pool.list_tools(service)
+    for listed in tools:
+        contract_pins.observe(service, listed.name, contract_from_tool(listed))
+    return tools
+
+
 def _contract_for(entry, tool) -> ToolContract:
     return effective_contract(contract_pins, entry.name, tool, entry.tools)
 
@@ -226,7 +237,7 @@ async def handle_service_head(request: Request, service: str, pool: ConnectionPo
     if not path:
         # HEAD / → ping + tool count
         try:
-            tools = await pool.list_tools(service)
+            tools = await _list_tools(pool, service)
             healthy = await pool.ping(service)
             headers["X-WebSpec-Tool-Count"] = str(len(tools))
             headers["X-WebSpec-Status"] = "connected" if healthy else "degraded"
@@ -239,7 +250,7 @@ async def handle_service_head(request: Request, service: str, pool: ConnectionPo
 
     # HEAD /{tool} → tool existence check
     try:
-        tools = await pool.list_tools(service)
+        tools = await _list_tools(pool, service)
     except Exception as e:
         logger.warning("HEAD %s/%s failed: %s", service, path, e)
         return Response(status_code=503, headers={"Retry-After": "1", **headers})
@@ -264,7 +275,7 @@ async def handle_service_options(request: Request, service: str, pool: Connectio
         return _error(**_unknown_service(request, service, registry))
 
     try:
-        tools = await pool.list_tools(service)
+        tools = await _list_tools(pool, service)
     except Exception as e:
         return _error(503, "service_unavailable", f"Could not connect to {service}: {e}")
 
@@ -288,7 +299,7 @@ async def handle_service_list(request: Request, service: str, pool: ConnectionPo
     if entry is None:
         return _error(**_unknown_service(request, service, registry))
     try:
-        tools = await pool.list_tools(service)
+        tools = await _list_tools(pool, service)
     except Exception as e:
         return _error(503, "service_unavailable", f"Could not connect to {service}: {e}")
     return JSONResponse({
@@ -319,7 +330,7 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
     if not authorize(LOCAL_ALLOW_ALL, method, f"{service}.localhost", path):
         return early(403, "forbidden", "Not authorized")
     try:
-        tools = await pool.list_tools(service)
+        tools = await _list_tools(pool, service)
     except Exception as e:
         return early(503, "service_unavailable", f"Could not connect to {service}: {e}")
     tool = _resolve_tool(path, tools)

@@ -46,6 +46,23 @@ non_root = pytest.mark.skipif(os.geteuid() == 0, reason="as root, files the test
                               "and install.sh restarts in a clean environment that drops the fake tools")
 
 
+def _guard_key_readable_here() -> bool:
+    """Whether a dry run without root gets past the guard key, as load_daemon decides it: not on a
+    Mac where WebSpec is installed (/etc/webspec is root:_webspec 0750, guard.key 0440)."""
+    etc = "/etc/webspec"
+    if not os.path.isdir(etc):
+        return True
+    key = os.path.join(etc, "guard.key")
+    return os.access(etc, os.X_OK) and (not os.path.exists(key) or os.access(key, os.R_OK))
+
+
+# The plan of a fresh install goes past the guard key, which a dry run without root cannot read
+# where WebSpec is installed: there it stops, and says so (test_a_dry_run_without_root_stops_at_
+# an_installed_guard_key).
+fresh_host = pytest.mark.skipif(not _guard_key_readable_here(),
+                                reason="WebSpec is installed here: a dry run without root stops at its guard key")
+
+
 def _daemon() -> dict:
     return plistlib.loads(DAEMON_PLIST.read_bytes())
 
@@ -445,6 +462,7 @@ def _assert_only_probes_ran(calls: list[str]) -> None:
 
 
 @non_root
+@fresh_host
 def test_dry_run_plans_a_fresh_install(dry_run, tmp_path):
     result, calls = dry_run(FAKE_DEV_AGENT="0", WEBSPEC_DOMAIN="example.com")
     assert result.returncode == 0, result.stdout + result.stderr
@@ -539,10 +557,25 @@ def test_dry_run_plans_a_fresh_install(dry_run, tmp_path):
     assert "503 approval_unavailable" in signers
 
 
+@non_root
+@pytest.mark.skipif(_guard_key_readable_here(), reason="needs a Mac where WebSpec is installed")
+def test_a_dry_run_without_root_stops_at_an_installed_guard_key(dry_run):
+    # What the fresh_host tests cannot show here: the dry run stops where root would be needed.
+    result, calls = dry_run(FAKE_DEV_AGENT="0")
+    assert result.returncode == 0, result.stdout + result.stderr
+    _assert_only_probes_ran(calls)
+    flat = " ".join(result.stdout.split())
+    assert ("/etc/webspec/guard.key cannot be read without root, and what a real run does from here depends "
+            "on it and on checks that need root as well: run the dry run with sudo to see that part of the "
+            "plan.") in flat
+    assert not [line for line in _plan(result) if line.startswith("+ launchctl")]
+
+
 FILL_COMMAND = f"/usr/local/bin/op read 'op://<vault>/<item>/<field>' | sudo {INSTALL} --fill-key"
 
 
 @non_root
+@fresh_host
 def test_dry_run_tells_the_operator_safe_ways_to_edit_and_fill_secrets(dry_run, tmp_path):
     result, _ = dry_run(FAKE_DEV_AGENT="0")
     assert result.returncode == 0, result.stderr
@@ -863,6 +896,7 @@ def test_an_id_counts_as_used_when_dscl_fails_to_list_the_ids(tmp_path):
 
 
 @non_root
+@fresh_host
 @pytest.mark.parametrize("sudo_user, sudo_uid", [("devuser", "501"), ("opsadmin", "502"), (None, None)],
                          ids=["agent-user-runs-sudo", "separate-admin-runs-sudo", "no-sudo"])
 def test_dry_run_warns_about_a_loaded_dev_agent_and_does_not_load(dry_run, sudo_user, sudo_uid):

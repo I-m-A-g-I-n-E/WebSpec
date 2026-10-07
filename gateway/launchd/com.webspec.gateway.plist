@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Single-user DEVELOPMENT setup: a LaunchAgent that runs the gateway as the logged-in user, with
+  its log and state in that user's home. It does not meet DP-1 (the gateway must run as a
+  dedicated OS user, not the agent's) or DP-4 (the agent must not be able to write the gateway's
+  configuration). For production use gateway/deploy/macos/ (a LaunchDaemon running as _webspec,
+  installed by gateway/deploy/macos/install.sh), and boot this agent out first.
+-->
 <plist version="1.0">
 <dict>
     <key>Label</key>

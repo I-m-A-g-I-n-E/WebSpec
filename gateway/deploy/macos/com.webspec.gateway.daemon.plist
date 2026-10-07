@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  WebSpec gateway: production LaunchDaemon for macOS (docs/spec/audit-deployment.md, DP-1 to DP-9).
+
+  gateway/deploy/macos/install.sh installs this file unchanged as
+  /Library/LaunchDaemons/com.webspec.gateway.daemon.plist (root:wheel 0644) and loads it with
+  `launchctl bootstrap system`. Do not edit the installed copy: the next run of install.sh
+  replaces it. Site settings go in /etc/webspec/gateway.env, which install.sh never overwrites.
+
+  The gateway runs as the hidden system user _webspec. The agent's user can neither read its
+  environment or memory (DP-1) nor write its code (root-owned /opt/webspec/venv) or its
+  configuration (root-owned /etc/webspec) (DP-4). The stdio MCP servers it spawns run as
+  _webspec too: they can read guard.key and gateway.env, and write /var/lib/webspec, audit log
+  included. Run only servers you trust as much as the gateway, or ship the log off the host.
+
+  NO SECRETS IN THIS FILE. Every local user can read it, and `launchctl print system/<label>`
+  shows its environment to any user. The guard key comes from /etc/webspec/guard.key
+  (root:_webspec 0440: the gateway reads it through its group and cannot change it) through
+  WEBSPEC_GUARD_KEY_FILE (GD-5). MCP-server secrets and WEBSPEC_DOMAIN come from
+  /etc/webspec/gateway.env (root:_webspec 0640). WEBSPEC_ACCESS_LOG stays unset: GET
+  arguments travel in URLs (DP-6).
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.webspec.gateway.daemon</string>
+
+    <!-- DP-1: a dedicated user, never the agent's. launchd honours these only in the system domain. -->
+    <key>UserName</key>
+    <string>_webspec</string>
+    <key>GroupName</key>
+    <string>_webspec</string>
+
+    <!--
+      launchd has no EnvironmentFile, so /bin/sh loads /etc/webspec/gateway.env, then replaces
+      itself with the gateway, which keeps the PID that launchd supervises. set -a exports every
+      assignment there, overriding EnvironmentVariables below as systemd's EnvironmentFile= does
+      on Linux; set -e makes a missing file or a failing line stop the job instead of starting
+      the gateway half-configured.
+      -I (isolated mode): the working directory is writable by the stdio servers, so it must not
+      be on sys.path, and PYTHON* variables must not change what the gateway imports.
+      DP-7: one job, one gateway process (nonces, pins and approvals live in its memory).
+    -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-c</string>
+        <string>set -ae; . /etc/webspec/gateway.env; exec /opt/webspec/venv/bin/python -I -m webspec</string>
+        <string>webspec-gateway</string>
+    </array>
+
+    <!-- The gateway's own. It starts the stdio servers in / (python -I; webspec/pool.py). -->
+    <key>WorkingDirectory</key>
+    <string>/var/lib/webspec</string>
+
+    <!--
+      PATH is inherited by the stdio MCP servers. Extend it in /etc/webspec/gateway.env, never
+      here, and only by appending (PATH="$PATH:/opt/webspec/bin") directories whose commands
+      root alone can modify: a server another user can replace runs as _webspec, which can read
+      the guard key. Homebrew's directories belong to the user who installed Homebrew, usually
+      the agent's, and /usr/local/bin often links into apps a user owns; install.sh does not
+      load the daemon with such a PATH unless ALLOW_NONROOT_PATH=1. WEBSPEC_SSH_KEYGEN pins the
+      program that verifies level-4 approvals, whatever PATH holds.
+    -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>/var/lib/webspec</string>
+        <key>PATH</key>
+        <string>/opt/webspec/venv/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>WEBSPEC_CONFIG</key>
+        <string>/etc/webspec/config.json</string>
+        <key>WEBSPEC_GUARD_KEY_FILE</key>
+        <string>/etc/webspec/guard.key</string>
+        <key>WEBSPEC_AUDIT_LOG</key>
+        <string>/var/lib/webspec/gateway-audit.jsonl</string>
+        <key>WEBSPEC_APPROVERS_FILE</key>
+        <string>/etc/webspec/allowed_signers</string>
+        <key>WEBSPEC_SSH_KEYGEN</key>
+        <string>/usr/bin/ssh-keygen</string>
+        <!--
+          The gateway listens only on the socket below, which it takes from launchd by this
+          name; it never binds a port itself, so WEBSPEC_HOST has no say. The ports name the
+          Host headers it answers: Caddy's 7001 in front and its own 7002 (localhost:7002).
+        -->
+        <key>WEBSPEC_LAUNCHD_SOCKET</key>
+        <string>gateway</string>
+        <key>WEBSPEC_PORT</key>
+        <string>7001</string>
+        <key>WEBSPEC_INTERNAL_PORT</key>
+        <string>7002</string>
+    </dict>
+
+    <!--
+      DP-9: launchd, not the gateway, holds the gateway's port, from the moment the job is
+      loaded until it is booted out: across crashes, KeepAlive restarts and `launchctl
+      kickstart -k`. While the gateway is down, Caddy's connections wait in this socket's queue
+      instead of reaching some other local process that took the port meanwhile, guard headers,
+      approvals and GET arguments included. The gateway takes the socket with
+      launch_activate_socket("gateway") and exits if that fails (webspec/activation.py).
+      DP-8: loopback only. Caddy listens on 127.0.0.1:7001 and forwards to 127.0.0.1:7002.
+    -->
+    <key>Sockets</key>
+    <dict>
+        <key>gateway</key>
+        <dict>
+            <key>SockNodeName</key>
+            <string>127.0.0.1</string>
+            <key>SockServiceName</key>
+            <integer>7002</integer>
+            <key>SockFamily</key>
+            <string>IPv4</string>
+            <key>SockType</key>
+            <string>stream</string>
+        </dict>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+
+    <!--
+      launchd stops the gateway (launchctl bootout, kickstart -k) with SIGTERM and kills it
+      ExitTimeOut seconds later. Without this key the system picks the limit: 5 s on macOS 27
+      (`launchctl print` shows "exit timeout = 5"). After SIGTERM the gateway gives requests in
+      flight up to 35 s, a tool call's 30 s timeout plus 5 (webspec/__main__.py), then cancels them
+      and exits; 40 leaves it 5 s to stop its stdio servers. Killed sooner, a call ends without an
+      answer although its tool may have run, and the restarted gateway has forgotten its
+      Idempotency-Key: a retry with that key runs the tool again instead of being told that the
+      outcome is unknown (ID-3, ID-5). install.sh waits out this limit after a bootout or a restart.
+    -->
+    <key>ExitTimeOut</key>
+    <integer>40</integer>
+
+    <!--
+      Standard, stated rather than left to the default it equals: launchd's light limits suit a
+      loopback broker that mostly waits on sockets. The gateway sits on the synchronous path of
+      every tool call, so Background (lowest scheduling priority, throttled disk and network I/O,
+      and an I/O policy the stdio MCP servers it spawns inherit) would slow every call. Adaptive
+      follows XPC transactions, which this HTTP server never opens, so it would stay in Background.
+      Interactive lifts every limit and is meant for jobs a UI waits on, not a headless daemon
+      running third-party servers.
+      No SoftResourceLimits NumberOfFiles: in a system daemon that key also sets kern.maxfiles.
+    -->
+    <key>ProcessType</key>
+    <string>Standard</string>
+
+    <!-- 63 = 0077: files the gateway or launchd creates (audit log, gateway.log) are private to _webspec. -->
+    <key>Umask</key>
+    <integer>63</integer>
+
+    <key>StandardOutPath</key>
+    <string>/var/log/webspec/gateway.log</string>
+    <key>StandardErrorPath</key>
+    <string>/var/log/webspec/gateway.log</string>
+</dict>
+</plist>

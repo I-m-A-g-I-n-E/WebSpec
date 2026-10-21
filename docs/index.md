@@ -1,5 +1,5 @@
 ---
-title: WebSpec
+title: Make every AI tool call say what it does
 template: home.html
 hide:
   - navigation
@@ -27,7 +27,7 @@ part of a request agrees, and refuses the calls that don't.</p>
 
 <div class="ws-seal">
 <figure class="ws-specimen" aria-label="A request to the reference gateway">
-<div class="ws-specimen__band"><span>Request · reference gateway</span><span class="ws-specimen__status">200 OK</span></div>
+<div class="ws-specimen__band"><span>Request<span class="ws-wide"> · reference gateway</span></span><span class="ws-specimen__status">200 OK</span></div>
 <pre><code><span><b class="ws-p ws-p--method">DELETE</b> <span class="ws-p ws-p--path">/delete_note</span>?<span class="ws-p ws-p--args">id=welcome</span></span><span><span class="ws-p--key">Host:</span> <span class="ws-p ws-p--host">notes.localhost</span></span><span><span class="ws-p--key">X-Gimme-Definer:</span> <span class="ws-p ws-p--definer">REMOVE</span></span></code></pre>
 <ul class="ws-legend">
 <li class="ws-p--host"><i></i>who</li>

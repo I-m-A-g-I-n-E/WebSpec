@@ -680,6 +680,7 @@ body {
 }
 
 .ws-specimen__status {
+  white-space: nowrap;
   color: var(--ws-green);
   font-weight: 600;
 }
@@ -701,7 +702,7 @@ body {
   padding: 1.3rem 1.3rem 1rem;
 }
 
-.ws-legend {
+.md-typeset .ws-legend:not([hidden]) {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem 1.1rem;
@@ -713,7 +714,7 @@ body {
   color: var(--ws-ink-2);
 }
 
-.md-typeset .ws-legend li {
+[dir] .md-typeset .ws-legend li {
   margin: 0;
   display: flex;
   align-items: center;
@@ -1425,6 +1426,10 @@ body {
 }
 
 @media screen and (max-width: 30em) {
+  .ws-wide {
+    display: none;
+  }
+
   .ws-start {
     grid-template-columns: minmax(0, 1fr);
   }

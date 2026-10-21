@@ -102,7 +102,7 @@ contract yourself in the gateway's configuration:
 ```
 
 An override is authoritative and may loosen what the server declared. Use that power
-deliberately. The gateway guards against mistakes in two ways:
+deliberately. The gateway guards against mistakes in three ways:
 
 - **A typo fails closed.** An unknown key (`"readonly"`) or a value of the wrong type
   (`"read_only": "yes"`) turns the whole override into the strictest contract: destructive,

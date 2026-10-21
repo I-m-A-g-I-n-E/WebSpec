@@ -134,6 +134,7 @@ chained to the one before it.
 
 ## Next
 
+- [How it works](how-it-works.md) explains what each part of a request says, and why.
 - [A request at every level](walkthrough.md) shows the same three calls at levels 0 to 4.
 - [Annotating MCP servers](annotating.md) explains how your tools get the right contract.
 - [Human approval](approval.md) sets up level 4.

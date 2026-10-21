@@ -15,11 +15,12 @@ Each part of the call sits in its own slot. The host says who handles it, the me
 kind of act it is, the path which act, the definer says the verb aloud, and the body says
 with what. The gateway refuses any request whose parts disagree. A *security level* from 0
 to 4 decides how much proof each call must carry. At the top, a person signs the exact
-request before anything destructive, dangerous, or open-world and mutating happens. WebSpec complements
-MCP: it is the HTTP face and the firewall in front of unchanged MCP servers.
+request before anything destructive, dangerous, or open-world and mutating happens. WebSpec
+complements MCP: it is the HTTP face and the firewall in front of unchanged MCP servers.
 
-**Read the spec:** <https://i-m-a-g-i-n-e.github.io/WebSpec/>. The **Spec** tab is normative;
-the **Guide** tab has the quickstart, walkthroughs, and rationale.
+**Read it:** <https://i-m-a-g-i-n-e.github.io/WebSpec/>. Start with the home page and
+[How it works](https://i-m-a-g-i-n-e.github.io/WebSpec/guide/how-it-works/). The **Spec** tab is
+normative; the **Guide** tab has the quickstart, walkthroughs, and rationale.
 
 ## What's here
 

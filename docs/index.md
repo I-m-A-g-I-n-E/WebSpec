@@ -1,190 +1,291 @@
-# WebSpec
+---
+title: WebSpec
+template: home.html
+hide:
+  - navigation
+  - toc
+---
 
-**WebSpec turns every AI tool call into an ordinary HTTP request that says exactly what it
-does, so the web, and a gateway in front of your MCP servers, can enforce it.**
+<section class="ws-hero" markdown="1">
+<div class="ws-wrap" markdown="1">
+<div markdown="1">
 
-REST APIs already work this way. GitHub's API deletes a repository with this request line:
+<p class="ws-kicker">Open spec · Reference gateway · For MCP</p>
 
-```text
-DELETE /repos/{owner}/{repo}
-```
+<h1>Make every AI tool call<br> <em>say what it does.</em></h1>
 
-Browsers and proxies act on that line, and logs record it, without reading the body.
+<p class="ws-lede">WebSpec gives each MCP tool its own URL, and each call an HTTP method that
+matches what the tool does. A gateway in front of your unchanged MCP servers checks that every
+part of a request agrees, and refuses the calls that don't.</p>
 
-AI agents often reach their tools through MCP, the Model Context Protocol. Its
-[Streamable HTTP transport](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http)
-sends every call as a `POST` to one endpoint. Here is a delete, abridged:
+<div class="ws-actions" markdown="1">
+[Run it in ten minutes <span>→</span>](guide/index.md){ .ws-button .ws-button--solid }
+[Read the spec](spec/index.md){ .ws-button }
+</div>
 
-```text
-POST /mcp
-MCP-Protocol-Version: 2026-07-28
-Mcp-Method: tools/call
-Mcp-Name: delete_note
+</div>
 
-{"jsonrpc": "2.0", "id": 1,
+<div class="ws-seal">
+<figure class="ws-specimen" aria-label="A request to the reference gateway">
+<div class="ws-specimen__band"><span>Request · reference gateway</span><span class="ws-specimen__status">200 OK</span></div>
+<pre><code><span><b class="ws-p ws-p--method">DELETE</b> <span class="ws-p ws-p--path">/delete_note</span>?<span class="ws-p ws-p--args">id=welcome</span></span><span><span class="ws-p--key">Host:</span> <span class="ws-p ws-p--host">notes.localhost</span></span><span><span class="ws-p--key">X-Gimme-Definer:</span> <span class="ws-p ws-p--definer">REMOVE</span></span></code></pre>
+<ul class="ws-legend">
+<li class="ws-p--host"><i></i>who</li>
+<li class="ws-p--method"><i></i>what kind</li>
+<li class="ws-p--path"><i></i>which act</li>
+<li class="ws-p--args"><i></i>with what</li>
+<li class="ws-p--definer"><i></i>the verb, said aloud</li>
+</ul>
+</figure>
+</div>
+
+</div>
+</section>
+
+<section markdown="1">
+<div class="ws-wrap" markdown="1">
+
+<p class="ws-kicker">The problem</p>
+
+## To the web, every MCP call looks the same.
+
+<p class="ws-intro">MCP's HTTP transport sends every tool call as a <code>POST</code> to one
+endpoint. Since its 2026-07-28 revision a header names the tool, but a name is only a name: the
+rules the web applies by method, such as CORS preflights and method allow-lists, treat a read, a
+send, and a delete alike. WebSpec puts what a call does back on the request line, where
+browsers, proxies, and logs already look.</p>
+
+<div class="ws-versus">
+<figure>
+<figcaption><b>MCP over HTTP</b><span>every call is a POST to /mcp (abridged)</span></figcaption>
+<pre><code><b class="ws-p ws-p--method">POST</b> /mcp
+<span class="ws-dim">MCP-Protocol-Version: 2026-07-28</span>
+<span class="ws-dim">Mcp-Method: tools/call</span>
+<span class="ws-dim">Mcp-Name:</span> delete_note
+
+<span class="ws-dim">{"jsonrpc": "2.0", "id": 1,
  "method": "tools/call",
  "params": {
   "name": "delete_note",
-  "arguments": {"id": "welcome"}}}
-```
+  "arguments": {"id": "welcome"}}}</span></code></pre>
+</figure>
+<figure>
+<figcaption><b>Through a WebSpec gateway</b><span>one URL per tool</span></figcaption>
+<pre><code><b class="ws-p ws-p--method">DELETE</b> <span class="ws-p ws-p--path">/delete_note</span>?<span class="ws-p ws-p--args">id=welcome</span>
+<span class="ws-p--key">Host:</span> <span class="ws-p ws-p--host">notes.localhost</span>
+<span class="ws-p--key">X-Gimme-Definer:</span> <span class="ws-p ws-p--definer">REMOVE</span></code></pre>
+</figure>
+</div>
 
-Since its 2026-07-28 revision, MCP copies the method and the tool's name into headers
-(`Mcp-Method`, `Mcp-Name`), so a proxy can see which tool is called without reading the body.
-But a name is only a name. A read, a send, and a delete are all a `POST` to the same endpoint,
-so the rules that browsers and proxies apply by method, such as CORS preflights and method
-allow-lists, treat them all alike.
+</div>
+</section>
 
-A WebSpec gateway sits in front of unchanged MCP servers and gives each tool its own URL. Here
-is the same delete, from a real exchange with WebSpec's reference gateway:
+<section markdown="1">
+<div class="ws-wrap" markdown="1">
 
-```text
-DELETE /delete_note?id=welcome
-Host: notes.localhost
-X-Gimme-Definer: REMOVE
-```
+<p class="ws-kicker">Read it like a sentence</p>
 
-The gateway called `delete_note` on the demo MCP server it knows as `notes` (hence the host
-`notes.localhost`) and answered `200 OK` ([full exchange](guide/walkthrough.md#level-0-local),
-the last one under Level 0). That server has three tools: `read_note`, `send_note`, and
-`delete_note`. Only the gateway speaks MCP. The agent's side is plain HTTP, so you can send the
-same request with `curl` ([Quickstart](guide/index.md)).
+## Every part says one thing, and the parts must agree.
 
-The path is the tool's own name, so it repeats the verb. What WebSpec takes from REST is the
-meaning of the method, not REST collection paths such as `/notes` and `/notes/welcome`, which
-are only [proposed](#status). The `X-Gimme-Definer` header, the **definer**, names the act
-again in one word, the way a check states its amount in both figures and words. A bank may
-question or refuse a check whose two amounts disagree, and the gateway refuses a request whose
-method and definer disagree. (Its `X-Gimme-` prefix, like the `X-WebSpec-` headers below, is
-defined by this spec.)
+<p class="ws-intro">The gateway learns what a tool does from what its MCP server declares (its
+annotations) or from the operator, never from the request. It checks every part of the request
+against that, and against the other parts.</p>
 
-## A tool call is a sentence
+<div class="ws-anatomy">
 
-Each part of that request says one thing. The gateway learns what a tool does from the hints
-its MCP server declares about it (annotations) or from the operator, never from the request.
-`delete_note` declares itself destructive and idempotent, and a tool that declares nothing
-counts as destructive, which is MCP's own default. The definer must come from the method's
-family of verbs: `REMOVE` and `ARCHIVE` are `DELETE` verbs, and `SEND` and `CREATE` are `POST`
-verbs. A `GET` carries none. Every status code below is a real answer from the reference
-gateway.
+<div class="ws-part">
+<span class="ws-part__token ws-p--host">notes.localhost</span>
+<p><span class="ws-part__role">Who handles it</span>The host names the destination: here, the
+MCP server <code>notes</code>. Browsers treat each host as its own origin, and proxies route by
+it.</p>
+<p><span class="ws-refusal">A host the gateway doesn't serve, such as
+<code>mail.localhost</code>: <code>404 unknown_service</code></span></p>
+</div>
 
-| Part of the sentence | What the web already does, and what the gateway adds |
-|---|---|
-| **Who handles it** | The host, `notes.localhost`, names the **destination**: the MCP server `notes` behind the gateway. A browser treats each host as its own origin, so by default a script from another origin cannot read a destination's answers. It can still send a simple `GET`, which runs a read-only tool at level 0 without seeing the answer. Proxies route by host. A destination the gateway doesn't have, such as `mail.localhost`, gets `404 unknown_service`. |
-| **What kind of act** | The method, `DELETE`. [HTTP requires](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1) a server to refuse a `GET` that would delete something, because crawlers and prefetchers `GET` every link. A browser sends a cross-origin `DELETE` only after a CORS preflight. The gateway sees the tool's contract, not its name: `delete_note` is destructive and idempotent, so the gateway admits `DELETE` and also `PUT`, HTTP's other idempotent write method. `GET /delete_note?id=welcome` gets HTTP's own refusal, `405 Method Not Allowed` with `Allow: HEAD, OPTIONS, PUT, DELETE`. `HEAD` and `OPTIONS` only describe a tool; they never run it. |
-| **Which act exactly** | The path, `/delete_note`. Logs record it, and a reverse proxy can match it. The gateway calls the MCP tool of that name. |
-| **The verb, said aloud** | The definer, `REMOVE`. A page from another origin can add a custom header only after a CORS preflight, so requiring one is a common defense against cross-site request forgery. The gateway refuses that preflight by default. A form posted to `/send_note` from another origin needs no preflight, but it arrives without a definer and gets `400 missing_definer`. `REMOVE` on `POST /send_note` gets `400 definer_family_mismatch`. The definer is checked against the method, not the tool: a `PUT` to `/delete_note` takes a `PUT` verb such as `SET`. |
-| **With what** | The query, `id=welcome`, or a JSON body. Frameworks disagree about repeated query keys (HTTP parameter pollution). The gateway allows each query key once: `id=welcome&id=other` gets `400 duplicate_query_key`. Repeated keys inside a JSON body are not refused yet: the last one wins. |
+<div class="ws-part">
+<span class="ws-part__token ws-p--method">DELETE</span>
+<p><span class="ws-part__role">What kind of act</span>The tool's contract, not the caller,
+decides which methods may run it. <code>delete_note</code> declares itself destructive and
+idempotent, so it takes <code>DELETE</code> or <code>PUT</code>. HTTP defines
+<code>GET</code> as safe, and crawlers follow every link, so the gateway never lets a
+<code>GET</code> reach a tool that isn't read-only.</p>
+<p><span class="ws-refusal"><code>GET /delete_note</code>: <code>405 Method Not Allowed</code>
+with <code>Allow: HEAD, OPTIONS, PUT, DELETE</code></span></p>
+</div>
 
-**On whose authority.** The delete above went to a destination at level 0 of the
-[security dial](#the-security-dial), which runs from 0 to 4. At level 0 nothing is signed, so
-the gateway serves the destination only under loopback names such as `notes.localhost`. A
-loopback name is only a `Host` header, though, and the gateway does not check where a request
-comes from. Level 0 stays on this machine only while the gateway listens on `127.0.0.1`, its
-default, and no proxy forwards those names ([known limits](spec/status.md#known-limits)).
+<div class="ws-part">
+<span class="ws-part__token ws-p--path">/delete_note</span>
+<p><span class="ws-part__role">Which act</span>The path names one MCP tool on that server.
+Logs record it, and a reverse proxy can match it.</p>
+<p><span class="ws-refusal">A path that names no tool: <code>404 tool_not_found</code></span></p>
+</div>
 
-A public domain requires level 1 or higher. From level 1, on any host, a shim in the agent's
-harness (the program that runs the model and sends its calls) signs every request with a key it
-shares with the gateway, much as GitHub and Stripe sign their webhooks with a shared secret. The
-model never needs the key. The walkthrough runs `notes` at each level in turn. Here is a signed
-read from its [level-1 run](guide/walkthrough.md#level-1-signed):
+<div class="ws-part">
+<span class="ws-part__token ws-p--args">id=welcome</span>
+<p><span class="ws-part__role">With what</span>Arguments travel in the query or in a JSON body.
+Bodies must be strict JSON, and each query key may appear once.</p>
+<p><span class="ws-refusal">A repeated key, <code>?id=welcome&amp;id=other</code>:
+<code>400 duplicate_query_key</code></span></p>
+</div>
 
-```text
-GET /read_note?id=welcome
-Host: notes.localhost
-X-WebSpec-Nonce: 403c28aba42fa462a23469b97db9b204
-X-WebSpec-Guard: ef56efa3
-```
+<div class="ws-part">
+<span class="ws-part__token ws-p--definer">REMOVE</span>
+<p><span class="ws-part__role">The verb, said aloud</span>Like the amount in words on a check,
+the definer restates the method in one word, and the two must agree. A page on another origin
+can't add this header without a CORS preflight, and by default the gateway refuses the
+preflight.</p>
+<p><span class="ws-refusal"><code>REMOVE</code> on a <code>POST</code>:
+<code>400 definer_family_mismatch</code></span>
+<span class="ws-refusal">A form posted from another site, which can't carry the header:
+<code>400 missing_definer</code></span></p>
+</div>
 
-The gateway issued that nonce for `notes`, and it works once: the same bytes sent again get
-`403 nonce_reused`. The guard is an HMAC over the method, host, path, query, body, definer, and
-idempotency key, along with the nonce. Sign a `POST /send_note` whose body says
-`"to": "ana@example.com"`, change the address to `eve@example.com`, and the gateway answers
-`403 guard_invalid`. So does a request signed for one destination and sent to another. Tags
-such as `ef56efa3` are 32 bits today, so rate-limit at the edge
-([known limits](spec/status.md#known-limits)).
+</div>
 
-Browsers and proxies already enforce rules on the host and the method. The gateway checks every
-part and makes sure the parts agree, so **a `GET` can reach only a tool whose contract says it
-is read-only**, as the `405` above shows. The contract is what the server declared or the
-operator set: a server that labels a tool read-only from its first listing is believed.
+<p class="ws-maxim">So a <code>GET</code> can reach only a tool whose contract says it is
+read-only.</p>
 
-## WebSpec and MCP
+<p class="ws-footnote">Every answer on this page is the reference gateway's, and its test suite
+checks each one. <a href="guide/how-it-works/">How it works</a> explains each part in full.</p>
 
-WebSpec complements MCP; it does not replace it. MCP is how a client discovers and calls the
-tools a server offers, and under WebSpec the gateway is that client. The agent speaks plain
-HTTP to the gateway: `GET /` lists a destination's tools, `OPTIONS /{tool}` says what a call
-needs, and each call is a request like the delete above. WebSpec is the HTTP face and the
-firewall in front of the servers:
+</div>
+</section>
 
-- Each MCP server becomes a destination (`{server}.{domain}`), each tool a path, and each call
-  uses a method that fits what the tool does.
-- A tool's MCP annotations (`readOnlyHint`, `destructiveHint`, …) become an **enforced
-  contract** rather than a hint. MCP tells clients to treat annotations as untrusted unless the
-  server is trusted. Under WebSpec the operator, whoever runs the gateway, makes that decision:
-  adding a server trusts its annotations, and an override in the gateway's configuration
-  corrects any tool the operator doesn't trust. Once the gateway has described or called a
-  tool, it pins the strictest contract it has seen for it, so the server cannot re-list it as
-  read-only to unlock `GET`. Pins live in memory, and a restart forgets them.
-- The servers don't change. The reference gateway talks to them over MCP's own transports
-  (stdio or HTTP).
+<section markdown="1">
+<div class="ws-wrap" markdown="1">
 
-## The security dial
+<p class="ws-kicker">Turn the dial</p>
 
-Each destination runs at a **level** from 0 to 4. Raising the level only ever adds to what a
-request must carry, and the model's part of the request stays the same at every level.
+## Raise the level. The model's part never changes.
 
-| Level | Adds | Holds against |
-|---|---|---|
-| **0** local | Method binding, definer verbs, and well-formed arguments | Confused or careless agents, and pages on other origins sending unsafe requests |
-| **1** signed | The guard HMAC and a single-use nonce | Forged, altered, or replayed requests from anyone without the key |
-| **2** bound | An idempotency key for tools that are not idempotent | Duplicate side effects from retries |
-| **3** cleared | A single-use clearance for every call that changes something, and for risky reads | Calls the harness's policy did not vouch for, such as ones steered by prompt injection in data the agent read |
-| **4** witnessed | A person's signature over the exact request, for the riskiest calls | A fully compromised agent harness, for the calls that need a person's signature |
+<p class="ws-intro">A bank check states its amount twice, carries a signature, bears a number
+so it is paid only once, clears before the money moves, and may need a second signature when
+the stakes are high. Each WebSpec level adds the next of those guarantees, and none takes one
+away. The model writes the same request at every level. A small signing layer, the shim, in
+the agent's harness (the program that runs the model) adds the rest.</p>
 
-Level 0's checks produced the refusals above. It checks the form of the arguments (each query
-key once; a JSON body must be one object, with no `NaN`, `Infinity`, or numbers that overflow),
-not the tool's schema. Level 0 is served only under loopback names. From level 1, a destination
-may also be served on a public domain. Level 2's key travels in `Idempotency-Key`, the header
-Stripe's API uses for safe retries. Level 2 also adds a bookend to the definer
-(`SEND:8a9975c7`): a short HMAC that binds the method and verb to the first and last 16 bytes of
-the body. Today it adds nothing, because the guard already signs the whole body and the definer.
-The level-3 clearance is bound to the destination, method, tool, and arguments. It also covers
-reads that their server or the operator marks `sensitive` or `dangerous`, WebSpec's tiers above
-`open`. It is keyed with the guard's key, so it is a policy checkpoint, not a separate lock.
-Level 4 covers destructive tools, tools marked `dangerous`, and open-world tools that change
-something, such as sending a message.
+<div class="ws-dial">
+<div class="ws-levels" role="tablist" aria-label="Security level">
+<button class="ws-level" role="tab" data-level="0" aria-selected="false" aria-controls="ws-dial-panel"><span class="ws-level__n">0</span><span class="ws-level__name">local</span><span class="ws-level__like">Amount in figures and words</span></button>
+<button class="ws-level" role="tab" data-level="1" aria-selected="false" aria-controls="ws-dial-panel"><span class="ws-level__n">1</span><span class="ws-level__name">signed</span><span class="ws-level__like">Signed</span></button>
+<button class="ws-level" role="tab" data-level="2" aria-selected="false" aria-controls="ws-dial-panel"><span class="ws-level__n">2</span><span class="ws-level__name">bound</span><span class="ws-level__like">Numbered, paid once</span></button>
+<button class="ws-level" role="tab" data-level="3" aria-selected="false" aria-controls="ws-dial-panel"><span class="ws-level__n">3</span><span class="ws-level__name">cleared</span><span class="ws-level__like">Cleared</span></button>
+<button class="ws-level" role="tab" data-level="4" aria-selected="true" aria-controls="ws-dial-panel"><span class="ws-level__n">4</span><span class="ws-level__name">witnessed</span><span class="ws-level__like">Countersigned</span></button>
+</div>
 
-The model writes only what it is good at: the method, host, path, arguments, and one definer
-word. A harness shim adds the signatures, so the model never needs to see a key
-([Security levels](spec/levels.md#the-harness-shim)).
+<div class="ws-dial__panel" id="ws-dial-panel" role="tabpanel">
+<div class="ws-dial__card">
+<div class="ws-dial__head"><span><code>send_note</code>, a send that reaches outside systems (open-world)</span><span class="ws-key"><span class="ws-key--model">written by the model</span><span class="ws-key--shim">added by the shim</span></span></div>
+<div class="ws-req"><span><b class="ws-p ws-p--method">POST</b> <span class="ws-p ws-p--path">/send_note</span></span><span><span class="ws-p--key">Host:</span> <span class="ws-p ws-p--host">notes.localhost</span></span><span><span class="ws-p--key">Content-Type:</span> application/json</span><span><span class="ws-p--key">X-Gimme-Definer:</span> <span class="ws-p ws-p--definer">SEND</span><span class="ws-tail" data-from="2">:8a9975c7</span></span><span class="ws-shim" data-from="2">Idempotency-Key: <b>k-91c2</b></span><span class="ws-shim" data-from="3">X-UFO-Clearance: <b>08db7b72:1791244639</b></span><span class="ws-shim" data-from="4">X-WebSpec-Approval: <b>e6bcb018cdffb4cc91c2a460…</b></span><span class="ws-shim" data-from="1">X-WebSpec-Nonce: <b>b712879c3c9d7b92a014bfc62aa34653</b></span><span class="ws-shim" data-from="1" data-to="1" hidden>X-WebSpec-Guard: <b>ebeefe8b</b></span><span class="ws-shim" data-from="2">X-WebSpec-Guard: <b>b85db549</b></span><span> </span><span class="ws-p ws-p--args">{"id":"welcome","to":"ana@example.com"}</span></div>
+</div>
 
-## Status
+<dl class="ws-dial__facts">
+<div data-level-fact="0"><dt>Adds</dt><dd>Method binding, definer verbs, and strictly parsed arguments. Served only on loopback names.</dd></div>
+<div data-level-fact="0"><dt>Holds against</dt><dd>Confused or careless agents, and pages on other origins sending unsafe requests.</dd></div>
+<div data-level-fact="0" class="ws-without"><dt>Without it</dt><dd>No definer: <code>400 missing_definer</code></dd></div>
+<div data-level-fact="1"><dt>Adds</dt><dd>An HMAC over the method, host, path, query, body, definer, and idempotency key, with a single-use nonce. Required on a public domain.</dd></div>
+<div data-level-fact="1"><dt>Holds against</dt><dd>Forged, altered, or replayed requests from anyone without the key.</dd></div>
+<div data-level-fact="1" class="ws-without"><dt>Without it</dt><dd><code>401 guard_missing</code></dd></div>
+<div data-level-fact="2"><dt>Adds</dt><dd>An <code>Idempotency-Key</code> for tools that aren't idempotent. (The short tag after the verb, a bookend, is redundant with the guard today.)</dd></div>
+<div data-level-fact="2"><dt>Holds against</dt><dd>Duplicate side effects from retries. A retry with the same key gets the stored result back.</dd></div>
+<div data-level-fact="2" class="ws-without"><dt>Without it</dt><dd><code>400 idempotency_key_required</code></dd></div>
+<div data-level-fact="3"><dt>Adds</dt><dd>A single-use clearance from the harness's policy, bound to this destination, method, tool, and arguments, for every change and for reads marked above tier <code>open</code>.</dd></div>
+<div data-level-fact="3"><dt>Holds against</dt><dd>Calls the harness's policy did not vouch for. It is only as good as that policy: the gateway checks the voucher, not the reasoning behind it.</dd></div>
+<div data-level-fact="3" class="ws-without"><dt>Without it</dt><dd><code>403 clearance_missing</code></dd></div>
+<div data-level-fact="4"><dt>Adds</dt><dd>A person's signature over the exact request, for destructive tools, tools marked <code>dangerous</code> (the highest risk tier), and open-world changes.</dd></div>
+<div data-level-fact="4"><dt>Holds against</dt><dd>A fully compromised harness, for the calls a person must sign.</dd></div>
+<div data-level-fact="4" class="ws-without"><dt>Without it</dt><dd><code>428 approval_required</code>, with a summary for a person to sign</dd></div>
+</dl>
+</div>
+</div>
 
-What is built today:
+<p class="ws-footnote">The headers are valid signatures over this request under the
+<a href="guide/walkthrough/">walkthrough's</a> demo key; at level 4 this is the approved retry.
+<a href="spec/levels/">Security levels</a> has the rules.</p>
 
-| Area | State |
-|---|---|
-| Host routing (`{destination}.{domain}`, path = MCP tool name) | **Implemented** |
-| Qualifier labels (`{qualifier}*.{destination}.{domain}`: optional labels before the destination, such as `eu` in `eu.mail.example.com`): parsing and allow-lists | **Implemented**, but every qualifier is refused today, even an allowed one, until qualifiers can route to their own backend |
-| Tool contracts, contract pinning, and method binding | **Implemented** |
-| Levels 0–4: guard, definers and bookend, `Idempotency-Key`, clearance, human approval | **Implemented** |
-| Hash-chained audit log and process hardening | **Implemented** |
-| Reference deployments for Linux, macOS, and Docker ([Deploying](guide/deploy.md)) | **Implemented** |
-| Independent signers per level (RFC 9421 signatures), durable state, intent checks | **Proposed** |
-| REST collection paths, format suffixes, hosted multi-tenant auth, discovery by meaning | **Proposed** (long-range vision, outside this spec) |
+</div>
+</section>
 
-"Implemented" means built into the reference gateway (`gateway/` in the
-[repository](https://github.com/I-m-A-g-I-n-E/WebSpec)) and covered by its tests. For the
-details, see [Status and roadmap](spec/status.md).
+<section markdown="1">
+<div class="ws-wrap" markdown="1">
 
-## Reading this spec
+<p class="ws-kicker">Where it sits</p>
 
-- The **Spec** tab is short and normative. The **Guide** tab holds the walkthroughs,
-  examples, and rationale.
-- MUST, MUST NOT, SHOULD, SHOULD NOT, and MAY are used as in RFC 2119 and RFC 8174.
-- Every requirement has a stable ID, such as [MB-1](spec/methods.md#method-binding). A gateway conforms at level *n* when it
-  meets every requirement that applies at levels up to *n*
-  ([conformance table](spec/status.md#conformance)).
-- Transcripts from the reference gateway use loopback names such as `notes.localhost`. Other
-  examples use `example.com`. The reference deployment serves `*.i-a-m.live` through a
-  Cloudflare tunnel and Caddy, and `gimme.tools` is the planned product domain.
+## An HTTP face for the MCP servers you already run.
+
+<div class="ws-flow">
+<div class="ws-node"><span class="ws-node__name">Model</span><p>Writes the method, path, arguments, and one verb. Never sees a key.</p></div>
+<div class="ws-wire">request</div>
+<div class="ws-node"><span class="ws-node__name">Harness shim</span><p>Adds the nonce, signatures, idempotency key, and clearance the level calls for. Learns what to add from <code>OPTIONS</code>.</p></div>
+<div class="ws-wire">HTTP</div>
+<div class="ws-node ws-node--gateway"><span class="ws-node__name">WebSpec gateway</span><ul><li>Checks every part against the tool's contract, pinned so a server can't loosen it while the gateway runs</li><li>Runs the checks the destination's level requires</li><li>Keeps a hash-chained audit log</li></ul></div>
+<div class="ws-wire">MCP</div>
+<div class="ws-node"><span class="ws-node__name">MCP servers</span><p>Unchanged, over stdio or HTTP. Their annotations become each tool's contract.</p></div>
+</div>
+
+<p class="ws-footnote">WebSpec complements MCP: the gateway is the MCP client, and the agent
+speaks plain HTTP.</p>
+
+</div>
+</section>
+
+<section markdown="1">
+<div class="ws-wrap" markdown="1">
+
+<p class="ws-kicker">Honest limits</p>
+
+## What it stops, and what it doesn't.
+
+<div class="ws-ledger">
+<div>
+<h3>Stops</h3>
+<ul>
+<li><span class="ws-lv">L0</span><span>A <code>GET</code>, or any method the contract doesn't admit, reaching a tool that changes something</span></li>
+<li><span class="ws-lv">L0</span><span>Forms and scripts on other sites sending unsafe requests</span></li>
+<li><span class="ws-lv">L1</span><span>Forged, altered, or replayed requests</span></li>
+<li><span class="ws-lv">L2</span><span>A retry that would run a side effect twice</span></li>
+<li><span class="ws-lv">L3</span><span>Changes, and reads marked above tier <code>open</code>, that the harness's policy didn't vouch for</span></li>
+<li><span class="ws-lv">L4</span><span>Destructive or <code>dangerous</code> calls, and open-world changes, that no person signed, even from a compromised harness</span></li>
+</ul>
+</div>
+<div class="ws-ledger--no">
+<h3>Doesn't</h3>
+<ul>
+<li><span class="ws-lv">—</span><span>Judge intent. A well-formed, signed call that does the wrong thing passes levels 0 to 3.</span></li>
+<li><span class="ws-lv">—</span><span>Check arguments against the tool's schema. They're checked for form only: strict JSON and unique query keys.</span></li>
+<li><span class="ws-lv">—</span><span>Gate open-world reads. A URL fetcher can carry data out in its arguments unless you raise it to <code>dangerous</code>.</span></li>
+<li><span class="ws-lv">—</span><span>Survive a stolen guard key below level 4. One key signs everything levels 1 to 3 require.</span></li>
+<li><span class="ws-lv">—</span><span>Resist guessing on its own. Tags are 32 bits today, so rate-limit at the edge.</span></li>
+<li><span class="ws-lv">—</span><span>Remember across a restart. Nonces, idempotency records, and contract pins live in memory.</span></li>
+<li><span class="ws-lv">—</span><span>Help if traffic can route around it. The gateway must be the only way out.</span></li>
+</ul>
+</div>
+</div>
+
+<p class="ws-footnote"><a href="guide/threat-model/">Threat model</a> ·
+<a href="spec/status/#known-limits">Known limits</a></p>
+
+</div>
+</section>
+
+<section markdown="1">
+<div class="ws-wrap" markdown="1">
+
+<p class="ws-kicker">Where it stands</p>
+
+## Built and tested, with the rest written down.
+
+<div class="ws-status">
+<div class="ws-status--built"><span class="ws-status__label">Implemented</span><p>Host routing, tool contracts and pinning, method binding, levels 0 to 4, a hash-chained audit log, and reference deployments for Linux, macOS, and Docker. CI runs the gateway against real MCP servers.</p></div>
+<div class="ws-status--next"><span class="ws-status__label">Proposed</span><p>Independent signers per level (RFC 9421 signatures), durable state, schema validation, scoped tokens, and intent checks. See the <a href="spec/status/#roadmap">roadmap</a>.</p></div>
+</div>
+
+<div class="ws-start" markdown="1">
+[<span class="ws-card__n">01</span><span class="ws-card__title">Quickstart</span><span class="ws-card__text">Run the gateway in front of a demo server and call it with curl.</span>](guide/index.md){ .ws-card }
+[<span class="ws-card__n">02</span><span class="ws-card__title">How it works</span><span class="ws-card__text">Why each part of a request matters, and where its authority comes from.</span>](guide/how-it-works.md){ .ws-card }
+[<span class="ws-card__n">03</span><span class="ws-card__title">Every level</span><span class="ws-card__text">Real transcripts of a read, a send, and a delete at levels 0 to 4.</span>](guide/walkthrough.md){ .ws-card }
+[<span class="ws-card__n">04</span><span class="ws-card__title">The spec</span><span class="ws-card__text">Normative rules, each with a stable ID you can cite.</span>](spec/index.md){ .ws-card }
+</div>
+
+</div>
+</section>

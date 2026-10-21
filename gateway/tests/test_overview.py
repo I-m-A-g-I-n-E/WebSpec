@@ -1,9 +1,10 @@
 """The overview's answers come from the real gateway; keep them true.
 
-docs/index.md opens with a delete as the reference gateway received it, then quotes what the
-gateway answers to requests that misdescribe themselves. These tests send those requests to the
+The home page (docs/index.md) and How it works (docs/guide/how-it-works.md) show a delete as
+the reference gateway received it, then quote what the gateway answers to requests that
+misdescribe themselves or lack what a level requires. These tests send those requests to the
 real gateway in front of the real demo MCP server (stdio, no mocks), as test_examples.py does
-for the walkthrough, and check that the page quotes only answers seen here.
+for the walkthrough, and check that the pages quote only answers seen here.
 """
 
 import json
@@ -18,9 +19,10 @@ EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 DOCS = Path(__file__).resolve().parents[2] / "docs"
 sys.path.insert(0, str(EXAMPLES))
 import walkthrough  # noqa: E402
-from shim import Shim, guard_tag  # noqa: E402
+from shim import Shim, bookend, guard_tag  # noqa: E402
 
-PAGE = (DOCS / "index.md").read_text()
+HOME = (DOCS / "index.md").read_text()
+PAGE = (DOCS / "guide" / "how-it-works.md").read_text()
 KEY, NOTE = walkthrough.DEMO_KEY, walkthrough.NOTE
 OTHER_ORIGIN = "https://evil.example"
 # What an HTML form on another origin can post without a preflight: one body per encoding.
@@ -56,6 +58,9 @@ def sent(tmp_path_factory):
         for var in ("WEBSPEC_DOMAIN", "WEBSPEC_CORS_ORIGINS"):
             mp.delenv(var, raising=False)
 
+        _, signers = walkthrough.make_approver(workdir)
+        mp.setenv("WEBSPEC_APPROVERS_FILE", str(signers))
+
         @contextmanager
         def gateway(level: int, *destinations: str):
             # A fresh gateway process: nothing one-time carries over.
@@ -74,6 +79,7 @@ def sent(tmp_path_factory):
             notes = Shim(http, "notes.localhost", "notes", KEY)
             here = {"Host": "notes.localhost"}
             got["unserved host"] = http.get("/read_note?id=welcome", headers={"Host": "mail.localhost"})
+            got["unknown tool"] = http.get("/no_such_tool", headers=here)
             got["GET of a delete"] = notes.call("GET", "delete_note", {"id": "welcome"})
             got["preflight"] = http.options("/send_note", headers={
                 **here, "Origin": OTHER_ORIGIN, "Access-Control-Request-Method": "POST",
@@ -115,6 +121,19 @@ def sent(tmp_path_factory):
             last = notes.log[-1]
             got["same bytes again"] = notes._send(last.method, last.target, "", last.body,
                                                   {k: v for k, v in last.headers.items() if k != "Host"})
+            got["unsigned"] = http.get("/read_note?id=welcome", headers={"Host": "notes.localhost"})
+
+        # The home page's dial: the send at each level, without what that level adds.
+        body = json.dumps(NOTE, separators=(",", ":")).encode()
+        with gateway(2, "notes") as http:
+            notes = Shim(http, "notes.localhost", "notes", KEY)
+            got["level 2, no key"] = notes._signed(2, "POST", "/send_note", body=body, headers={
+                "Content-Type": "application/json", "X-Gimme-Definer": f"SEND:{bookend(KEY, 'POST', 'SEND', body)}"})
+        with gateway(3, "notes") as http:
+            unvouched = Shim(http, "notes.localhost", "notes", KEY, vouch=lambda *_: False)
+            got["level 3, not vouched for"] = unvouched.call("POST", "send_note", NOTE, "SEND")
+        with gateway(4, "notes") as http:
+            got["level 4, no approval"] = Shim(http, "notes.localhost", "notes", KEY).call("POST", "send_note", NOTE, "SEND")
     return got
 
 
@@ -131,6 +150,17 @@ def test_the_requests_on_the_page_are_the_walkthroughs(request_text):
 
 def test_a_host_the_gateway_does_not_serve(sent):
     assert answer(sent["unserved host"]) == (404, "unknown_service")
+
+
+def test_a_path_that_names_no_tool(sent):
+    assert answer(sent["unknown tool"]) == (404, "tool_not_found")
+
+
+def test_each_level_refuses_a_send_without_what_it_adds(sent):
+    assert answer(sent["unsigned"]) == (401, "guard_missing")
+    assert answer(sent["level 2, no key"]) == (400, "idempotency_key_required")
+    assert answer(sent["level 3, not vouched for"]) == (403, "clearance_missing")
+    assert answer(sent["level 4, no approval"]) == (428, "approval_required")
 
 
 def test_a_get_cannot_reach_a_delete(sent):
@@ -190,8 +220,9 @@ def test_the_same_signed_bytes_twice(sent):
     assert answer(sent["same bytes again"]) == (403, "nonce_reused")
 
 
-def test_the_page_quotes_only_answers_seen_here(sent):
+@pytest.mark.parametrize("page", [HOME, PAGE], ids=["home", "how it works"])
+def test_the_page_quotes_only_answers_seen_here(sent, page):
     seen = {f"{status} {error}" for status, error in map(answer, sent.values()) if error}
-    quoted = set(re.findall(r"`([1-5]\d\d [a-z_]+)`", PAGE))
+    quoted = set(re.findall(r"(?:`|<code>)([1-5]\d\d [a-z_]+)(?:`|</code>)", page))
     assert quoted, "the page quotes no answers"
     assert quoted <= seen, f"quoted on the page but not seen here: {sorted(quoted - seen)}"

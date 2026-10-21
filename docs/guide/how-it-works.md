@@ -55,18 +55,49 @@ from the operator, never from the request. `delete_note` declares itself destruc
 idempotent. A tool that declares nothing counts as destructive, which is MCP's own default.
 Every status code below is a real answer from the reference gateway.
 
-| Part | What the web already does | What the gateway adds |
-|---|---|---|
-| **Who handles it**: the host, `notes.localhost` | A browser treats each host as its own origin, so a script from another origin cannot read a destination's answers. (It can still send a simple `GET`, which runs a read-only tool at level 0 without seeing the result.) Proxies route by host. | The host names the **destination**, the MCP server `notes`. A destination the gateway doesn't have, such as `mail.localhost`, gets `404 unknown_service`. |
-| **What kind of act**: the method, `DELETE` | HTTP defines `GET` as [safe](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1), and crawlers and prefetchers `GET` every link. A browser sends a cross-origin `DELETE` only after a CORS preflight. | The tool's contract picks the methods. `delete_note` is destructive and idempotent, so it admits `DELETE` and `PUT`, HTTP's other idempotent write. `GET /delete_note?id=welcome` gets `405 Method Not Allowed` with `Allow: HEAD, OPTIONS, PUT, DELETE`. `HEAD` and `OPTIONS` describe a tool and never run it. |
-| **Which act**: the path, `/delete_note` | Logs record it, and a reverse proxy can match it. | The gateway calls the MCP tool of that name. |
-| **The verb, said aloud**: the definer, `REMOVE` | A page on another origin can add a custom header only after a CORS preflight, so requiring one is a common defense against cross-site request forgery. | The verb must come from the method's family: `REMOVE` and `ARCHIVE` are `DELETE` verbs; `SEND` and `CREATE` are `POST` verbs. The gateway refuses the cross-origin preflight by default. A form posted to `/send_note` from another origin needs no preflight, so it arrives without a definer and gets `400 missing_definer`. `REMOVE` on `POST /send_note` gets `400 definer_family_mismatch`. |
-| **With what**: the query, `id=welcome`, or a JSON body | Frameworks disagree about repeated query keys (HTTP parameter pollution). | Each query key may appear once: `id=welcome&id=other` gets `400 duplicate_query_key`. Repeated keys inside a JSON body are not refused yet: the last one wins. |
+### Who handles it: the host
 
-The definer works like the amount on a check, written once in figures and again in words. A
-bank may refuse a check whose two amounts disagree, and the gateway refuses a request whose
-method and definer disagree. It checks the definer against the method, not the tool: a `PUT`
-to `/delete_note` takes a `PUT` verb such as `SET`.
+`notes.localhost` names the **destination**, the MCP server `notes`. A browser treats each host
+as its own origin, so a script from another origin cannot read a destination's answers. (It can
+still send a simple `GET`, which runs a read-only tool at level 0 without seeing the result.)
+Proxies route by host. A destination the gateway doesn't have, such as `mail.localhost`, gets
+`404 unknown_service`.
+
+### What kind of act: the method
+
+HTTP defines `GET` as [safe](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1), and
+crawlers and prefetchers `GET` every link. A browser sends a cross-origin `DELETE` only after a
+CORS preflight. The gateway lets the tool's contract pick the methods: `delete_note` is
+destructive and idempotent, so it admits `DELETE` and `PUT`, HTTP's other idempotent write
+method. `GET /delete_note?id=welcome` gets `405 Method Not Allowed` with `Allow: HEAD, OPTIONS, PUT, DELETE`.
+`HEAD` and `OPTIONS` describe a tool and never run it.
+
+### Which act: the path
+
+`/delete_note` names the MCP tool the gateway calls. Logs record it, and a reverse proxy can
+match it.
+
+### The verb, said aloud: the definer
+
+`X-Gimme-Definer: REMOVE` restates the method in one word, the way a check states its amount in
+figures and again in words. A bank may refuse a check whose two amounts disagree, and the
+gateway refuses a request whose method and definer disagree. The verb must come from the
+method's family: `REMOVE` and `ARCHIVE` are `DELETE` verbs, and `SEND` and `CREATE` are `POST`
+verbs, so `REMOVE` on `POST /send_note` gets `400 definer_family_mismatch`. The definer is
+checked against the method, not the tool: a `PUT` to `/delete_note` takes a `PUT` verb such as
+`SET`.
+
+The header also stops cross-site requests. A page on another origin can add a custom header
+only after a CORS preflight, and the gateway refuses that preflight by default. A form posted to
+`/send_note` from another origin needs no preflight, so it arrives without a definer and gets
+`400 missing_definer`.
+
+### With what: the arguments
+
+`id=welcome` travels in the query; unsafe methods may also send a JSON body. Frameworks
+disagree about repeated query keys (HTTP parameter pollution), so each key may appear once:
+`id=welcome&id=other` gets `400 duplicate_query_key`.
+Repeated keys inside a JSON body are not refused yet: the last one wins.
 
 Browsers and proxies already enforce rules on the host and the method. The gateway checks every
 part and makes sure the parts agree, so **a `GET` can reach only a tool whose contract says it

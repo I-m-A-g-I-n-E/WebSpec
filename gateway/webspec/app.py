@@ -92,8 +92,12 @@ async def _service_dispatch(request: Request) -> Response:
     captured = request.path_params.get("service", "")
 
     # Host grammar: {qualifier}*.{destination}.{domain}. Only the destination routes.
+    # Starlette 1.9 matches Host() routes case-insensitively and captures the labels in lower
+    # case, so check the header as sent: HG-2 admits lowercase labels only, and the checks
+    # below (public exposure, the guard) read the header itself.
     parsed = split_labels(captured)
-    if parsed is None:
+    host_sent = request.headers.get("host", "")
+    if parsed is None or host_sent != host_sent.lower():
         return _deny(request, captured, 404, "invalid_host", "Host labels must be lowercase DNS labels.")
     service, qualifiers = parsed
 

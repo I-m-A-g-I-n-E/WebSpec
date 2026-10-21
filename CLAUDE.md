@@ -17,6 +17,7 @@ WebSpec monorepo — protocol specification + reference implementation for tool 
 - **plugins/webspec-red-team/** — Claude Code plugin: 10 red-team pentesting agents
 - **plugins/webspector/** — Claude Code plugin: WebSpec protocol validator (5 agents, 5 skills, 2 commands; predates the rewritten spec)
 - **docs/** — The published spec site (MkDocs Material → https://i-m-a-g-i-n-e.github.io/WebSpec/). `docs/spec/` is normative and every requirement has a rule ID (`MB-1`, `GD-2`, …); `docs/guide/` is how-to and rationale. Long-form essays, the tier-C vision, retired designs, and article drafts live in Notion, not here.
+- **overrides/** — The site's theme: `main.html` (fonts, link-preview tags), `home.html` (the full-width home page), and `hooks/rule_ids.py` (rule IDs in docs/spec become self-links, `#mb-1`). Styles are in `docs/stylesheets/webspec.css`; `docs/javascripts/webspec.js` drives the home page's level dial, whose headers are real signatures under the walkthrough's demo key. `gateway/tests/test_overview.py` sends every status code that the home page and How it works quote to the real gateway
 - **gateway/examples/** — Demo MCP server, reference harness shim (stdlib only, written from the spec), and the walkthrough generator whose output is `docs/guide/walkthrough.md` (`tests/test_examples.py` replays it)
 - **design/** — Design notes and implementation plans (not published). `design/reviews/2026-10-06-deployment-findings.md` explains the review findings (F1–F56, P1–P20) and contracts (C1–C4) that comments in the deployment code cite
 

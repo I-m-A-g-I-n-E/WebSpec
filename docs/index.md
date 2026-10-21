@@ -57,7 +57,7 @@ browsers, proxies, and logs already look.</p>
 
 <div class="ws-versus">
 <figure>
-<figcaption><b>MCP over HTTP</b><span>every call is a POST to /mcp</span></figcaption>
+<figcaption><b>MCP over HTTP</b><span>every call is a POST to /mcp (abridged)</span></figcaption>
 <pre><code><b class="ws-p ws-p--method">POST</b> /mcp
 <span class="ws-dim">MCP-Protocol-Version: 2026-07-28</span>
 <span class="ws-dim">Mcp-Method: tools/call</span>
@@ -107,8 +107,8 @@ it.</p>
 <p><span class="ws-part__role">What kind of act</span>The tool's contract, not the caller,
 decides which methods may run it. <code>delete_note</code> declares itself destructive and
 idempotent, so it takes <code>DELETE</code> or <code>PUT</code>. HTTP defines
-<code>GET</code> as safe, and crawlers follow every link, so a <code>GET</code> never
-deletes.</p>
+<code>GET</code> as safe, and crawlers follow every link, so the gateway never lets a
+<code>GET</code> reach a tool that isn't read-only.</p>
 <p><span class="ws-refusal"><code>GET /delete_note</code>: <code>405 Method Not Allowed</code>
 with <code>Allow: HEAD, OPTIONS, PUT, DELETE</code></span></p>
 </div>
@@ -122,8 +122,8 @@ Logs record it, and a reverse proxy can match it.</p>
 
 <div class="ws-part">
 <span class="ws-part__token ws-p--args">id=welcome</span>
-<p><span class="ws-part__role">With what</span>Arguments travel in the query or in a JSON body,
-and both are parsed strictly.</p>
+<p><span class="ws-part__role">With what</span>Arguments travel in the query or in a JSON body.
+Bodies must be strict JSON, and each query key may appear once.</p>
 <p><span class="ws-refusal">A repeated key, <code>?id=welcome&amp;id=other</code>:
 <code>400 duplicate_query_key</code></span></p>
 </div>
@@ -132,7 +132,8 @@ and both are parsed strictly.</p>
 <span class="ws-part__token ws-p--definer">REMOVE</span>
 <p><span class="ws-part__role">The verb, said aloud</span>Like the amount in words on a check,
 the definer restates the method in one word, and the two must agree. A page on another origin
-can't add this header without a CORS preflight, and the gateway refuses the preflight.</p>
+can't add this header without a CORS preflight, and by default the gateway refuses the
+preflight.</p>
 <p><span class="ws-refusal"><code>REMOVE</code> on a <code>POST</code>:
 <code>400 definer_family_mismatch</code></span>
 <span class="ws-refusal">A form posted from another site, which can't carry the header:
@@ -160,8 +161,8 @@ checks each one. <a href="guide/how-it-works/">How it works</a> explains each pa
 <p class="ws-intro">A bank check states its amount twice, carries a signature, bears a number
 so it is paid only once, clears before the money moves, and may need a second signature when
 the stakes are high. Each WebSpec level adds the next of those guarantees, and none takes one
-away. The model writes the same request at every level; a shim in its harness adds the
-rest.</p>
+away. The model writes the same request at every level. A small signing layer, the shim, in
+the agent's harness (the program that runs the model) adds the rest.</p>
 
 <div class="ws-dial">
 <div class="ws-levels" role="tablist" aria-label="Security level">
@@ -174,7 +175,7 @@ rest.</p>
 
 <div class="ws-dial__panel" id="ws-dial-panel" role="tabpanel">
 <div class="ws-dial__card">
-<div class="ws-dial__head"><span>An open-world send, <code>send_note</code></span><span class="ws-key"><span class="ws-key--model">written by the model</span><span class="ws-key--shim">added by the shim</span></span></div>
+<div class="ws-dial__head"><span><code>send_note</code>, a send that reaches outside systems (open-world)</span><span class="ws-key"><span class="ws-key--model">written by the model</span><span class="ws-key--shim">added by the shim</span></span></div>
 <div class="ws-req"><span><b class="ws-p ws-p--method">POST</b> <span class="ws-p ws-p--path">/send_note</span></span><span><span class="ws-p--key">Host:</span> <span class="ws-p ws-p--host">notes.localhost</span></span><span><span class="ws-p--key">Content-Type:</span> application/json</span><span><span class="ws-p--key">X-Gimme-Definer:</span> <span class="ws-p ws-p--definer">SEND</span><span class="ws-tail" data-from="2">:8a9975c7</span></span><span class="ws-shim" data-from="2">Idempotency-Key: <b>k-91c2</b></span><span class="ws-shim" data-from="3">X-UFO-Clearance: <b>08db7b72:1791244639</b></span><span class="ws-shim" data-from="4">X-WebSpec-Approval: <b>e6bcb018cdffb4cc91c2a460…</b></span><span class="ws-shim" data-from="1">X-WebSpec-Nonce: <b>b712879c3c9d7b92a014bfc62aa34653</b></span><span class="ws-shim" data-from="1" data-to="1" hidden>X-WebSpec-Guard: <b>ebeefe8b</b></span><span class="ws-shim" data-from="2">X-WebSpec-Guard: <b>b85db549</b></span><span> </span><span class="ws-p ws-p--args">{"id":"welcome","to":"ana@example.com"}</span></div>
 </div>
 
@@ -185,13 +186,13 @@ rest.</p>
 <div data-level-fact="1"><dt>Adds</dt><dd>An HMAC over the method, host, path, query, body, definer, and idempotency key, with a single-use nonce. Required on a public domain.</dd></div>
 <div data-level-fact="1"><dt>Holds against</dt><dd>Forged, altered, or replayed requests from anyone without the key.</dd></div>
 <div data-level-fact="1" class="ws-without"><dt>Without it</dt><dd><code>401 guard_missing</code></dd></div>
-<div data-level-fact="2"><dt>Adds</dt><dd>An <code>Idempotency-Key</code> for tools that aren't idempotent, and a bookend on the definer.</dd></div>
+<div data-level-fact="2"><dt>Adds</dt><dd>An <code>Idempotency-Key</code> for tools that aren't idempotent. (The short tag after the verb, a bookend, is redundant with the guard today.)</dd></div>
 <div data-level-fact="2"><dt>Holds against</dt><dd>Duplicate side effects from retries. A retry with the same key gets the stored result back.</dd></div>
 <div data-level-fact="2" class="ws-without"><dt>Without it</dt><dd><code>400 idempotency_key_required</code></dd></div>
-<div data-level-fact="3"><dt>Adds</dt><dd>A single-use clearance from the harness's policy, bound to this destination, method, tool, and arguments.</dd></div>
-<div data-level-fact="3"><dt>Holds against</dt><dd>Calls the policy did not vouch for, such as one steered by a prompt injection in a page the agent read.</dd></div>
+<div data-level-fact="3"><dt>Adds</dt><dd>A single-use clearance from the harness's policy, bound to this destination, method, tool, and arguments, for every change and for reads marked above tier <code>open</code>.</dd></div>
+<div data-level-fact="3"><dt>Holds against</dt><dd>Calls the harness's policy did not vouch for. It is only as good as that policy: the gateway checks the voucher, not the reasoning behind it.</dd></div>
 <div data-level-fact="3" class="ws-without"><dt>Without it</dt><dd><code>403 clearance_missing</code></dd></div>
-<div data-level-fact="4"><dt>Adds</dt><dd>A person's signature over the exact request, for destructive, <code>dangerous</code>, and open-world changes.</dd></div>
+<div data-level-fact="4"><dt>Adds</dt><dd>A person's signature over the exact request, for destructive tools, tools marked <code>dangerous</code> (the highest risk tier), and open-world changes.</dd></div>
 <div data-level-fact="4"><dt>Holds against</dt><dd>A fully compromised harness, for the calls a person must sign.</dd></div>
 <div data-level-fact="4" class="ws-without"><dt>Without it</dt><dd><code>428 approval_required</code>, with a summary for a person to sign</dd></div>
 </dl>
@@ -215,9 +216,9 @@ rest.</p>
 <div class="ws-flow">
 <div class="ws-node"><span class="ws-node__name">Model</span><p>Writes the method, path, arguments, and one verb. Never sees a key.</p></div>
 <div class="ws-wire">request</div>
-<div class="ws-node"><span class="ws-node__name">Harness shim</span><p>Adds the nonce, signatures, and keys the level calls for. Learns what to add from <code>OPTIONS</code>.</p></div>
+<div class="ws-node"><span class="ws-node__name">Harness shim</span><p>Adds the nonce, signatures, idempotency key, and clearance the level calls for. Learns what to add from <code>OPTIONS</code>.</p></div>
 <div class="ws-wire">HTTP</div>
-<div class="ws-node ws-node--gateway"><span class="ws-node__name">WebSpec gateway</span><ul><li>Checks every part against the tool's contract, pinned so a server can't loosen it</li><li>Runs the checks the destination's level requires</li><li>Keeps a hash-chained audit log</li></ul></div>
+<div class="ws-node ws-node--gateway"><span class="ws-node__name">WebSpec gateway</span><ul><li>Checks every part against the tool's contract, pinned so a server can't loosen it while the gateway runs</li><li>Runs the checks the destination's level requires</li><li>Keeps a hash-chained audit log</li></ul></div>
 <div class="ws-wire">MCP</div>
 <div class="ws-node"><span class="ws-node__name">MCP servers</span><p>Unchanged, over stdio or HTTP. Their annotations become each tool's contract.</p></div>
 </div>
@@ -243,17 +244,19 @@ speaks plain HTTP.</p>
 <li><span class="ws-lv">L0</span><span>Forms and scripts on other sites sending unsafe requests</span></li>
 <li><span class="ws-lv">L1</span><span>Forged, altered, or replayed requests</span></li>
 <li><span class="ws-lv">L2</span><span>A retry that would run a side effect twice</span></li>
-<li><span class="ws-lv">L3</span><span>Sensitive calls the harness's policy didn't vouch for</span></li>
-<li><span class="ws-lv">L4</span><span>Destructive and open-world changes no person signed, even from a compromised harness</span></li>
+<li><span class="ws-lv">L3</span><span>Changes, and reads marked above tier <code>open</code>, that the harness's policy didn't vouch for</span></li>
+<li><span class="ws-lv">L4</span><span>Destructive or <code>dangerous</code> calls, and open-world changes, that no person signed, even from a compromised harness</span></li>
 </ul>
 </div>
 <div class="ws-ledger--no">
 <h3>Doesn't</h3>
 <ul>
 <li><span class="ws-lv">—</span><span>Judge intent. A well-formed, signed call that does the wrong thing passes levels 0 to 3.</span></li>
-<li><span class="ws-lv">—</span><span>Validate meaning. Arguments are checked for shape, not against the tool's schema.</span></li>
+<li><span class="ws-lv">—</span><span>Check arguments against the tool's schema. They're checked for form only: strict JSON and unique query keys.</span></li>
 <li><span class="ws-lv">—</span><span>Gate open-world reads. A URL fetcher can carry data out in its arguments unless you raise it to <code>dangerous</code>.</span></li>
 <li><span class="ws-lv">—</span><span>Survive a stolen guard key below level 4. One key signs everything levels 1 to 3 require.</span></li>
+<li><span class="ws-lv">—</span><span>Resist guessing on its own. Tags are 32 bits today, so rate-limit at the edge.</span></li>
+<li><span class="ws-lv">—</span><span>Remember across a restart. Nonces, idempotency records, and contract pins live in memory.</span></li>
 <li><span class="ws-lv">—</span><span>Help if traffic can route around it. The gateway must be the only way out.</span></li>
 </ul>
 </div>

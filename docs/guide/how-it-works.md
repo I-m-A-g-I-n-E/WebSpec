@@ -41,8 +41,8 @@ X-Gimme-Definer: REMOVE
 
 The gateway called `delete_note` on the demo MCP server it knows as `notes` and answered
 `200 OK` ([full exchange](walkthrough.md#level-0-local)). That server has three tools:
-`read_note`, `send_note`, and `delete_note`. Only the gateway speaks MCP. The agent's side is
-plain HTTP, so `curl` works too ([Quickstart](index.md)).
+`read_note`, `send_note`, and `delete_note`, and `curl` can call them all
+([Quickstart](index.md)).
 
 What WebSpec takes from REST is the meaning of the method. The path is the tool's own name;
 REST collection paths such as `/notes/welcome` are part of the long-range vision, not this
@@ -119,10 +119,10 @@ and the agent speaks plain HTTP to the gateway: `GET /` lists a destination's to
 MCP tells clients to treat annotations as untrusted unless the server is trusted. Under
 WebSpec the operator, whoever runs the gateway, makes that decision. Adding a server trusts its
 annotations, and an override in the gateway's configuration corrects any tool the operator
-doesn't trust. A tool with no annotations gets MCP's strict defaults. Once the gateway has
-described or called a tool, it pins the strictest contract it has seen for it, so the server
-cannot re-list it as read-only to unlock `GET`. Pins live in memory, and a restart forgets
-them. [Annotating MCP servers](annotating.md) shows how to annotate your own tools.
+doesn't trust. Once the gateway has described or called a tool, it pins the strictest
+contract it has seen for it, so the server cannot re-list it as read-only to unlock `GET`. Pins
+live in memory, and a restart forgets them; a stdio server, which runs as the gateway's user,
+can force one ([known limits](../spec/status.md#known-limits)). [Annotating MCP servers](annotating.md) shows how to annotate your own tools.
 
 ## On whose authority
 
@@ -130,7 +130,7 @@ At level 0 nothing is signed, so the gateway serves the destination only under l
 such as `notes.localhost`. A loopback name is only a `Host` header, though, and the gateway
 does not check where a request comes from. Level 0 stays on this machine only while the gateway
 listens on `127.0.0.1`, its default, and no proxy forwards those names
-([known limits](../spec/status.md#known-limits)).
+([DP-5, DP-8](../spec/audit-deployment.md#deployment)).
 
 A public domain requires level 1 or higher. From level 1, on any host, a shim in the agent's
 harness (the program that runs the model and sends its calls) signs every request with a key it
@@ -162,8 +162,8 @@ request must carry, and the model's part of the request stays the same at every 
 | **0** local | Method binding, definer verbs, and well-formed arguments | Confused or careless agents, and pages on other origins sending unsafe requests |
 | **1** signed | The guard HMAC and a single-use nonce | Forged, altered, or replayed requests from anyone without the key |
 | **2** bound | An `Idempotency-Key` for tools that are not idempotent, and a bookend on the definer | Duplicate side effects from retries |
-| **3** cleared | A single-use clearance for every call that changes something, and for risky reads | Calls the harness's policy did not vouch for, such as ones steered by prompt injection in data the agent read |
-| **4** witnessed | A person's signature over the exact request, for the riskiest calls | A fully compromised agent harness, for the calls that need a person's signature |
+| **3** cleared | A single-use clearance for every call that changes something, and for reads marked above tier `open` | Calls the harness's policy did not vouch for. It is only as good as that policy: the gateway checks the voucher, not the reasoning behind it |
+| **4** witnessed | A person's signature over the exact request, for destructive tools, tools marked `dangerous`, and open-world changes | A fully compromised agent harness, for the calls that need a person's signature |
 
 Two honest notes. The bookend, a short HMAC that binds the definer to the ends of the body,
 adds nothing today, because the guard already signs the whole body and the definer. And the

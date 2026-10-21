@@ -19,7 +19,8 @@ start with [How it works](../guide/how-it-works.md).
 |---|---|---|
 | `HG` `PA` `AR` | Host grammar, paths, arguments | [Addressing](addressing.md) |
 | `TC` `MB` | Tool contracts and method binding | [Methods and contracts](methods.md) |
-| `DF` `RQ` | Definers, and what each request must carry | [Methods and contracts](methods.md#per-method-rules) |
+| `DF` | Definers | [Methods and contracts](methods.md#per-method-rules) |
+| `RQ` | What each request must carry, by level | [Methods and contracts](methods.md#requirements) |
 | `RS` `DS` | Responses and discovery | [Methods and contracts](methods.md#responses) |
 | `LV` `PO` | Levels and processing order | [Security levels](levels.md) |
 | `GD` `ID` `CL` `AP` | Guard (level 1), idempotency (2), clearance (3), approval (4) | [Security levels](levels.md#level-1-signed) |

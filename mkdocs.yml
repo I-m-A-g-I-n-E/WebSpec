@@ -1,5 +1,5 @@
 site_name: WebSpec
-site_description: Every AI tool call as an ordinary HTTP request that says exactly what it does — the HTTP face and firewall in front of MCP servers.
+site_description: An open spec and reference gateway that gives each MCP tool its own URL and each call an HTTP method that says what it does, then refuses the calls whose parts disagree.
 site_url: https://i-m-a-g-i-n-e.github.io/WebSpec/
 repo_url: https://github.com/I-m-A-g-I-n-E/WebSpec
 repo_name: I-m-A-g-I-n-E/WebSpec

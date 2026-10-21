@@ -97,9 +97,7 @@ or to watch the roadmap.
   DP-2 has no macOS equivalent. In the Docker stack, Docker lets Caddy's published port go
   whenever Caddy's container is down, so DP-9 holds there for the gateway's port only, and a
   process that holds the port when Docker starts Caddy again keeps it until it stops.
-  Everywhere, the stdio MCP
-  servers share the gateway's user:
-  they can read what it reads (on macOS the guard-key file and every secret), read each other's
+  Everywhere, the stdio MCP servers share the gateway's user: they can read what it reads (on macOS the guard-key file and every secret), read each other's
   environment, and signal the gateway. Run only stdio servers you trust as much as the gateway.
   `gateway/systemd` and `gateway/launchd` are development units that run the gateway as the
   logged-in user; they meet neither DP-1 nor DP-4.

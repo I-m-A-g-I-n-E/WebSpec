@@ -59,32 +59,4 @@ someone to discover.
   URL fetcher, can carry data out in its arguments. Raise such tools to `dangerous`.
 - **It doesn't help if traffic can bypass it.** The gateway must be the only way out.
 
-## WebSpec and MCP
-
-The two complement each other:
-
-| MCP provides | WebSpec adds |
-|---|---|
-| A protocol for discovering and calling tools on a server | A URL and an HTTP method for each tool, so the web's own machinery (TLS, origins, CORS, proxies, logs) can see and police each call |
-| Tool annotations as *hints* | Annotations turned into an enforced *contract*, pinned so a server can't loosen it |
-| Transports: stdio and Streamable HTTP | A gateway that speaks those transports to unchanged servers |
-| Authorization for remote servers (OAuth) | Per-call authority that scales with risk: signatures, single-use clearances, and a person's approval |
-
-MCP lets an agent call a tool. WebSpec decides which calls get through, and leaves a record
-that can't be quietly rewritten.
-
-## The Apple parallel
-
-WebSpec arrived at roughly the same shape as Apple's platform security:
-
-| Apple | WebSpec |
-|---|---|
-| Entitlements: signed, declarative capabilities bound to the code's identity | Tool contracts. Operator overrides are the grants, and pinning keeps them stable |
-| App Sandbox (Seatbelt): deny by default | Unannotated means strict; method binding; isolation per destination |
-| TCC consent, with Touch ID and the Secure Enclave proving the user is present | Level-4 approval, signed by a biometric-gated key |
-| XPC privilege separation | The gateway and each MCP server as separate processes, with the gateway as its own OS user |
-| Hardened Runtime (no task-port or debugger attach) | A non-dumpable gateway process |
-| Private Cloud Compute's verifiable transparency log | The hash-chained audit log |
-
-Entitlement keys are reverse-DNS names (`com.apple.security.network.client`). WebSpec hosts
-are the same naming tree, read forward.
+For how WebSpec relates to MCP, see [How it works](how-it-works.md#webspec-and-mcp).

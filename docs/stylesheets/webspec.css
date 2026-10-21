@@ -1433,3 +1433,22 @@ body {
     font-size: 0.68rem;
   }
 }
+
+/* Code inside table cells wraps between words, never inside one. */
+.md-typeset table code {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+/* A rule's badge stands in for its bullet. */
+[dir] .md-typeset ul > li:has(> .ws-rule:first-child),
+[dir] .md-typeset ul > li:has(> p:first-child > .ws-rule:first-child) {
+  list-style: none;
+  margin-left: 0;
+}
+
+/* In the dark scheme the band is nearly the page color, so the gateway takes a green tint. */
+[data-md-color-scheme="slate"] .ws-node--gateway {
+  background: color-mix(in srgb, var(--ws-green) 12%, var(--ws-paper-2));
+  border-color: color-mix(in srgb, var(--ws-green) 45%, transparent);
+}

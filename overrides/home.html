@@ -1,0 +1,13 @@
+{#- The home page: full-width sections, no title or edit button. Its content is docs/index.md. -#}
+{% extends "main.html" %}
+
+{% block extrahead %}
+  {{ super() }}
+  <link rel="preload" href="{{ 'assets/guilloche.svg' | url }}" as="image" type="image/svg+xml">
+{% endblock %}
+
+{% block content %}
+  <div class="ws-home">
+    {{ page.content }}
+  </div>
+{% endblock %}

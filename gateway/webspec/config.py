@@ -85,7 +85,8 @@ def is_public_host(host: str) -> bool:
     public_domain = os.environ.get("WEBSPEC_DOMAIN")
     if not public_domain:
         return False
-    hostname = host.split(":")[0]
+    # Host names are case-insensitive: NOTES.EXAMPLE.COM is as public as notes.example.com.
+    hostname, public_domain = host.split(":")[0].lower(), public_domain.lower()
     return hostname == public_domain or hostname.endswith("." + public_domain)
 
 

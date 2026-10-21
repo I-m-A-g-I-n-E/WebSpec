@@ -36,3 +36,12 @@ def test_unguarded_service_allowed_on_localhost(public_client):
     # localhost is not the public domain → normal handling (503/200, not 403)
     r = public_client.get("/", headers={"Host": "mail-proton.localhost"})
     assert r.status_code != 403
+
+
+@pytest.mark.parametrize("host", ["MAIL-PROTON.i-a-m.live", "mail-proton.I-A-M.LIVE", "Mail-Proton.I-a-m.Live"])
+def test_a_host_in_capitals_is_refused_not_served(public_client, host):
+    # Starlette 1.9 matches Host() routes case-insensitively (RFC 9110 §4.2.3), so these now
+    # reach the service routes. HG-2 refuses them: comparing the header as sent with the
+    # public domain would otherwise miss it, and serve an unguarded service publicly (HG-7).
+    r = public_client.get("/", headers={"Host": host})
+    assert r.status_code == 404, r.text

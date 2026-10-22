@@ -4,7 +4,8 @@ Follows the semantics of the IETF HTTPAPI ``Idempotency-Key`` header draft:
 
 - same key + same request fingerprint, completed  → replay the stored response
   (``Idempotent-Replayed: true``), the tool is NOT called again
-- same key + different fingerprint                → 422 (key reused for another request)
+- same key + different fingerprint, or a request
+  that resolves to a different tool (ID-2)         → 422 (key reused for another request)
 - same key, first attempt still in flight          → 409
 - same key, first attempt's outcome unknown        → 409 (the tool may have run; a blind
   retry could double-send, so the gateway refuses rather than guess)
@@ -69,6 +70,7 @@ class _Record:
     state: str
     updated_at: float
     response: StoredResponse | None = None
+    tool: str = ""  # the tool the request resolved to: on POST the path alone does not name it (ID-2)
 
 
 @dataclass(frozen=True)
@@ -107,10 +109,10 @@ class IdempotencyStore:
         return rec
 
     @staticmethod
-    def _classify(rec: _Record | None, fingerprint: str) -> Decision:
+    def _classify(rec: _Record | None, fingerprint: str, tool: str) -> Decision:
         if rec is None:
             return Decision("proceed")
-        if rec.fingerprint != fingerprint:
+        if rec.fingerprint != fingerprint or rec.tool != tool:
             return Decision("mismatch")
         if rec.state == DONE:
             return Decision("replay", rec.response)
@@ -127,22 +129,22 @@ class IdempotencyStore:
             del records[victim]
         return True
 
-    def peek(self, scope: str, key: str, fingerprint: str) -> Decision:
+    def peek(self, scope: str, key: str, fingerprint: str, tool: str = "") -> Decision:
         """Non-mutating classification (used to replay before re-checking one-shot credentials)."""
-        return self._classify(self._lookup(scope, key, time.monotonic()), fingerprint)
+        return self._classify(self._lookup(scope, key, time.monotonic()), fingerprint, tool)
 
-    def begin(self, scope: str, key: str, fingerprint: str) -> Decision:
+    def begin(self, scope: str, key: str, fingerprint: str, tool: str = "") -> Decision:
         """Atomically classify the key; on ``proceed`` the key is marked in-flight.
 
         Must be called with no ``await`` between it and the caller acting on the result.
         """
         now = time.monotonic()
-        decision = self._classify(self._lookup(scope, key, now), fingerprint)
+        decision = self._classify(self._lookup(scope, key, now), fingerprint, tool)
         if decision.kind != "proceed":
             return decision
         if not self._make_room(scope, now):
             return Decision("full")
-        self._records(scope)[key] = _Record(fingerprint=fingerprint, state=IN_FLIGHT, updated_at=now)
+        self._records(scope)[key] = _Record(fingerprint=fingerprint, state=IN_FLIGHT, updated_at=now, tool=tool)
         return decision
 
     def _settle(self, scope: str, key: str, state: str, response: StoredResponse | None = None) -> None:

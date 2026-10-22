@@ -239,14 +239,14 @@ def test_bdd2_a_same_key_rename_with_a_looser_contract_is_refused_until_the_oper
     assert (confirmed[0]["pinned_tool"], confirmed[0]["tool"]) == ("create_email", "add_email")
 
 
-def test_bdd3_a_rename_onto_another_key_gives_404_and_the_new_tool_never_runs(notes):
+def test_bdd3_a_rename_onto_another_key_gives_400_unknown_action_and_the_new_tool_never_runs(notes):
     client, pool = notes
     note = json_body({"id": "welcome", "to": "ana@example.com"})
     assert send(client, "POST", "/email", body=note, headers={"WebSpec-Definer": "SEND"}).status_code == 200
     pool.tools = [t for t in pool.tools if t.name != "send_email"] + [
         tool("create_email", read_only=False, destructive=False, open_world=False)]
     r = send(client, "POST", "/email", body=note, headers={"WebSpec-Definer": "SEND"})
-    assert answer(r) == (404, "tool_not_found")
+    assert answer(r) == (400, "unknown_action")
     assert [c[1] for c in pool.calls] == ["send_email"]  # create_email never ran
 
 
@@ -436,12 +436,13 @@ def test_no_slash_fold_for_a_noun_first_tool_name(monkeypatch):
     assert r.status_code == 200 and pool.calls == [("svc", "notes_purge", {})]
 
 
-def test_a_post_action_the_path_does_not_map_is_404_and_names_the_mapped_ones(monkeypatch):
+def test_a_post_action_the_path_does_not_map_is_400_unknown_action_and_points_to_options(monkeypatch):
     tools = [tool("send_email", read_only=False, destructive=False, open_world=True),
              tool("create_email", read_only=False, destructive=False, open_world=False)]
     client, pool = make_client(monkeypatch, [entry(level=0)], tools)
     r = send(client, "POST", "/email", body=b"{}", headers={"WebSpec-Definer": "TRIGGER"})
-    assert answer(r) == (404, "tool_not_found")
+    assert answer(r) == (400, "unknown_action")
+    assert "OPTIONS /email" in r.json()["detail"]
     assert "SEND" in r.json()["detail"] and "CREATE" in r.json()["detail"]
     assert pool.calls == []
     entries = client.options("/email", headers={"Host": H}).json()["entries"]
@@ -700,7 +701,6 @@ REFUSALS = {
     "404 invalid_host": lambda c: send(c, "GET", "/note", host="Svc.localhost"),
     "400 missing_tool": lambda c: send(c, "POST", "/", body=b"{}", headers={"WebSpec-Definer": "SEND"}),
     "plain 404, a host that matches no route": lambda c: send(c, "GET", "/note", host="example.org"),
-    "plain 405, a method outside the per-method table": lambda c: send(c, "TRACE", "/note"),
 }
 
 
@@ -712,6 +712,17 @@ def test_every_refusal_is_no_store(notes, name):
     if not name.startswith("plain"):
         assert f"{r.status_code} {answer(r)[1]}" == name
     assert r.headers.get("cache-control") == "no-store", name
+    assert pool.calls == []
+
+
+@pytest.mark.parametrize("method", ["TRACE", "PROPFIND"])
+def test_an_unknown_method_gets_the_paths_allow_or_404(notes, method):
+    client, pool = notes
+    r = send(client, method, "/note")
+    assert answer(r) == (405, "method_not_allowed") and r.headers["allow"] == "HEAD, OPTIONS, GET, DELETE"
+    assert r.headers.get("cache-control") == "no-store"
+    r = send(client, method, "/nothing")
+    assert answer(r) == (404, "tool_not_found") and r.headers.get("cache-control") == "no-store"
     assert pool.calls == []
 
 

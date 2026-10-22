@@ -232,6 +232,10 @@ class ContractPins:
         self._pins[key] = effective
         return effective
 
+    def get(self, service: str, tool_name: str) -> ToolContract | None:
+        """The pinned contract of a tool listed since startup, or None."""
+        return self._pins.get((service, tool_name))
+
     # Pins live for the process lifetime and deliberately survive a service being
     # removed from config and re-added (otherwise editing the config would be a way to
     # reset them). TODO(C): persist pins across restarts (operator-approved contract
@@ -248,11 +252,16 @@ def effective_contract(
     """observed (annotations) → pinned join → operator override."""
     observed = contract_from_tool(tool)
     pinned = pins.observe(service, tool.name, observed)
+    return overridden(pinned, service, tool.name, overrides)
+
+
+def overridden(contract: ToolContract, service: str, tool_name: str,
+               overrides: Mapping[str, Any] | None = None) -> ToolContract:
+    """``contract`` under the destination's ``tools`` overrides (TC-5)."""
     if overrides and not isinstance(overrides, Mapping):
         logger.error("Service %s: 'tools' overrides must be an object — failing closed", service)
         return STRICTEST
-    override = (overrides or {}).get(tool.name)
-    return apply_override(pinned, override)
+    return apply_override(contract, (overrides or {}).get(tool_name))
 
 
 # ── Requirements ──

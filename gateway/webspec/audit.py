@@ -62,7 +62,7 @@ def _append_fd(path: Path) -> int:
 @dataclass(frozen=True)
 class Context:
     service: str
-    host: str
+    host: str | None  # None for a record that no request made (a binding change, AU-5)
     method: str
     path: str
     tool: str | None = None

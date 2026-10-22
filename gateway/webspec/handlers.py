@@ -1,10 +1,12 @@
 """HTTP method dispatch under per-method profiles.
 
-HEAD / OPTIONS discover (never invoke). GET / POST / PUT / PATCH / DELETE invoke a tool,
-but only through a method the tool's *contract* admits, and only after the request
+HEAD / OPTIONS discover (never invoke). Every other method resolves a tool through the
+destination's route map (routes.py: the path, the method, and on POST the definer), then
+invokes it, but only through a method the tool's *contract* admits, and only after the request
 carries everything the method + contract + tier require at the service's level.
 
-Spec: docs/spec/methods.md (binding, contracts) and docs/spec/levels.md (requirements)
+Spec: docs/spec/addressing.md (route map), docs/spec/methods.md (binding, contracts) and
+docs/spec/levels.md (requirements)
 """
 
 from __future__ import annotations
@@ -23,28 +25,32 @@ from . import approval as approval_mod
 from . import audit
 from . import guard as guard_mod
 from . import idempotency as idem
-from .config import GuardKeyError, ServiceRegistry, get_session_key, is_public_host
-from .definer import DefinerError, definer_header, validate_definer
+from .config import GuardKeyError, ServiceEntry, ServiceRegistry, get_session_key, is_public_host
+from .definer import DefinerError, DefinerResult, definer_header, validate_definer
 from .guard import canonical_query, loads_strict, validate_clearance_token
 from .methods import (
+    INVOKING_METHODS,
     SAFE_METHODS,
     ContractPins,
     ToolContract,
     admissible_methods,
-    allow_header,
-    contract_from_tool,
-    describe,
     effective_contract,
+    overridden,
     requirements,
 )
-from .permissions import LOCAL_ALLOW_ALL, authorize, scope_required
+from .permissions import LOCAL_ALLOW_ALL, authorize
 from .pool import ConnectionPool, DEFAULT_TIMEOUT
+from .routes import BindingEvent, Refusal, RouteMap, key_of
 from .serializers import serialize_tool_result
 
 logger = logging.getLogger("webspec.handlers")
 
 # Strictest-contract-seen per (service, tool); see methods.ContractPins.
 contract_pins = ContractPins()
+# One route map per destination (routes.RouteMap), holding its binding pins and the tools its
+# first build moved. Like contract pins, they live for the process and survive a destination
+# being removed from the config and added back (PA-8): re-adding it is a rebuild.
+route_maps: dict[str, RouteMap] = {}
 
 
 def _error(status: int, error_type: str, detail: str, headers: dict | None = None, **extra) -> JSONResponse:
@@ -81,22 +87,6 @@ def _unknown_service(request: Request, service: str, registry: ServiceRegistry) 
     """
     extra = {} if is_public_host(request.headers.get("host", "")) else {"available": registry.names()}
     return {"status": 404, "error_type": "unknown_service", "detail": f"Unknown service: {service}", **extra}
-
-
-def _resolve_tool_name(path: str, tool_names: list[str]) -> str | None:
-    """Resolve path to tool name. Try exact match first, then slash-to-underscore fallback."""
-    if path in tool_names:
-        return path
-    # Slash-to-underscore fallback (F10)
-    alt = path.replace("/", "_")
-    if alt in tool_names:
-        return alt
-    return None
-
-
-def _resolve_tool(path: str, tools: list):
-    name = _resolve_tool_name(path, [t.name for t in tools])
-    return None if name is None else next(t for t in tools if t.name == name)
 
 
 class ArgumentError(ValueError):
@@ -157,27 +147,77 @@ def _arguments(request: Request, body: bytes, input_schema) -> dict:
     return {**query_args, **body_args}
 
 
-async def _list_tools(pool: ConnectionPool, service: str) -> list:
-    """The service's tools, every one's contract pinned (TC-6). Pinning only the tool a request
-    names would let a later listing loosen a tool the gateway has listed but nothing has yet
-    described or called: a server could then re-list a destructive tool as read-only."""
-    tools = await pool.list_tools(service)
-    for listed in tools:
-        contract_pins.observe(service, listed.name, contract_from_tool(listed))
-    return tools
+async def _list_tools(pool: ConnectionPool, entry: ServiceEntry) -> tuple[list, RouteMap]:
+    """The destination's tools and its route map, which pins every listed tool's contract (TC-6).
+
+    Pinning only the tool a request names would let a later listing loosen a tool the gateway
+    has listed but nothing has yet described or called: a server could then re-list a
+    destructive tool as read-only.
+    """
+    tools = await pool.list_tools(entry.name)
+    return tools, _route_map(entry, tools)
 
 
 def _contract_for(entry, tool) -> ToolContract:
     return effective_contract(contract_pins, entry.name, tool, entry.tools)
 
 
-def _tool_info(entry, tool, contract: ToolContract) -> dict:
-    info: dict = {"name": tool.name, "description": tool.description or ""}
-    if tool.inputSchema:
-        info["inputSchema"] = tool.inputSchema
-    info.update(describe(contract, entry.level))
-    info["scopes_required"] = {m: scope_required(entry.name, m, tool.name) for m in info["methods"]}
-    return info
+def _route_map(entry: ServiceEntry, tools: list) -> RouteMap:
+    """The destination's route map, built at its first listing and rebuilt whenever its inputs change.
+
+    Its inputs are the listed tools, their effective contracts and the config's ``bindings``,
+    so comparing them rebuilds the map at every re-list that changes anything and at every
+    config reload (PA-7). No ``await`` runs between reading the map and storing its successor,
+    so a request sees either the old map or the new one.
+    """
+    contracts = {t.name: _contract_for(entry, t) for t in tools}
+    current = route_maps.get(entry.name)
+    if current is not None and current.contracts == contracts and current.bindings == entry.bindings:
+        return current
+    if current is None:
+        current = RouteMap.build(entry.name, contracts)  # PA-6; the rebuild applies the bindings
+    rebuilt = current.rebuild(contracts, entry.bindings)
+    for event in rebuilt.events:
+        _audit_binding(entry, rebuilt, event)
+    route_maps[entry.name] = rebuilt
+    return rebuilt
+
+
+def _audit_binding(entry: ServiceEntry, route_map: RouteMap, event: BindingEvent) -> None:
+    """AU-5: a pinned key that now resolves to another tool, or its confirmation."""
+    pinned = contract_pins.get(entry.name, event.pinned_tool)
+    pinned = overridden(pinned, entry.name, event.pinned_tool, entry.tools) if pinned else None
+    ctx = audit.Context(service=entry.name, host=None, method=event.method, path=event.path, tool=event.tool,
+                        level=entry.level, contract=route_map.contracts.get(event.tool))
+    audit.record(ctx, outcome=event.kind, status=None, reason=None, definer=event.definer or None,
+                 pinned_tool=event.pinned_tool, pinned_tier=pinned.tier if pinned else None,
+                 pinned_risk=pinned.risk if pinned else None)
+
+
+def _entries(entry: ServiceEntry, tools: list, route_map: RouteMap, path: str | None = None) -> list[dict]:
+    """DS-1: one entry per key on ``path`` (on every path, without one), or the error of a closed key."""
+    schemas = {t.name: t.inputSchema for t in tools}
+    rows = []
+    for (method, noun, definer), target in route_map.table(path):
+        row = {"path": f"/{noun}", "method": method, **({"definer": definer} if method == "POST" else {})}
+        if isinstance(target, Refusal):
+            row["error"] = target.error
+        else:
+            contract = route_map.contracts[target]
+            row.update(tool=target, inputSchema=schemas.get(target) or {}, contract=contract.as_dict(),
+                       requirements=requirements(method, contract, entry.level).as_dict())
+        rows.append(row)
+    return rows
+
+
+def _refusal(refuse, r: Refusal) -> JSONResponse:
+    """A route refusal (PA-10) through ``refuse``: the path's Allow on a 405, the tools on a closed key."""
+    extra = {}
+    if r.error == "binding_changed":
+        extra = {"pinned_tool": r.tools[0], "tool": r.tools[1]}
+    elif r.tools:
+        extra = {"tools": list(r.tools)}
+    return refuse(r.status, r.error, r.detail, headers={"Allow": r.allow} if r.allow else None, **extra)
 
 
 def _decorate(response: Response, contract: ToolContract, level: int) -> Response:
@@ -226,113 +266,110 @@ def _audited_idempotency_response(audit_ctx, decision: idem.Decision) -> Respons
 
 
 async def handle_service_head(request: Request, service: str, pool: ConnectionPool, registry: ServiceRegistry) -> Response:
-    """HEAD / → ping; HEAD /{tool} → tool existence + Allow (its admissible methods)."""
+    """HEAD / → health; HEAD /{noun} → the path's Allow and a link to the map (DS-2). Never invokes."""
     path = request.path_params.get("path", "").strip("/")
     entry = registry.get(service)
     if entry is None:
         return _error(**_unknown_service(request, service, registry))
 
     headers = {"WebSpec-Service": service, "WebSpec-Level": str(entry.level)}
-
-    if not path:
-        # HEAD / → ping + tool count
-        try:
-            tools = await _list_tools(pool, service)
-            healthy = await pool.ping(service)
-            headers["WebSpec-Tool-Count"] = str(len(tools))
-            headers["WebSpec-Status"] = "connected" if healthy else "degraded"
-            return Response(status_code=200, headers=headers)
-        except Exception as e:
-            logger.warning("HEAD %s failed: %s", service, e)
-            return Response(status_code=503, headers={"Retry-After": "1", **headers})
-
-    # HEAD /{tool} → tool existence check
     try:
-        tools = await _list_tools(pool, service)
+        tools, route_map = await _list_tools(pool, entry)
+        if not path:
+            healthy = await pool.ping(service)
     except Exception as e:
         logger.warning("HEAD %s/%s failed: %s", service, path, e)
         return Response(status_code=503, headers={"Retry-After": "1", **headers})
-    tool = _resolve_tool(path, tools)
-    if tool is None:
+
+    if not path:
+        headers["WebSpec-Tool-Count"] = str(len(tools))
+        headers["WebSpec-Status"] = "connected" if healthy else "degraded"
+        return Response(status_code=200, headers=headers)
+    # The route, not whether an item exists: HEAD never reaches the tool.
+    allow = route_map.allow(path)
+    if allow is None:
         return Response(status_code=404, headers=headers)
-    contract = _contract_for(entry, tool)
-    headers["WebSpec-Tier"] = contract.tier
-    headers["Allow"] = allow_header(contract)
-    return Response(status_code=200, headers=headers)
+    return Response(status_code=200, headers={**headers, "Allow": allow, "Link": '</>; rel="service-desc"'})
 
 
 async def handle_service_options(request: Request, service: str, pool: ConnectionPool, registry: ServiceRegistry) -> Response:
-    """OPTIONS / → every tool's contract; OPTIONS /{tool} → one tool's schema, methods, requirements."""
+    """OPTIONS / → the whole route map; OPTIONS /{noun} → the path's entries and Allow (DS-1)."""
     path = request.path_params.get("path", "").strip("/")
     entry = registry.get(service)
     if entry is None:
         return _error(**_unknown_service(request, service, registry))
 
     try:
-        tools = await _list_tools(pool, service)
+        tools, route_map = await _list_tools(pool, entry)
     except Exception as e:
         return _error(503, "service_unavailable", f"Could not connect to {service}: {e}")
 
-    if not path:
-        return JSONResponse({
-            "service": service,
-            "level": entry.level,
-            "tools": [_tool_info(entry, t, _contract_for(entry, t)) for t in tools],
-        })
-
-    tool = _resolve_tool(path, tools)
-    if tool is None:
-        return _error(404, "tool_not_found", f"Tool not found: {path}", tool=path, available=[t.name for t in tools])
-    contract = _contract_for(entry, tool)
-    return JSONResponse(_tool_info(entry, tool, contract), headers={"Allow": allow_header(contract)})
+    allow = route_map.allow(path) if path else None
+    if path and allow is None:
+        return _error(404, "tool_not_found", f"/{path} maps no tool")
+    body = {"service": service, "level": entry.level, "entries": _entries(entry, tools, route_map, path or None)}
+    return JSONResponse(body, headers={"Allow": allow} if allow else None)
 
 
 async def handle_service_list(request: Request, service: str, pool: ConnectionPool, registry: ServiceRegistry) -> Response:
-    """GET / → tool names, descriptions, and the methods each admits."""
+    """GET / → every tool with its description and its entry: method, path, and on POST the definer (DS-3)."""
     entry = registry.get(service)
     if entry is None:
         return _error(**_unknown_service(request, service, registry))
     try:
-        tools = await _list_tools(pool, service)
+        tools, route_map = await _list_tools(pool, entry)
     except Exception as e:
         return _error(503, "service_unavailable", f"Could not connect to {service}: {e}")
-    return JSONResponse({
-        "service": service,
-        "level": entry.level,
-        "tools": [
-            {"name": t.name, "description": t.description or "",
-             "methods": sorted(admissible_methods(_contract_for(entry, t)))}
-            for t in tools
-        ],
-    })
+    listed = []
+    for t in tools:
+        method, noun, definer = key = key_of(route_map.entries[t.name])
+        row = {"name": t.name, "description": t.description or "", "method": method, "path": f"/{noun}"}
+        if method == "POST":
+            row["definer"] = definer
+        if isinstance(route_map.keys.get(key), Refusal):
+            row["error"] = route_map.keys[key].error
+        listed.append(row)
+    return JSONResponse({"service": service, "level": entry.level, "tools": listed})
 
 
 async def handle_service_invoke(request: Request, service: str, pool: ConnectionPool, registry: ServiceRegistry) -> Response:
-    """GET/POST/PUT/PATCH/DELETE /{tool} → call_tool, under the tool's method profile."""
+    """Every other method on /{noun}: resolve the tool (PA-10), then call it under its method profile."""
     path = request.path_params.get("path", "").strip("/")
     method = request.method.upper()
 
-    def early(status: int, error_type: str, detail: str, **extra) -> JSONResponse:
+    def early(status: int, error_type: str, detail: str, headers: dict | None = None, **extra) -> JSONResponse:
         audit.record_request(request, service=service, outcome="denied", status=status, reason=error_type)
-        return _error(status, error_type, detail, **extra)
+        return _error(status, error_type, detail, headers=headers, **extra)
 
     entry = registry.get(service)
     if entry is None:
         return early(**_unknown_service(request, service, registry))
     if not path:
-        return early(400, "missing_tool", f"{method} requires a tool path")
+        if method in INVOKING_METHODS:  # PA-3; GET / is the listing and never gets here
+            return early(400, "missing_tool", f"{method} requires a tool path")
+        return early(405, "method_not_allowed", f"/ does not allow {method}", headers={"Allow": "HEAD, OPTIONS, GET"})
     if not authorize(LOCAL_ALLOW_ALL, method, f"{service}.localhost", path):
         return early(403, "forbidden", "Not authorized")
     try:
-        tools = await _list_tools(pool, service)
+        tools, route_map = await _list_tools(pool, entry)
     except Exception as e:
         return early(503, "service_unavailable", f"Could not connect to {service}: {e}")
-    tool = _resolve_tool(path, tools)
-    if tool is None:
-        return early(404, "tool_not_found", f"Tool not found: {path}", tool=path, available=[t.name for t in tools])
-    tool_name = tool.name
 
-    contract = _contract_for(entry, tool)
+    # PA-10, in order: the path maps nothing (404), not the method (405), then on POST the
+    # definer, which names the action (400), then a closed key (503).
+    definer = validate_definer(method, definer_header(request.headers))
+    verb = definer.canonical if isinstance(definer, DefinerResult) else ""
+    target = route_map.resolve(method, "/" + path, verb)
+    if isinstance(target, Refusal) and target.status in (404, 405):
+        return _refusal(early, target)
+    if method == "POST" and isinstance(definer, DefinerError):
+        return early(definer.status_code, definer.error_type, definer.detail)
+    if isinstance(target, Refusal):
+        return _refusal(early, target)
+    tool_name = target
+    tool = next(t for t in tools if t.name == tool_name)
+
+    contract = route_map.contracts[tool_name]
     level = entry.level
     body = await request.body()
     host = request.headers.get("host", "")
@@ -344,23 +381,17 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
         audit.record(audit_ctx, outcome="denied", status=status, reason=error_type)
         return _error(status, error_type, detail, headers=headers, **extra)
 
-    # 1. Method binding: the gateway, not the caller, decides how a tool may be reached.
-    admissible = admissible_methods(contract)
-    if method not in admissible:
-        return deny(
-            405, "method_not_allowed",
-            f"{method} cannot invoke {tool_name}; its contract admits {', '.join(sorted(admissible))}",
-            headers={"Allow": allow_header(contract)},
-            tool=tool_name, allowed=sorted(admissible), contract=contract.as_dict(),
-        )
+    # 1. Method binding (MB-2), on every request: the map only narrows it (PA-5).
+    if method not in admissible_methods(contract):
+        return deny(405, "method_not_allowed", f"{method} cannot invoke {tool_name} under its contract",
+                    headers={"Allow": route_map.allow(path)}, tool=tool_name, contract=contract.as_dict())
     reqs = requirements(method, contract, level)
 
     # 2. Method rules
     if reqs.empty_body and body:
         return deny(400, "body_not_allowed", "GET carries arguments in the query string only; the body must be empty")
 
-    # DF-1, DF-2: required on POST; on PUT, PATCH and DELETE checked only when sent.
-    definer = validate_definer(method, definer_header(request.headers))
+    # DF-1, DF-2 on PUT, PATCH and DELETE: optional, checked only when sent (POST's was checked with the route).
     if isinstance(definer, DefinerError):
         return deny(definer.status_code, definer.error_type, definer.detail)
     canonical_definer = definer.canonical
@@ -381,7 +412,7 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
         if not idem.valid_key(idem_key):
             return deny(400, "idempotency_key_invalid", "Idempotency-Key must be 1-255 visible ASCII characters")
         fingerprint = idem.request_fingerprint(method, "/" + path, cquery, body)
-        early_decision = idem.store.peek(service, idem_key, fingerprint)
+        early_decision = idem.store.peek(service, idem_key, fingerprint, tool_name)
         if early_decision.kind != "proceed":
             return _audited_idempotency_response(audit_ctx, early_decision)
 
@@ -423,7 +454,7 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
     if reqs.approval and not approval_mod.store.can_spend(approval_header):
         return deny(403, "approval_reused", "This approval was already spent")
     if use_idem:
-        claim = idem.store.begin(service, idem_key, fingerprint)
+        claim = idem.store.begin(service, idem_key, fingerprint, tool_name)
         if claim.kind != "proceed":
             return _audited_idempotency_response(audit_ctx, claim)
     if reqs.clearance:

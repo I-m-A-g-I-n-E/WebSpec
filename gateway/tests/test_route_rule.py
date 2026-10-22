@@ -12,7 +12,7 @@ webspec.routes
     table's definer on POST), else (POST, ``/{tool_name}``, INVOKE). The candidate stands if
     MB-1 admits its method for the contract and it is not PUT or DELETE for a non-idempotent
     tool. Otherwise the entry is ``/{tool_name}`` with the contract's fallback method:
-    read-only -> GET, destructive and idempotent -> DELETE, anything else -> POST + INVOKE.
+    read-only -> GET, destructive and idempotent -> PUT, anything else -> POST + INVOKE.
 
     get read list search -> GET | set replace -> PUT | update modify patch append rename -> PATCH
     delete remove -> DELETE | create add -> POST CREATE | send -> POST SEND
@@ -53,9 +53,9 @@ webspec.routes
         Every open key as a key string mapped to its tool: "GET /note", "POST /email SEND". The key
         string is "METHOD /path", plus " DEFINER" on POST, the format of the config ``bindings``.
 
-``Refusal`` (frozen dataclass): ``status`` 404 | 405 | 503; ``error`` "tool_not_found" |
-    "method_not_allowed" | "route_collision" | "binding_changed"; ``allow`` the path's Allow
-    value on a 405, else None.
+``Refusal`` (frozen dataclass): ``status`` 400 | 404 | 405 | 503; ``error`` "unknown_action" (a POST
+    verb that maps no tool on a path that maps POST) | "tool_not_found" | "method_not_allowed" |
+    "route_collision" | "binding_changed"; ``allow`` the path's Allow value on a 405, else None.
 
 ``BindingEvent`` (frozen dataclass): ``kind`` "binding_changed" | "binding_confirmed";
     ``binding`` the key string; ``pinned_tool`` the tool the key was pinned to; ``tool`` the tool
@@ -75,7 +75,8 @@ In the gateway (test_v2_http.py)
   "binding_changed" and a confirmation one with ``outcome`` "binding_confirmed". Its ``method``,
   ``path`` and, for a POST key, ``definer`` give the key; ``tool`` is the tool the key now
   resolves to and ``pinned_tool`` the tool it was pinned to.
-- Refusals: ``404 tool_not_found``, ``405 method_not_allowed`` with the path's ``Allow``,
+- Refusals: ``404 tool_not_found``, ``405 method_not_allowed`` with the path's ``Allow`` (also for
+  methods such as TRACE), ``400 unknown_action`` (its body points to ``OPTIONS /{noun}``),
   ``503 route_collision``, ``503 binding_changed``, ``400 missing_definer`` (POST only),
   ``400 unknown_definer`` (an empty value, a ":", a comma, two field lines or an unknown word),
   ``400 definer_family_mismatch``. Every refusal and every discovery answer carries
@@ -188,7 +189,7 @@ def test_the_name_splits_at_its_first_underscore():
 def test_a_name_without_an_underscore_takes_its_full_name():
     assert entry_of("run", ADDITIVE) == ("POST", "/run", "INVOKE", False)
     assert entry_of("read", READ_ONLY) == ("GET", "/read", "", True)  # op-auth's read: POST is not admissible
-    assert entry_of("delete", DESTRUCTIVE_IDEMPOTENT) == ("DELETE", "/delete", "", True)
+    assert entry_of("delete", DESTRUCTIVE_IDEMPOTENT) == ("PUT", "/delete", "", True)
 
 
 def test_an_empty_rest_takes_the_full_name():
@@ -219,11 +220,11 @@ def test_the_contract_examples(tool_name, contract, expected):
     ("create_report", READ_ONLY, ("GET", "/create_report", "", True)),
     ("run_query", READ_ONLY, ("GET", "/run_query", "", True)),
     ("delete_cache", READ_ONLY, ("GET", "/delete_cache", "", True)),
-    # destructive and idempotent -> DELETE
-    ("update_widget", DESTRUCTIVE_IDEMPOTENT, ("DELETE", "/update_widget", "", True)),
-    ("create_widget", DESTRUCTIVE_IDEMPOTENT, ("DELETE", "/create_widget", "", True)),
-    ("get_widget", DESTRUCTIVE_IDEMPOTENT, ("DELETE", "/get_widget", "", True)),
-    ("run_query", DESTRUCTIVE_IDEMPOTENT, ("DELETE", "/run_query", "", True)),
+    # destructive and idempotent -> PUT
+    ("update_widget", DESTRUCTIVE_IDEMPOTENT, ("PUT", "/update_widget", "", True)),
+    ("create_widget", DESTRUCTIVE_IDEMPOTENT, ("PUT", "/create_widget", "", True)),
+    ("get_widget", DESTRUCTIVE_IDEMPOTENT, ("PUT", "/get_widget", "", True)),
+    ("run_query", DESTRUCTIVE_IDEMPOTENT, ("PUT", "/run_query", "", True)),
     # anything else -> POST + INVOKE
     ("get_widget", ADDITIVE, ("POST", "/get_widget", "INVOKE", True)),
     ("list_widgets", UNANNOTATED, ("POST", "/list_widgets", "INVOKE", True)),
@@ -264,7 +265,7 @@ def _fallback_method(contract: ToolContract) -> str:
     if contract.read_only:
         return "GET"
     if contract.destructive and contract.idempotent:
-        return "DELETE"
+        return "PUT"
     return "POST"
 
 
@@ -336,12 +337,16 @@ def test_a_method_the_path_does_not_map_is_405_with_the_paths_allow():
     ("POST", "/send_email", "SEND"),
     ("POST", "/send/email", "SEND"),      # PA-1's slash fold is gone
     ("GET", "/note/welcome", ""),         # one segment only; ids stay in the query
-    ("POST", "/email", "TRIGGER"),        # a POST action the path does not map
-    ("POST", "/email", "CREATE"),
 ])
 def test_what_maps_nothing_is_404(method, path, definer):
     m = routes.RouteMap.build("notes", NOTES)
     assert refusal(m.resolve(method, path, definer)) == (404, "tool_not_found")
+
+
+@pytest.mark.parametrize("definer", ["TRIGGER", "CREATE"])
+def test_a_post_action_the_path_does_not_map_is_400_unknown_action(definer):
+    m = routes.RouteMap.build("notes", NOTES)
+    assert refusal(m.resolve("POST", "/email", definer)) == (400, "unknown_action")
 
 
 def test_allow_is_per_path_in_canonical_order():
@@ -373,15 +378,15 @@ def test_the_first_build_moves_every_collider_to_its_full_name():
     }
     assert m.moved == frozenset({"list_issues", "search_issues", "create_email", "add_email"})
     assert refusal(m.resolve("GET", "/issues")) == (404, "tool_not_found")
-    assert refusal(m.resolve("POST", "/email", "CREATE")) == (404, "tool_not_found")
+    assert refusal(m.resolve("POST", "/email", "CREATE")) == (400, "unknown_action")
 
 
 def test_an_entry_already_at_its_full_name_never_moves():
     m = routes.RouteMap.build("w", {"widget": READ_ONLY, "get_widget": READ_ONLY})
     assert m.routes() == {"GET /widget": "widget", "GET /get_widget": "get_widget"}
     assert m.moved == frozenset({"get_widget"})
-    m = routes.RouteMap.build("w", {"widget": DESTRUCTIVE_IDEMPOTENT, "delete_widget": DESTRUCTIVE_IDEMPOTENT})
-    assert m.routes() == {"DELETE /widget": "widget", "DELETE /delete_widget": "delete_widget"}
+    m = routes.RouteMap.build("w", {"widget": DESTRUCTIVE_IDEMPOTENT, "set_widget": DESTRUCTIVE_IDEMPOTENT})
+    assert m.routes() == {"PUT /widget": "widget", "PUT /set_widget": "set_widget"}
 
 
 def test_the_first_build_repeats_until_no_key_is_shared():
@@ -454,7 +459,7 @@ def test_a_same_key_rename_is_refused_until_the_operator_confirms_it():
 def test_a_rename_onto_another_key_leaves_the_old_key_unmapped():
     first = routes.RouteMap.build("mail", {"send_email": ADDITIVE, "read_email": READ_ONLY})
     m = first.rebuild({"create_email": ADDITIVE, "read_email": READ_ONLY})
-    assert refusal(m.resolve("POST", "/email", "SEND")) == (404, "tool_not_found")
+    assert refusal(m.resolve("POST", "/email", "SEND")) == (400, "unknown_action")
     # The new key was never pinned and nobody shares it: bound and pinned.
     assert m.resolve("POST", "/email", "CREATE") == "create_email"
     assert m.events == ()
@@ -480,7 +485,7 @@ def test_a_confirmation_only_confirms_it_never_routes():
     m = routes.RouteMap.build("mail", {"send_email": ADDITIVE}).rebuild(
         {"send_email": ADDITIVE}, {"POST /email CREATE": "send_email"})
     assert m.routes() == {"POST /email SEND": "send_email"}
-    assert refusal(m.resolve("POST", "/email", "CREATE")) == (404, "tool_not_found")
+    assert refusal(m.resolve("POST", "/email", "CREATE")) == (400, "unknown_action")
 
 
 def test_a_tightened_contract_moves_the_tool_off_get():

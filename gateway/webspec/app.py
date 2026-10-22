@@ -8,11 +8,12 @@ import os
 from contextlib import asynccontextmanager
 
 from starlette.applications import Starlette
+from starlette.datastructures import MutableHeaders
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
-from starlette.responses import JSONResponse, Response
-from starlette.routing import Host, Route
+from starlette.responses import JSONResponse, PlainTextResponse, Response
+from starlette.routing import Host, Route, request_response
 
 from .config import GuardKeyError, ServiceRegistry, get_session_key, is_public_host
 from . import audit
@@ -67,8 +68,9 @@ async def _config_reload_loop() -> None:
                     for removed in old_names - new_names:
                         logger.info("Config reload: removing service %s", removed)
                         await pool.remove_service(removed)
-                        # Contract pins are deliberately kept: removing and re-adding a
-                        # service must not be a way to reset them (methods.ContractPins).
+                        # Contract pins and route maps (binding pins, moved tools) are
+                        # deliberately kept: removing and re-adding a service must not be a
+                        # way to reset them (TC-6, PA-8).
                     # Modified/added services will be lazily re-created
                     for added in new_names - old_names:
                         logger.info("Config reload: new service available: %s", added)
@@ -108,6 +110,9 @@ async def _service_dispatch(request: Request) -> Response:
     if dupes:
         return _deny(request, service, 400, "duplicate_query_key",
                      f"Query keys must not repeat ({', '.join(dupes)}); encode lists as JSON.")
+    # DF-2: at most one definer field line, whatever the method, refused before the guard.
+    if len(request.headers.getlist(DEFINER_HEADER)) > 1:
+        return _deny(request, service, 400, "unknown_definer", f"Send at most one {DEFINER_HEADER} field line.")
 
     if registry is not None:
         entry = registry.get(service)
@@ -162,7 +167,8 @@ async def _service_dispatch(request: Request) -> Response:
         return await handle_service_options(request, service, pool, registry)
     if method == "GET" and not path:
         return await handle_service_list(request, service, pool, registry)
-    # Starlette's Route(methods=ALL_METHODS) has already refused anything else with 405.
+    # Every other method, TRACE and extension methods included, is resolved on the route map
+    # (PA-10), which answers a method it does not map with 405 and the path's Allow.
     return await handle_service_invoke(request, service, pool, registry)
 
 
@@ -213,12 +219,53 @@ async def _index_dispatch(request: Request) -> Response:
 
 # ── Service sub-app routes ──
 
+class _EveryMethod:
+    """An endpoint as an ASGI app, so that Route() passes it every method, TRACE included, and
+    the gateway answers each one itself (PA-10). Route() limits a function endpoint to the
+    methods it lists."""
+
+    def __init__(self, endpoint) -> None:
+        self.app = request_response(endpoint)
+
+    async def __call__(self, scope, receive, send) -> None:
+        await self.app(scope, receive, send)
+
+
 service_routes = Starlette(
     routes=[
-        Route("/", _service_dispatch, methods=list(ALL_METHODS)),
-        Route("/{path:path}", _service_dispatch, methods=list(ALL_METHODS)),
+        Route("/", _EveryMethod(_service_dispatch)),
+        Route("/{path:path}", _EveryMethod(_service_dispatch)),
     ],
 )
+
+
+class NoStore:
+    """``Cache-Control: no-store`` on every response that sets none (RS-4, DS-3, GD-4).
+
+    That covers refusals, the web framework's own included (a host that matches no route, a
+    rejected CORS preflight), discovery answers and nonces: a cache must not keep a 404 or
+    a 405 after the route map changes, and nothing else the gateway serves is cacheable.
+    """
+
+    def __init__(self, app) -> None:
+        self.app = app
+
+    async def __call__(self, scope, receive, send) -> None:
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+
+        async def send_no_store(message) -> None:
+            if message["type"] == "http.response.start":
+                MutableHeaders(scope=message).setdefault("cache-control", "no-store")
+            await send(message)
+
+        await self.app(scope, receive, send_no_store)
+
+
+def _internal_error(request: Request, exc: Exception) -> Response:
+    """The plain-text 500 for an unhandled error, which is answered outside every middleware."""
+    return PlainTextResponse("Internal Server Error", status_code=500, headers={"Cache-Control": "no-store"})
+
 
 index_routes = Starlette(
     routes=[
@@ -292,15 +339,20 @@ def create_app() -> Starlette:
     app = Starlette(
         routes=routes,
         middleware=[
+            Middleware(NoStore),
+            # DP-8: what an origin in WEBSPEC_CORS_ORIGINS may send, and what it may read. Without
+            # WebSpec-Taint in the exposed list a harness in that origin could not see the mark (RS-2).
             Middleware(
                 CORSMiddleware,
                 allow_origins=cors_origins(),
                 allow_methods=list(ALL_METHODS),
-                allow_headers=["WebSpec-Guard", "WebSpec-Nonce", DEFINER_HEADER,
-                               "WebSpec-Clearance", "WebSpec-Provenance", "WebSpec-Approval",
-                               "Idempotency-Key", "Content-Type"],
+                allow_headers=[DEFINER_HEADER, "WebSpec-Guard", "WebSpec-Nonce", "WebSpec-Clearance",
+                               "WebSpec-Approval", "WebSpec-Provenance", "Idempotency-Key", "Content-Type"],
+                expose_headers=["Allow", "Link", "WebSpec-Level", "WebSpec-Tier", "WebSpec-Taint",
+                                "WebSpec-Status", "WebSpec-Tool-Count", "WebSpec-Service", "Idempotent-Replayed"],
             ),
         ],
+        exception_handlers={Exception: _internal_error},
         lifespan=lifespan,
     )
 

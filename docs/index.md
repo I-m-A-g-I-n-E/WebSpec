@@ -16,7 +16,8 @@ hide:
 
 <p class="ws-lede">WebSpec gives each MCP tool its own URL, and each call an HTTP method that
 matches what the tool does. A gateway in front of your unchanged MCP servers refuses any method
-a tool's contract doesn't admit, and any change whose definer header doesn't match its method.</p>
+a tool's contract doesn't admit, and any change whose definer header is missing or doesn't match
+its method.</p>
 
 <div class="ws-actions" markdown="1">
 [Run it in ten minutes <span>→</span>](guide/index.md){ .ws-button .ws-button--solid }

@@ -14,9 +14,9 @@ X-Gimme-Definer: SEND
 Each part of the call sits in its own slot. The host says who handles it, the method what
 kind of act it is, the path which act, the definer says the verb aloud, and the body says
 with what. The gateway refuses a method the tool's contract doesn't admit, and a change whose
-definer doesn't match its method. A *security level* from 0 to 4 decides how much proof each call
-must carry. At the top, a person signs the
-request before anything destructive, dangerous, or open-world and mutating happens. WebSpec
+definer is missing or doesn't match its method. A *security level* from 0 to 4 decides how much
+proof each call must carry. At the top, a person signs the request before anything destructive,
+dangerous, or open-world and mutating happens. WebSpec
 complements MCP: it is the HTTP face and the firewall in front of unchanged MCP servers.
 
 **Read it:** <https://i-m-a-g-i-n-e.github.io/WebSpec/>. Start with the home page and

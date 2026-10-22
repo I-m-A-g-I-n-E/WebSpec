@@ -44,38 +44,38 @@ The gateway called `delete_note` on the demo MCP server it knows as `notes` and 
 `read_note`, `send_note`, and `delete_note`, and `curl` can call them all
 ([Quickstart](index.md)).
 
-What WebSpec takes from REST is the meaning of the method. The path is the tool's own name;
-REST collection paths such as `/notes/welcome` are part of the long-range vision, not this
-spec.
+What WebSpec takes from REST is the meaning of the method.
 
 ## A tool call is a sentence
 
-The gateway learns what a tool does from the hints its MCP server declares (annotations) or
-from the operator, never from the request. `delete_note` declares itself destructive and
-idempotent. A tool that declares nothing counts as destructive, which is MCP's own default.
-Every status code below is a real answer from the reference gateway.
+The gateway learns what kind of act a tool performs, its **contract**, from the hints its MCP
+server declares (annotations) or from the operator who runs the gateway, never from the
+request. A tool that declares nothing counts as destructive, which is MCP's own default. The
+gateway checks each part of a request against the contract and against the other parts. Every
+status code below is a real answer from the reference gateway.
 
 ### Who handles it: the host
 
 `notes.localhost` names the **destination**, the MCP server `notes`. A browser treats each host
 as its own origin, so a script from another origin cannot read a destination's answers. (It can
-still send a simple `GET`, which runs a read-only tool at level 0 without seeing the result.)
-Proxies route by host. A destination the gateway doesn't have, such as `mail.localhost`, gets
+still send a simple `GET`, which runs a read-only tool at [level 0](#the-security-dial) without
+seeing the result.) Proxies route by host. A destination the gateway doesn't have, such as `mail.localhost`, gets
 `404 unknown_service`.
 
 ### What kind of act: the method
 
-HTTP defines `GET` as [safe](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1), and
-crawlers and prefetchers `GET` every link. A browser sends a cross-origin `DELETE` only after a
-CORS preflight. The gateway lets the tool's contract pick the methods: `delete_note` is
-destructive and idempotent, so it admits `DELETE` and `PUT`, HTTP's other idempotent write
-method. `GET /delete_note?id=welcome` gets `405 Method Not Allowed` with `Allow: HEAD, OPTIONS, PUT, DELETE`.
+The tool's contract, not the caller, picks the methods that may run it. HTTP defines `GET` as
+[safe](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1), and crawlers and prefetchers
+`GET` every link, so **the gateway lets a `GET` reach only a tool whose contract says it is
+read-only.** `delete_note` declares itself destructive and idempotent, so it admits `DELETE` and
+`PUT`, HTTP's other idempotent write method. A browser sends either one cross-origin only after
+a CORS preflight. `GET /delete_note?id=welcome` gets `405 Method Not Allowed` with `Allow: HEAD, OPTIONS, PUT, DELETE`.
 `HEAD` and `OPTIONS` describe a tool and never run it.
 
 ### Which act: the path
 
-`/delete_note` names the MCP tool the gateway calls. Logs record it, and a reverse proxy can
-match it.
+`/delete_note` is the name of the MCP tool the gateway calls, not a REST resource path such as
+`/notes/welcome`. Logs record the path, and a reverse proxy can match it.
 
 ### The verb, said aloud: the definer
 
@@ -99,10 +99,6 @@ disagree about repeated query keys (HTTP parameter pollution), so each key may a
 `id=welcome&id=other` gets `400 duplicate_query_key`.
 Repeated keys inside a JSON body are not refused yet: the last one wins.
 
-Browsers and proxies already enforce rules on the host and the method. The gateway checks every
-part and makes sure the parts agree, so **a `GET` can reach only a tool whose contract says it
-is read-only.**
-
 ## WebSpec and MCP
 
 WebSpec complements MCP; it does not replace it. Under WebSpec the gateway is the MCP client,
@@ -111,26 +107,29 @@ and the agent speaks plain HTTP to the gateway: `GET /` lists a destination's to
 
 | MCP provides | WebSpec adds |
 |---|---|
-| A protocol for discovering and calling tools on a server | A URL and a method for each tool, so the web's own machinery (TLS, origins, CORS, proxies, logs) can see and police each call |
-| Tool annotations, as hints | Annotations enforced as a contract, pinned so a server can't loosen it |
+| A protocol for discovering and calling tools on a server | A URL and a method for each tool, so the web's own machinery (origins, CORS, proxies, logs) can see and police each call |
+| Tool annotations, as hints | Annotations enforced as a contract, pinned so a server can't loosen it while the gateway runs |
 | Transports: stdio and Streamable HTTP | A gateway that speaks those transports to unchanged servers |
 | Authorization for remote servers (OAuth) | Per-call authority that scales with risk: signatures, single-use clearances, and a person's approval |
 
 MCP tells clients to treat annotations as untrusted unless the server is trusted. Under
-WebSpec the operator, whoever runs the gateway, makes that decision. Adding a server trusts its
-annotations, and an override in the gateway's configuration corrects any tool the operator
-doesn't trust. Once the gateway has described or called a tool, it pins the strictest
-contract it has seen for it, so the server cannot re-list it as read-only to unlock `GET`. Pins
-live in memory, and a restart forgets them; a stdio server, which runs as the gateway's user,
-can force one ([known limits](../spec/status.md#known-limits)). [Annotating MCP servers](annotating.md) shows how to annotate your own tools.
+WebSpec the operator makes that decision. Adding a server trusts its annotations, and an
+override in the gateway's configuration corrects any tool the operator doesn't trust. Once the
+gateway has described or called a tool, it pins the strictest contract it has seen for it, so
+the server cannot re-list it as read-only to unlock `GET`. Pins live in memory, so a restart
+forgets them. A stdio server runs as the gateway's user, so it can stop the gateway, and the
+reference deployments then restart it with no pins
+([known limits](../spec/status.md#known-limits)). [Annotating MCP servers](annotating.md) shows
+how to annotate your own tools.
 
 ## On whose authority
 
 At level 0 nothing is signed, so the gateway serves the destination only under loopback names
 such as `notes.localhost`. A loopback name is only a `Host` header, though, and the gateway
-does not check where a request comes from. Level 0 stays on this machine only while the gateway
-listens on `127.0.0.1`, its default, and no proxy forwards those names
-([DP-5, DP-8](../spec/audit-deployment.md#deployment)).
+does not check where a request comes from. Level 0 stays on this machine only while nothing
+outside it can reach the gateway under a loopback name: the gateway listens on `127.0.0.1`
+unless told otherwise, and a proxy in front of it must refuse loopback names that come from
+outside ([DP-5, DP-8](../spec/audit-deployment.md#deployment)).
 
 A public domain requires level 1 or higher. From level 1, on any host, a shim in the agent's
 harness (the program that runs the model and sends its calls) signs every request with a key it
@@ -154,21 +153,12 @@ such as `ef56efa3` are 32 bits today, so rate-limit at the edge.
 
 ## The security dial
 
-Each destination runs at a level from 0 to 4. Raising the level only ever adds to what a
-request must carry, and the model's part of the request stays the same at every level.
-
-| Level | Adds | Holds against |
-|---|---|---|
-| **0** local | Method binding, definer verbs, and well-formed arguments | Confused or careless agents, and pages on other origins sending unsafe requests |
-| **1** signed | The guard HMAC and a single-use nonce | Forged, altered, or replayed requests from anyone without the key |
-| **2** bound | An `Idempotency-Key` for tools that are not idempotent, and a bookend on the definer | Duplicate side effects from retries |
-| **3** cleared | A single-use clearance for every call that changes something, and for reads marked above tier `open` | Calls the harness's policy did not vouch for. It is only as good as that policy: the gateway checks the voucher, not the reasoning behind it |
-| **4** witnessed | A person's signature over the exact request, for destructive tools, tools marked `dangerous`, and open-world changes | A fully compromised agent harness, for the calls that need a person's signature |
-
-Two honest notes. The bookend, a short HMAC that binds the definer to the ends of the body,
-adds nothing today, because the guard already signs the whole body and the definer. And the
-level-3 clearance is keyed with the guard's key, so it is a policy checkpoint, not a separate
-lock; independent signers per level are [proposed](../spec/status.md#roadmap).
+Each destination runs at a level from 0 to 4. Raising the level only adds to what a request may
+have to carry, and the model's part stays the same: level 1 adds the guard and a nonce, level 2
+a bookend (a short tag on the verb) and an `Idempotency-Key`, level 3 a clearance from the
+harness's policy, and level 4 a person's signature. [Security levels](../spec/levels.md) says
+which calls need each, and [Known limits](../spec/status.md#known-limits) says where each level
+falls short.
 
 ## Next
 

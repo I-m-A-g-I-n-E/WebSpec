@@ -177,6 +177,14 @@ body {
   background: rgba(255, 255, 255, 0.12);
 }
 
+/* Section titles in search results: the text face, without the page h2's rule. */
+.md-search-result .md-typeset h2 {
+  font-family: var(--md-text-font-family);
+  letter-spacing: normal;
+  border-top: 0;
+  padding-top: 0;
+}
+
 .md-footer-meta {
   background: var(--ws-band);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -279,6 +287,13 @@ body {
   color: var(--ws-ink-3);
 }
 
+/* A touch screen can't hover to show the ¶, and the hidden ¶ can still wrap onto a line of its own. */
+@media (hover: none) {
+  .md-typeset .headerlink {
+    display: none;
+  }
+}
+
 .md-typeset strong {
   font-weight: 650;
 }
@@ -316,8 +331,25 @@ body {
   border-radius: var(--ws-radius);
 }
 
-.md-clipboard {
+/* The copy button: legible ink on a paper chip that hides the code under it. */
+[data-md-color-scheme] {
+  --md-code-bg-color--light: var(--ws-paper-3);
+  --md-code-bg-color--lighter: var(--ws-paper-2);
+}
+
+.md-code__button {
   color: var(--ws-ink-3);
+}
+
+/* The second shadow fills the 0.2rem strip between the chip and the block's right edge. */
+.md-code__nav {
+  box-shadow: -0.5em 0 0.5em var(--ws-paper-2), 0.2rem 0 0 var(--ws-paper-2);
+}
+
+/* A block marked { .ws-softwrap } wraps its long lines instead of scrolling. */
+.md-typeset .ws-softwrap code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 /* ── Tables ───────────────────────────────────────────────────────────────────────────── */
@@ -355,6 +387,15 @@ body {
 .md-typeset table:not([class]) tbody tr:hover {
   background: color-mix(in srgb, var(--ws-paper-2) 55%, transparent);
   box-shadow: none;
+}
+
+/* A table wider than the page casts a shadow at the edge that hides columns. */
+.md-typeset__scrollwrap {
+  background:
+    linear-gradient(to right, var(--ws-paper) 30%, transparent) left / 2rem 100% no-repeat local,
+    linear-gradient(to left, var(--ws-paper) 30%, transparent) right / 2rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, color-mix(in srgb, var(--ws-ink) 18%, transparent), transparent) left / 0.75rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--ws-ink) 18%, transparent), transparent) right / 0.75rem 100% no-repeat scroll;
 }
 
 /* ── Admonitions ──────────────────────────────────────────────────────────────────────── */
@@ -835,6 +876,24 @@ body {
   box-shadow: none;
 }
 
+/* A status chip moves to the next line whole, and wraps inside only when it is wider than the line. */
+.md-typeset .ws-refusal code {
+  display: inline-block;
+  max-width: 100%;
+}
+
+/* A chip and the colon after it stay on one line. */
+.ws-refusal .ws-keep {
+  white-space: nowrap;
+}
+
+@media screen and (min-width: 76.25em) {
+  .md-typeset .ws-dial__facts .ws-without code {
+    display: inline-block;
+    max-width: 100%;
+  }
+}
+
 .ws-maxim {
   margin: 3rem 0 0;
   font-family: var(--ws-serif);
@@ -842,6 +901,7 @@ body {
   line-height: 1.25;
   max-width: 44rem;
   color: var(--ws-ink);
+  text-wrap: balance;
 }
 
 .md-typeset .ws-maxim code {
@@ -949,7 +1009,7 @@ body {
 
 .ws-key {
   display: flex;
-  gap: 1rem;
+  gap: 0.3rem 0.8rem;
   flex-wrap: wrap;
 }
 
@@ -991,6 +1051,11 @@ body {
   background: color-mix(in srgb, var(--ws-gold) 11%, transparent);
   box-shadow: inset 3px 0 0 var(--ws-gold);
   color: var(--ws-ink-2);
+  /* A value too long for the card wraps under its header's name. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding-left: 2.2rem;
+  text-indent: -1rem;
 }
 
 .ws-req .ws-shim b {
@@ -1018,7 +1083,7 @@ body {
 
 .ws-dial__facts {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   gap: 1.5rem;
   margin: 1.4rem 0 0;
 }
@@ -1330,6 +1395,11 @@ body {
     grid-template-columns: 1fr;
   }
 
+  /* The side column is too narrow here for a status chip, so the facts stack. */
+  .ws-dial__facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .ws-wire {
     flex-direction: row;
     min-height: 2rem;
@@ -1437,6 +1507,15 @@ body {
   .ws-req {
     font-size: 0.68rem;
   }
+
+  .md-typeset .ws-versus figcaption {
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .md-typeset .ws-versus pre > code {
+    font-size: 0.72rem;
+  }
 }
 
 /* Code inside table cells wraps between words, never inside one. */
@@ -1445,10 +1524,33 @@ body {
   word-break: normal;
 }
 
-/* A rule's badge stands in for its bullet. */
+/* On phones a header no longer forces a 5rem column, and a prose column keeps a readable width. */
+@media screen and (max-width: 44.9375em) {
+  .md-typeset table:not([class]) th {
+    min-width: 0;
+  }
+
+  .md-typeset table:not([class]) :is(th, td) {
+    padding: 0.6em 0.75em;
+  }
+
+  .md-typeset table:not([class]) tr:has(> td:nth-child(3)) > td:last-child:not(:has(a, code)) {
+    min-width: 9rem;
+  }
+
+  .md-typeset table:not([class]) tr:not(:has(> td:nth-child(3))) > td:first-child:not(:has(a, code)) {
+    min-width: 6rem;
+  }
+}
+
+/* A rule's badge stands in for its bullet, so a list of rules starts at the text's edge. */
 [dir] .md-typeset ul > li:has(> .ws-rule:first-child),
 [dir] .md-typeset ul > li:has(> p:first-child > .ws-rule:first-child) {
   list-style: none;
+  margin-left: 0;
+}
+
+[dir] .md-typeset ul:has(> li > .ws-rule:first-child, > li > p:first-child > .ws-rule:first-child) {
   margin-left: 0;
 }
 

@@ -1,294 +1,245 @@
 ---
 name: HTTP Methods
-description: This skill should be used when working with HTTP method semantics, permission scoping, verb absorption, idempotency guarantees, HEAD/OPTIONS discovery, or METHOD tokenization for prompt injection defense. Trigger phrases include "http method", "permission scope", "method tokenization", "verb mapping", "idempotent", "rest semantics".
-version: 1.0.0
+description: This skill should be used when checking WebSpec tool contracts and method binding - MCP tool annotations (readOnlyHint, destructiveHint, idempotentHint, openWorldHint), which HTTP methods may invoke a tool, the WebSpec-Definer header and its verb families, what each request must carry by level, and the WebSpec response headers. Trigger phrases include "http method", "method binding", "tool contract", "tool annotations", "definer", "WebSpec-Definer", "verb family", "405", "missing_definer", "WebSpec-Taint".
+version: 2.0.0
 ---
 
-# WebSpec HTTP Methods
+# WebSpec methods, contracts, and definers
 
-> **Domain Note**: This skill uses `gimme.tools` as the default WebSpec domain. For self-hosted or enterprise deployments, substitute your configured domain.
+This skill follows the normative spec page
+[Methods and contracts](https://i-m-a-g-i-n-e.github.io/WebSpec/spec/methods/) (rules `TC`,
+`MB`, `DF`, `RQ`, `RS`; its `DS` rules are in the `service-discovery` skill). Cite a rule by
+its ID in every finding. Where this summary and the spec differ, the spec wins.
 
-## Overview
+The method says what kind of act a request is. The tool's **contract** says what kind of act
+the tool performs. The gateway refuses any request in which the two disagree, so a `GET` can
+reach only a tool whose contract says it is read-only.
 
-WebSpec leverages HTTP methods as semantic verbs, enabling intuitive permission scoping and prompt injection defense. Each method represents a specific action category with absorbed natural language verbs.
+## Tool contracts (TC-1 to TC-6)
 
-## Method Semantics
+| Field | Meaning | MCP source |
+|---|---|---|
+| `read_only` | Does not modify its environment | `readOnlyHint` |
+| `destructive` | May destroy or overwrite, not only add | `destructiveHint` |
+| `idempotent` | Repeating the call has no further effect | `idempotentHint` |
+| `open_world` | Interacts with external, untrusted entities | `openWorldHint` |
+| `tier` | `open` < `sensitive` < `dangerous` | `_meta["webspec/tier"]` (can only raise) |
 
-### Core Method Mapping
+- **TC-1** Precedence: operator override, then the server's `ToolAnnotations`, then MCP
+  defaults.
+- **TC-2** Unannotated means strict: not read-only, destructive, not idempotent, open-world.
+- **TC-3** Tier `open` for a read-only tool, `sensitive` otherwise; a server may raise it with
+  `_meta["webspec/tier"]`, never lower it.
+- **TC-4** A read-only tool is treated as non-destructive and idempotent.
+- **TC-5** Operator overrides live in the destination's config as `tools.{tool}`. A malformed
+  override fails closed to the strictest contract.
+- **TC-6** The gateway keeps the *join* of every contract it has seen for a tool (the stricter
+  value of each field). A server can tighten a contract, never loosen it; only an override
+  loosens. Pins are kept in memory, so a restart resets them.
 
-| Method | Semantic | Primary Action |
-|--------|----------|----------------|
-| GET | read | Retrieve resources without modification |
-| POST | create | Create new resources |
-| PUT | replace | Complete replacement of a resource |
-| PATCH | update | Partial modification of a resource |
-| DELETE | remove | Delete or archive resources |
-| HEAD | probe | Lightweight existence/metadata check |
-| OPTIONS | discover | Capability and permission discovery |
+## Method binding (MB-1 to MB-3)
 
-### Absorbed Verb Lists
+| Contract | Methods that may invoke the tool |
+|---|---|
+| read-only | `GET` |
+| neither read-only nor destructive | `POST`, `PATCH`, plus `PUT` if idempotent |
+| destructive | `DELETE`, plus `PUT` if idempotent or `POST` if not |
 
-Each HTTP method absorbs natural language verbs that map to its semantic:
+- **MB-1** The gateway, not the caller, decides which methods may invoke a tool, from its
+  contract.
+- **MB-2** A method the contract does not admit is `405 method_not_allowed` with the path's
+  `Allow`.
+- **MB-3** `HEAD` and `OPTIONS` are available on every tool path and never invoke the tool.
 
-**GET (read)**
-```
-fetch, retrieve, list, show, view, display, get, load,
-read, query, search, find, lookup, check, see
-```
+The route map then binds each tool to exactly one admissible method (PA-4, PA-5; see the
+`url-grammar` skill).
 
-**POST (create)**
-```
-create, add, insert, new, submit, send, post, write,
-compose, draft, generate, make, build, start
-```
+## The definer (DF-1 to DF-3)
 
-**PUT (replace)**
-```
-replace, set, overwrite, put, reset, initialize,
-restore, revert
-```
+| Method | Safe | Arguments | Definer | Definer family |
+|---|---|---|---|---|
+| `HEAD`, `OPTIONS` | yes | none | ignored | none |
+| `GET` | yes | query only, empty body | ignored | none |
+| `POST` | no | JSON object body and/or query | **required** | `CREATE` `SEND` `INVOKE` `TRIGGER` `UPLOAD` |
+| `PUT` | no | JSON object body and/or query | optional | `REPLACE` `OVERWRITE` `SET` |
+| `PATCH` | no | JSON object body and/or query | optional | `MODIFY` `APPEND` `AMEND` `RENAME` |
+| `DELETE` | no | query and/or JSON object body | optional | `REMOVE` `REVOKE` `ARCHIVE` `CANCEL` `PURGE` |
 
-**PATCH (update)**
-```
-update, modify, change, edit, patch, adjust, tweak,
-revise, amend, fix, correct
-```
+- **DF-1** Every `POST` carries `WebSpec-Definer` (`400 missing_definer`). On `PUT`, `PATCH`,
+  and `DELETE` it is optional, but a definer that is sent must be a verb of that method's family
+  (`400 definer_family_mismatch`). On `GET`, `HEAD`, and `OPTIONS` it is not checked, echoed, or
+  logged, though the guard still signs it.
+- **DF-2** At most one `WebSpec-Definer` field line, whatever the method. On the four unsafe
+  methods the value is exactly one verb, matched without regard to case. Anything else is
+  `400 unknown_definer`: two field lines, an empty value, a value with a `:` (the retired
+  bookend form), a value with a comma, or a word in no family.
+- **DF-3** On `POST` the definer names the action: it is part of the route key and selects
+  the tool among the `POST` entries on the path. On other methods it only confirms; it never
+  selects a tool. `ARCHIVE` on a `DELETE` is accepted on a tool that deletes outright, because
+  the definer is checked against the method, not the tool.
 
-**DELETE (remove)**
-```
-delete, remove, trash, archive, destroy, purge,
-clear, erase, drop, cancel, revoke
-```
+A `POST` verb that maps no tool on a path that maps other `POST` actions is
+`400 unknown_action`, and its detail points to `OPTIONS /{noun}`.
 
-### Idempotency Guarantees
+## Requirements (RQ-1, RQ-2)
 
-| Method | Idempotent | Safe | Description |
-|--------|------------|------|-------------|
-| GET | Yes | Yes | Multiple calls return same result |
-| HEAD | Yes | Yes | Same as GET, no body |
-| OPTIONS | Yes | Yes | Returns capabilities |
-| PUT | Yes | No | Same input = same state |
-| DELETE | Yes | No | Already deleted = no change |
-| POST | No | No | Each call may create new resource |
-| PATCH | No | No | May depend on current state |
+| Requirement | Applies when |
+|---|---|
+| Guard (`WebSpec-Nonce`, `WebSpec-Guard`) | level 1 or higher, on every request except `GET /__nonce` |
+| Definer (`WebSpec-Definer`) | the method is `POST` |
+| Empty body | the method is `GET` |
+| `Idempotency-Key` | the method is unsafe, the tool is not idempotent, and the level is 2 or higher |
+| Clearance (`WebSpec-Clearance`) | level 3 or higher, and the tool is not read-only or its tier is above `open` |
+| Human approval (`WebSpec-Approval`) | level 4, and the tool is destructive, `dangerous`, or open-world and not read-only |
 
-## Permission Scoping
+Raising the level only adds requirements (RQ-2). A read-only open-world tool (a fetcher, a
+search API) needs neither a clearance nor an approval unless its tier is raised.
 
-### Scope Grammar
+## Responses (RS-1 to RS-4)
 
-```
-SCOPE := METHOD ":" HOST? PATH_PATTERN
+- **RS-1** Every tool result (`200`, `422`, or a replay) carries `Cache-Control: no-store`,
+  `WebSpec-Level`, and `WebSpec-Tier`.
+- **RS-2** An open-world tool's response carries `WebSpec-Taint: open-world`. The harness
+  treats that body as untrusted data that cannot authorize later calls.
+- **RS-3** Success is `200 {"result": …}`; a tool error (MCP `isError`) is
+  `422 {"result": …, "error": true}`. When a definer was checked, the body gives its verb in
+  upper case as `canonical`.
+- **RS-4** Refusals are `{"error": code, "detail": text, …}` and carry `Cache-Control:
+  no-store`. A few framework answers are plain text (an unrouted host, a rejected CORS
+  preflight, an unhandled error, a missing guard key).
 
-METHOD := "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "*"
-HOST := subdomain "." domain
-PATH_PATTERN := "/" segment { "/" segment }
-segment := identifier | "*" | "**"
-```
+## Header names
 
-### Scope Examples
+Every header WebSpec defines is `WebSpec-<Name>`, with no `X-` prefix:
 
-```bash
-# Specific method + specific path
-GET:slack.gimme.tools/channels/C123/messages
+| Header | Direction | Rule |
+|---|---|---|
+| `WebSpec-Definer` | request | DF-1 to DF-3 |
+| `WebSpec-Nonce`, `WebSpec-Guard` | request | GD-1, GD-2 |
+| `WebSpec-Clearance` | request | CL-1 |
+| `WebSpec-Approval` | request | AP-3 |
+| `WebSpec-Level`, `WebSpec-Tier`, `WebSpec-Taint` | response | RS-1, RS-2 |
+| `WebSpec-Status`, `WebSpec-Tool-Count`, `WebSpec-Service` | response to `HEAD /` | DS-2 |
 
-# Specific method + wildcard path
-GET:slack.gimme.tools/channels/*
+Existing fields are reused: `Allow`, `Cache-Control`, `Link`, `Idempotency-Key`, and the
+de-facto `Idempotent-Replayed`, a deliberate exception to the naming rule.
 
-# All methods on specific path
-*:gdrive.gimme.tools/files/shared/*
+The gateway does not recognize earlier names, such as `X-Gimme-Definer`, `X-WebSpec-Guard`,
+`X-WebSpec-Nonce`, `X-WebSpec-Approval`, `X-UFO-Clearance`, or `X-UFO-Taint`. A request that
+sends a required header only under its old name is refused as if it were missing. A harness
+that looks for `X-UFO-Taint` sees no taint mark. `X-Gimme-Allowed`,
+`X-Gimme-Definer-Canonical`, `X-Gimme-Definer-Tier`, `X-WebSpec-Tool`, and
+`X-WebSpec-Description` no longer exist.
 
-# Method on any provider
-POST:*/messages
+## Real exchanges
 
-# Recursive wildcard (any depth)
-GET:github.gimme.tools/repos/**/contents/**
+These are real answers of the reference gateway (`gateway/`) in front of the demo server
+(`gateway/examples/demo_server.py`) at level 0, abridged to the headers that matter.
+`/email` maps `POST` with `SEND` to `send_email`.
 
-# Multiple scopes (comma-separated)
-GET:slack.gimme.tools/channels/*,POST:slack.gimme.tools/channels/*/messages
-```
+```text
+POST /email
+Host: notes.localhost
+Content-Type: application/json
+WebSpec-Definer: SEND
 
-### Scope Hierarchy
+{"id":"welcome","to":"ana@example.com"}
 
-Broader scopes implicitly grant narrower permissions:
-
-```
-*:slack.gimme.tools/**           # Full access to Slack
-  └── GET:slack.gimme.tools/**   # Read-only access
-      └── GET:slack.gimme.tools/channels/*  # Read channels only
-          └── GET:slack.gimme.tools/channels/C123  # Read one channel
-```
-
-### Permission Inheritance
-
-```javascript
-function scopeMatches(scope, request) {
-  const [scopeMethod, scopePath] = scope.split(':');
-  const [reqMethod, reqPath] = [request.method, request.path];
-
-  // Method check: "*" matches all
-  if (scopeMethod !== '*' && scopeMethod !== reqMethod) {
-    return false;
-  }
-
-  // Path check with wildcards
-  return pathMatchesPattern(reqPath, scopePath);
-}
-```
-
-## HEAD & OPTIONS Discovery
-
-### HEAD for Lightweight Probing
-
-HEAD returns headers without body, useful for:
-- Checking resource existence
-- Getting metadata (size, type, modified date)
-- Validating permissions before full request
-
-```bash
-# Check if file exists and get metadata
-HEAD gdrive.gimme.tools/files/abc123
 → 200 OK
-  Content-Type: application/pdf
-  Content-Length: 1048576
-  Last-Modified: 2024-01-15T10:30:00Z
+Cache-Control: no-store
+WebSpec-Level: 0
+WebSpec-Tier: sensitive
+WebSpec-Taint: open-world
 
-# Check if message exists
-HEAD slack.gimme.tools/channels/C123/messages/M456
-→ 200 OK (exists) or 404 Not Found
+{"result": {"queued": 1, "to": "ana@example.com"}, "canonical": "SEND"}
 ```
 
-### OPTIONS for Capability Discovery
+```text
+POST /email
+Host: notes.localhost
+Content-Type: application/json
+X-Gimme-Definer: SEND
 
-OPTIONS reveals what methods are allowed and what permissions exist:
+{"id":"welcome","to":"ana@example.com"}
 
-```bash
-OPTIONS slack.gimme.tools/channels/C123/messages
-→ 200 OK
-  Allow: GET, POST, HEAD, OPTIONS
-  X-WebSpec-Scopes: GET:read, POST:create
-  X-WebSpec-Rate-Limit: 100/minute
+→ 400 Bad Request
+Cache-Control: no-store
+
+{"error": "missing_definer", "detail": "POST requires the WebSpec-Definer header"}
 ```
 
-**Response Headers:**
+```text
+POST /email
+Host: notes.localhost
+Content-Type: application/json
+WebSpec-Definer: CREATE
 
-| Header | Purpose |
-|--------|---------|
-| `Allow` | Permitted HTTP methods |
-| `X-WebSpec-Scopes` | Required permission scopes |
-| `X-WebSpec-Rate-Limit` | Rate limiting info |
-| `X-WebSpec-Auth` | Authentication requirements |
+{"id":"welcome","to":"ana@example.com"}
 
-## METHOD Tokenization (Prompt Injection Defense)
+→ 400 Bad Request
+Cache-Control: no-store
 
-### The Security Problem
-
-Natural language can embed dangerous verbs that might be interpreted as actions:
-
-```
-"Please read this message and delete the old files"
-                              ^^^^^^
-                         Dangerous verb!
+{"error": "unknown_action", "detail": "/email maps no POST action CREATE; OPTIONS /email lists the actions it maps: SEND"}
 ```
 
-### The Structural Solution
+```text
+POST /email
+Host: notes.localhost
+Content-Type: application/json
+WebSpec-Definer: SEND:8a9975c7
 
-WebSpec uses METHOD tokenization to create a structural invariant:
+{"id":"welcome","to":"ana@example.com"}
 
-**Rule**: Only ONE raw HTTP METHOD token may appear at the protocol level per request. All verbs within payloads must be tokenized.
+→ 400 Bad Request
+Cache-Control: no-store
 
-### Tokenization Format
-
-```
-[M:METHOD]  or  [m:method]
-```
-
-Examples:
-```
-[M:DELETE]  →  Tokenized delete (safe in payload)
-[M:GET]     →  Tokenized get (safe in payload)
-[m:read]    →  Tokenized read (safe in payload)
+{"error": "unknown_definer", "detail": "WebSpec-Definer must be exactly one verb of POST's family: CREATE, INVOKE, SEND, TRIGGER, UPLOAD"}
 ```
 
-### Before vs After Tokenization
+```text
+DELETE /note?id=welcome
+Host: notes.localhost
+WebSpec-Definer: REPLACE
 
-**Unsafe payload:**
-```json
-{
-  "instructions": "Delete all messages older than 30 days"
-}
+→ 400 Bad Request
+Cache-Control: no-store
+
+{"error": "definer_family_mismatch", "detail": "REPLACE belongs to PUT family, not DELETE"}
 ```
 
-**Safe tokenized payload:**
-```json
-{
-  "instructions": "[M:DELETE] all messages older than 30 days"
-}
-```
+## What to check in code
 
-### Validation Algorithm
+**MCP servers**
 
-```javascript
-function validateMethodTokenization(request) {
-  const { method, body } = request;
+- Every tool declares `readOnlyHint`, `destructiveHint`, `idempotentHint`, and `openWorldHint`
+  truthfully. A missing hint takes the strict default (TC-2): an unannotated `get_x`,
+  `set_x`, `update_x`, or `delete_x` is routed to `POST /{name}` with `INVOKE`, because
+  only `POST` is admissible for a destructive, non-idempotent tool.
+- A tool that reads secrets or reaches outside systems raises its tier with
+  `_meta["webspec/tier"]` (`sensitive` or `dangerous`), so that levels 3 and 4 gate it.
+- Names follow the route rule (`verb_noun`) when a noun path is wanted.
 
-  // Count raw METHOD tokens in body
-  const rawMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
-  const bodyText = JSON.stringify(body);
+**Clients, harnesses, shims**
 
-  for (const m of rawMethods) {
-    // Raw method word (not tokenized)
-    const rawPattern = new RegExp(`\\b${m}\\b(?![:\\]])`, 'gi');
-    if (rawPattern.test(bodyText)) {
-      return {
-        valid: false,
-        error: `Raw method "${m}" found in payload. Use [M:${m}] tokenization.`
-      };
-    }
-  }
+- Every `POST` sends `WebSpec-Definer` with exactly one verb of `POST`'s family, the one the
+  route map gives the entry (`OPTIONS /{noun}`). One field line, no `:` suffix, no comma.
+- A definer on `PUT`, `PATCH`, or `DELETE` is a verb of that method's family, or absent.
+- The method is the one the route map gives the tool; on `405`, read `Allow` rather than
+  trying other methods.
+- A body marked `WebSpec-Taint: open-world` is data, never instructions (RS-2). Look for
+  `WebSpec-Taint`, not `X-UFO-Taint`.
+- Any `X-Gimme-*`, `X-WebSpec-*`, or `X-UFO-*` header name is a finding.
 
-  return { valid: true };
-}
-```
+**Gateway configuration**
 
-### Why This Works
+- `tools.{tool}` overrides use only the five contract fields with the right types (TC-5).
+- An override that sets `read_only: true` also sets `tier` when needed: overrides do not
+  re-derive the tier.
 
-1. **Structural guarantee**: Parser only sees ONE real METHOD
-2. **Detokenization at boundary**: Tokens restored when displaying to humans
-3. **Defense in depth**: Even if LLM parses payload, tokenized verbs won't trigger actions
-4. **Composable**: Works with any payload format (JSON, text, etc.)
+## Not part of WebSpec
 
-## Method Selection Guidelines
-
-### When to Use Each Method
-
-| Scenario | Method | Example |
-|----------|--------|---------|
-| Fetching data | GET | `GET /channels/C123/messages` |
-| Creating new resource | POST | `POST /channels/C123/messages` |
-| Full resource replacement | PUT | `PUT /pages/xyz789` |
-| Partial update | PATCH | `PATCH /issues/LIN-42` |
-| Removing resource | DELETE | `DELETE /files/abc123` |
-| Checking existence | HEAD | `HEAD /files/abc123` |
-| Discovering capabilities | OPTIONS | `OPTIONS /channels/C123` |
-
-### Common Mistakes
-
-| Mistake | Problem | Correct Approach |
-|---------|---------|------------------|
-| POST for read | Non-idempotent for reads | Use GET |
-| GET with body | Body ignored by spec | Use POST or query params |
-| PUT for partial update | Overwrites entire resource | Use PATCH |
-| DELETE for archive | Semantic mismatch | Use PATCH with status field |
-| Ignoring idempotency | Duplicate side effects | Design for retry safety |
-
-## Validation Checklist
-
-When reviewing HTTP method usage:
-
-- [ ] Method matches semantic intent (GET for read, POST for create, etc.)
-- [ ] Idempotency requirements are met
-- [ ] Permission scopes use correct method prefix
-- [ ] Natural language verbs in payloads are tokenized
-- [ ] HEAD used for lightweight probing where appropriate
-- [ ] OPTIONS available for capability discovery
-- [ ] No raw dangerous verbs in user-provided content
+Earlier drafts of this plugin described a "METHOD tokenization" scheme (`[M:DELETE]` tokens in
+payloads), lists of absorbed natural-language verbs per method, and `METHOD:host/path`
+permission scopes. None of these is in the spec. Scoped tokens of that form are a
+[roadmap](https://i-m-a-g-i-n-e.github.io/WebSpec/spec/status/#roadmap) item; do not report
+their absence as a finding.

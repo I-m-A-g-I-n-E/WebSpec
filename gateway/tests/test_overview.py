@@ -19,7 +19,7 @@ EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 DOCS = Path(__file__).resolve().parents[2] / "docs"
 sys.path.insert(0, str(EXAMPLES))
 import walkthrough  # noqa: E402
-from shim import Shim, guard_tag  # noqa: E402
+from shim import Shim, clearance, guard_tag  # noqa: E402
 
 HOME = (DOCS / "index.md").read_text()
 PAGE = (DOCS / "guide" / "how-it-works.md").read_text()
@@ -84,6 +84,9 @@ def sent(tmp_path_factory):
             # /note maps GET to read_note and DELETE to delete_note. PUT is admissible for
             # delete_note under MB-1, but the map does not give it PUT (PA-5).
             got["a method /note doesn't map"] = notes.call("PUT", "/note", {"id": "welcome"})
+            got["a send by GET"] = http.get("/email?id=welcome&to=eve%40example.com", headers=here)
+            got["a verb /email doesn't map"] = notes.call("POST", "/email", NOTE, "CREATE")
+            got["an id in the path"] = http.get("/note/welcome", headers=here)
             got["preflight"] = http.options("/email", headers={
                 **here, "Origin": OTHER_ORIGIN, "Access-Control-Request-Method": "POST",
                 "Access-Control-Request-Headers": "content-type, webspec-definer"})
@@ -169,6 +172,56 @@ def test_a_method_the_path_does_not_map(sent):
     response = sent["a method /note doesn't map"]
     assert answer(response)[0] == 405 and response.headers["allow"] == "HEAD, OPTIONS, GET, DELETE"
     assert "`405 Method Not Allowed` with `Allow: HEAD, OPTIONS, GET, DELETE`" in PAGE
+    assert "<code>PUT /note</code>:</span> <code>405 Method Not Allowed</code> with\n" \
+           "<code>Allow: HEAD, OPTIONS, GET, DELETE</code>" in HOME
+
+
+def test_a_get_cannot_reach_a_tool_that_is_not_read_only(sent):
+    response = sent["a send by GET"]
+    assert answer(response)[0] == 405 and response.headers["allow"] == "HEAD, OPTIONS, POST"
+    assert "`GET /email` gets `405 Method Not Allowed` with `Allow: HEAD, OPTIONS, POST`" in PAGE
+    assert "<code>GET /email</code>:</span>\n<code>405 Method Not Allowed</code> with " \
+           "<code>Allow: HEAD, OPTIONS, POST</code>" in HOME
+
+
+def test_on_post_the_definer_selects_the_action(sent):
+    # /email maps one POST action, SEND; another POST verb selects no tool.
+    assert answer(sent["a verb /email doesn't map"]) == (400, "unknown_action")
+
+
+def test_an_id_is_an_argument_not_part_of_the_path(sent):
+    assert answer(sent["an id in the path"]) == (404, "tool_not_found")
+    assert "such as `/note/welcome`,\ngets `404 tool_not_found`" in PAGE
+
+
+def test_the_home_page_shows_the_walkthroughs_delete():
+    # The specimen and the comparison show the level-0 delete that test_examples.py replays (200).
+    text = re.sub(r"<[^>]+>", "", HOME)
+    assert text.count("DELETE /note?id=welcome") == 2 and "→ 200 OK" in text
+    assert "DELETE /note?id=welcome\nHost: notes.localhost\n\n→ 200 OK" in (
+        DOCS / "guide" / "walkthrough.md").read_text()
+
+
+def test_the_dial_shows_requests_valid_under_the_demo_key():
+    # Each level's nonce and guard come from a real send at that level (see the page's footnote);
+    # the nonces are spent, but the tags must still verify under the walkthrough's demo key.
+    body = json.dumps(NOTE, separators=(",", ":")).encode()
+    shown = {}
+    for start, end, name, value in re.findall(
+            r'<span class="ws-shim" data-from="(\d)"(?: data-to="(\d)")?[^>]*>([\w-]+): <b>([^<]+)</b>', HOME):
+        for level in range(int(start), int(end or 4) + 1):
+            shown.setdefault(level, {})[name] = value
+    assert sorted(shown) == [1, 2, 3, 4]
+    for level, headers in shown.items():
+        key = headers.get("Idempotency-Key", "")
+        assert bool(key) == (level >= 2)
+        assert guard_tag(KEY, "POST", "notes.localhost", "/email", headers["WebSpec-Nonce"], body, "",
+                         "SEND", key) == headers["WebSpec-Guard"], level
+        assert ("WebSpec-Clearance" in headers) == (level >= 3)
+        assert ("WebSpec-Approval" in headers) == (level == 4)
+        if level >= 3:
+            ts = int(headers["WebSpec-Clearance"].split(":")[1])
+            assert clearance(KEY, "notes", "POST", "send_email", NOTE, ts) == headers["WebSpec-Clearance"]
 
 
 def test_another_origin_cannot_add_the_definer(sent):

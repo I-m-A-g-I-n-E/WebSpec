@@ -67,7 +67,7 @@ Then point the stack at the directory and call a tool:
 
 ```bash
 WEBSPEC_CONFIG_DIR=$PWD/demo docker compose -f docker/docker-compose.yml up -d
-curl -s "http://notes.localhost:7001/read_note?id=welcome"
+curl -s "http://notes.localhost:7001/note?id=welcome"
 # {"result":"Hello from WebSpec."}
 ```
 
@@ -76,8 +76,9 @@ curl -s "http://notes.localhost:7001/read_note?id=welcome"
 
 ## Guard key
 
-The gateway needs a guard key (`WEBSPEC_GUARD_KEY`) for every guarded request, and for every
-unsafe request at any level. Without one it still boots, and fails closed on those requests.
+The gateway needs a guard key (`WEBSPEC_GUARD_KEY`) for the guard and the clearance, so for
+every call to a destination at level 1 or higher. Without one it still boots, and fails closed
+on those requests.
 
 - **Set it directly.** Export `WEBSPEC_GUARD_KEY` before `docker compose up`. It is passed to
   the `gateway` container as is.

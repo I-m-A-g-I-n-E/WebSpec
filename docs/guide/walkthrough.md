@@ -4,17 +4,20 @@ This page shows what each security level adds, using a read, a send, and a delet
 shows only the calls that illustrate its rules. The calls go to a demo MCP server with three
 tools:
 
-| Tool | Contract | Tier | Methods the gateway admits |
+| Tool | Contract | Tier | Route |
 |---|---|---|---|
-| `read_note` | read-only, closed world | `open` | `GET` |
-| `send_note` | not read-only, not destructive, not idempotent, open world | `sensitive` | `POST`, `PATCH` |
-| `delete_note` | destructive, idempotent, closed world | `sensitive` | `DELETE`, `PUT` |
+| `read_note` | read-only, closed world | `open` | `GET /note` |
+| `send_email` | not read-only, not destructive, not idempotent, open world | `sensitive` | `POST /email` with `SEND` |
+| `delete_note` | destructive, idempotent, closed world | `sensitive` | `DELETE /note` |
 
-The tier (`open` < `sensitive` < `dangerous`) is the tool's risk class
-([TC-3](../spec/methods.md#tool-contracts)); each tool result reports it in `X-WebSpec-Tier`.
+The [route rule](how-it-works.md#the-route-rule) gives each tool its route from its name, and
+the contract decides whether that method is allowed
+([PA-4](../spec/addressing.md#the-route-rule)). The tier (`open` < `sensitive` < `dangerous`)
+is the tool's risk class ([TC-3](../spec/methods.md#tool-contracts)); each tool result reports
+it in `WebSpec-Tier`.
 
 Every exchange below is real, but abridged: the transcripts show only the headers that matter
-here, trim the `428` bodies to their main fields, and cut `X-WebSpec-Approval` values short. The
+here, trim the `428` bodies to their main fields, and cut `WebSpec-Approval` values short. The
 script `gateway/examples/walkthrough.py` runs the gateway in front of the demo server
 (`gateway/examples/demo_server.py`) at each level, and signs the requests with the reference
 shim (`gateway/examples/shim.py`). The shim is written from the
@@ -24,22 +27,22 @@ confirms that the two agree. To produce your own transcripts, run
 every change and checks their status codes.
 
 The model's side of every call is the same at every level: a method, a path, arguments, and
-one [definer](how-it-works.md#the-verb-said-aloud-the-definer) verb. Everything else is added
-by the shim, and each level adds to what the levels below it require.
+on `POST` one [definer](how-it-works.md#which-action-on-post-the-definer) verb. Everything else
+is added by the shim, and each level adds to what the levels below it require.
 
 ## Level 0: local
 
 At level 0 nothing is signed, and the destination is served only under loopback names. The
-gateway still checks that the parts of each request agree, and marks what comes back:
+gateway still binds each method to the tool's contract, and marks what comes back:
 
-- The read goes through `GET`.
-- `GET` cannot reach the delete. The `405` answer lists the methods that can.
-- The send needs a definer from `POST`'s verb family.
-- The send reaches the open world, so its result comes back marked `X-UFO-Taint: open-world`,
+- The read goes through `GET /note`.
+- `/note` maps `GET` and `DELETE` only. A `PUT` gets `405`, and `Allow` lists the methods the
+  path maps.
+- The send is a `POST`, so it names its action with a definer from `POST`'s verb family:
+  `SEND`. The answer echoes the verb it checked, as `canonical`.
+- The send reaches the open world, so its result comes back marked `WebSpec-Taint: open-world`,
   and the harness must treat it as untrusted data ([RS-2](../spec/methods.md#responses)).
-- The answer echoes the verb it checked. `X-Gimme-Definer-Tier` (`definer_tier` in the body) is
-  `1` when only the verb was checked, and `2` when a bookend was checked too, as it is from
-  level 2. It is unrelated to the tool's tier in `X-WebSpec-Tier`.
+- The delete carries no definer. On `DELETE` it is optional.
 
 **Read**
 
@@ -106,8 +109,8 @@ WebSpec-Tier: sensitive
 
 ## Level 1: signed
 
-From level 1 on, every request carries a fresh nonce in `X-WebSpec-Nonce`, and in
-`X-WebSpec-Guard` an HMAC over that nonce and the request's method, host, path, query, body,
+From level 1 on, every request carries a fresh nonce in `WebSpec-Nonce`, and in
+`WebSpec-Guard` an HMAC over that nonce and the request's method, host, path, query, body,
 definer, and idempotency key ([GD-2](../spec/levels.md#level-1-signed)). The shim fetches a new
 nonce from `GET /__nonce` before every call, signing that fetch with an empty nonce. The first
 transcript below shows one such fetch. The others leave the fetches out, so the nonce in the
@@ -159,11 +162,9 @@ Cache-Control: no-store
 
 ## Level 2: bound
 
-At level 2 the definer of every unsafe method carries a bookend (`SEND:8a9975c7`), a short
-HMAC over the method, the verb, and the ends of the body
-([DF-2](../spec/methods.md#per-method-rules)), so the gateway now reports
-`X-Gimme-Definer-Tier: 2`. The send, which is not idempotent, also carries an `Idempotency-Key`.
-A retry with the same key replays the stored result, marked `Idempotent-Replayed: true`,
+At level 2 the send, which is not idempotent, carries an `Idempotency-Key`
+([ID-1](../spec/levels.md#level-2-bound)). A retry with the same key replays the stored result,
+marked `Idempotent-Replayed: true`,
 without running the tool again: the outbox still holds a single note. Reusing the key for a
 different request is refused.
 
@@ -233,8 +234,8 @@ Cache-Control: no-store
 
 ## Level 3: cleared
 
-At level 3 the send needs a clearance: the harness's policy vouching for exactly this call
-(destination, method, tool, and arguments), with a timestamp within 30 seconds of the
+At level 3 the send needs a clearance: the harness's policy vouching for this call
+(its destination, method, tool, and arguments), with a timestamp within 30 seconds of the
 gateway's clock. When the policy declines, the shim sends the call without a clearance, and the
 gateway refuses it. A policy might decline, for example, because the recipient's address came
 from a web page the agent had just read. The reference shim vouches for every call unless it is
@@ -303,7 +304,7 @@ WebSpec-Tier: open
 
 At level 4 a person must witness both the send and the delete. The send reaches the open
 world, and the delete destroys data. The first attempt at each gets a `428` with a summary of
-exactly that request. A person signs the summary, and the shim retries the same request with
+that request. A person signs the summary, and the shim retries the same request with
 the approval attached (and, as always, a fresh nonce and guard). Here the signature comes from
 `ssh-keygen -Y sign`, which is what `webspec-ctl approve` runs once the person has read the
 summary and typed `approve` (see [Human approval](approval.md)). The read goes straight
@@ -442,7 +443,7 @@ WebSpec-Tier: sensitive
 | Level | Added to the model's request |
 |---|---|
 | 0 | Nothing |
-| 1 | `X-WebSpec-Nonce`, `X-WebSpec-Guard` |
-| 2 | A bookend on the definer, and `Idempotency-Key` for non-idempotent tools |
-| 3 | `X-UFO-Clearance`, when its policy vouches for the call |
-| 4 | `X-WebSpec-Approval`, after a person signs |
+| 1 | `WebSpec-Nonce`, `WebSpec-Guard` |
+| 2 | `Idempotency-Key` for non-idempotent tools |
+| 3 | `WebSpec-Clearance`, when its policy vouches for the call |
+| 4 | `WebSpec-Approval`, after a person signs |

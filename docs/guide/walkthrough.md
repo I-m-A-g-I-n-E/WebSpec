@@ -30,7 +30,7 @@ by the shim, and each level adds to what the levels below it require.
 ## Level 0: local
 
 At level 0 nothing is signed, and the destination is served only under loopback names. The
-gateway still checks that the parts of each request agree, and marks what comes back:
+gateway still binds each method to the tool's contract, and marks what comes back:
 
 - The read goes through `GET`.
 - `GET` cannot reach the delete. The `405` answer lists the methods that can.

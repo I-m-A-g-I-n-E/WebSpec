@@ -1,8 +1,8 @@
 # How it works
 
 WebSpec makes each AI tool call an ordinary HTTP request whose parts say what the call does,
-and puts a gateway in front of your MCP servers that checks the method against what the tool
-declares. This page follows one request part by part, then shows where its authority comes from.
+and puts a gateway in front of your MCP servers that checks the method against the tool's
+contract. This page follows one request part by part, then shows where its authority comes from.
 
 ## One URL per tool
 
@@ -52,7 +52,7 @@ The gateway learns what kind of act a tool performs, its **contract**, from the 
 server declares (annotations) or from the operator who runs the gateway, never from the
 request. A tool that declares nothing counts as destructive, which is MCP's own default. The
 gateway checks the method against the contract and, on every change, the definer against the
-method; arguments it checks for form only. Every status code below is a real answer from the
+method, and checks arguments for form only. Every status code below is a real answer from the
 reference gateway.
 
 ### Who handles it: the host
@@ -82,7 +82,7 @@ a CORS preflight. `GET /delete_note?id=welcome` gets `405 Method Not Allowed` wi
 
 `X-Gimme-Definer: REMOVE` restates the method in one word, the way a check states its amount in
 figures and again in words. A bank may refuse a check whose two amounts disagree, and the
-gateway refuses a request whose method and definer disagree. The verb must come from the
+gateway refuses a change whose method and definer disagree. The verb must come from the
 method's family: `REMOVE` and `ARCHIVE` are `DELETE` verbs, and `SEND` and `CREATE` are `POST`
 verbs, so `REMOVE` on `POST /send_note` gets `400 definer_family_mismatch`. The definer is
 checked against the method, not the tool: a `PUT` to `/delete_note` takes a `PUT` verb such as

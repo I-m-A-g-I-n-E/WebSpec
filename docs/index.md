@@ -16,7 +16,7 @@ hide:
 
 <p class="ws-lede">WebSpec gives each MCP tool its own URL, and each call an HTTP method that
 matches what the tool does. A gateway in front of your unchanged MCP servers refuses any method
-a tool's contract doesn't admit, and any change whose one-word verb doesn't match its method.</p>
+a tool's contract doesn't admit, and any change whose definer header doesn't match its method.</p>
 
 <div class="ws-actions" markdown="1">
 [Run it in ten minutes <span>→</span>](guide/index.md){ .ws-button .ws-button--solid }
@@ -130,7 +130,7 @@ Bodies must be strict JSON, and each query key may appear once.</p>
 <div class="ws-part">
 <span class="ws-part__token ws-p--definer">REMOVE</span>
 <p><span class="ws-part__role">The verb, said aloud</span>Like the amount in words on a check,
-the definer restates the method of every change in one word, and the two must agree. A page on another origin
+on every change the definer restates the method in one word, and the two must agree. A page on another origin
 can't add this header without a CORS preflight, and by default the gateway refuses the
 preflight.</p>
 <p><span class="ws-refusal"><code>REMOVE</code> on a <span class="ws-keep"><code>POST</code>:</span>

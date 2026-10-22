@@ -18,8 +18,6 @@ environment variables.
     - discovery (`HEAD`, `OPTIONS`, `GET /`), nonce issuance, or the retired `/__challenge`
     - the list of destinations (`GET /` on the bare domain)
     - requests that match no route, among them a `CONNECT` to `host:port`, which names no path
-    - methods it does not route (`TRACE`, `CONNECT`, and extension methods), which the web
-      framework answers with `405`
     - rejected CORS preflights
     - errors raised outside the invocation handler
 

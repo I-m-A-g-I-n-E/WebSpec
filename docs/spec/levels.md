@@ -21,7 +21,8 @@ what levels 1 to 4 require ([SH-1](#the-harness-shim)).
 
 - **PO-1** A gateway SHOULD apply its checks in this order, so that a request is refused with
   the most basic applicable error. The reference gateway does:
-    1. Host labels ([HG-2](addressing.md#host)), then repeated query keys ([AR-1](addressing.md#arguments))
+    1. Host labels ([HG-2](addressing.md#host)), then repeated query keys ([AR-1](addressing.md#arguments)),
+       then more than one `WebSpec-Definer` field line ([DF-2](methods.md#per-method-rules))
     2. Qualifiers ([HG-3, HG-5](addressing.md#host))
     3. For a configured destination: public exposure ([HG-7](addressing.md#host)), then the guard
        ([GD-1](#level-1-signed)). `GET /__nonce` is answered here, and so is the retired

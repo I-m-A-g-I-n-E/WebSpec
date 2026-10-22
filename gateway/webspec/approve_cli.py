@@ -101,7 +101,7 @@ def cmd_approve(args: argparse.Namespace) -> int:
         return 1
 
     blob = dearmor(proc.stdout.decode())
-    print(f"X-WebSpec-Approval: {cid}:{blob}")
+    print(f"WebSpec-Approval: {cid}:{blob}")
     return 0
 
 

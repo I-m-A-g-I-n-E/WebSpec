@@ -44,7 +44,7 @@ def test_real_server_contracts_drive_method_binding(client):
     assert r.status_code == 405 and r.headers["allow"] == "HEAD, OPTIONS, PUT, DELETE"
     assert client.get("/read_note?id=1", headers={"Host": H}).json()["result"] == "hello"  # nothing wiped
 
-    r = client.delete("/wipe?id=1", headers={"Host": H, "X-Gimme-Definer": "REMOVE"})
+    r = client.delete("/wipe?id=1", headers={"Host": H, "WebSpec-Definer": "REMOVE"})
     assert r.status_code == 200 and r.json()["result"] == "wiped"
     assert client.get("/read_note?id=1", headers={"Host": H}).json()["result"] == ""
 
@@ -68,7 +68,7 @@ def test_a_crash_mid_call_is_outcome_unknown_and_the_gateway_reconnects(tmp_path
     monkeypatch.setenv("WEBSPEC_GUARD_KEY", "22" * 32)
     monkeypatch.delenv("WEBSPEC_DOMAIN", raising=False)
     host = "crashy.localhost"
-    send = {"Host": host, "X-Gimme-Definer": "SEND", "Idempotency-Key": "crash-1",
+    send = {"Host": host, "WebSpec-Definer": "SEND", "Idempotency-Key": "crash-1",
             "Content-Type": "application/json"}
     with TestClient(appmod.create_app()) as client:
         r = client.post("/send_and_crash", headers=send, content=b'{"to":"ana"}')

@@ -10,7 +10,6 @@ from webspec.approval import sign_message
 
 from tests._gateway import (
     HAVE_SSH_KEYGEN,
-    bookend,
     clearance,
     entry,
     make_approver,
@@ -47,15 +46,15 @@ def test_get_reads_a_read_only_tool(l0):
     r = request(client, "GET", H, "/read_thing", query="id=1")
     assert r.status_code == 200 and r.json()["result"] == {"ok": "read_thing"}
     assert r.headers["cache-control"] == "no-store"
-    assert r.headers["x-webspec-level"] == "0"
-    assert "x-ufo-taint" not in r.headers
+    assert r.headers["webspec-level"] == "0"
+    assert "webspec-taint" not in r.headers
     assert pool.calls == [("svc", "read_thing", {"id": "1"})]
 
 
 def test_open_world_output_is_marked_tainted(l0):
     client, _ = l0
     r = request(client, "GET", H, "/search_web", query="q=x")
-    assert r.headers["x-ufo-taint"] == "open-world"
+    assert r.headers["webspec-taint"] == "open-world"
 
 
 @pytest.mark.parametrize("tool_name,allow", [
@@ -74,7 +73,7 @@ def test_get_cannot_reach_a_mutating_tool(l0, tool_name, allow):
 
 def test_post_cannot_reach_a_read_only_tool(l0):
     client, pool = l0
-    r = request(client, "POST", H, "/read_thing", body=b"{}", headers={"X-Gimme-Definer": "CREATE"})
+    r = request(client, "POST", H, "/read_thing", body=b"{}", headers={"WebSpec-Definer": "CREATE"})
     assert r.status_code == 405 and r.headers["allow"] == "HEAD, OPTIONS, GET"
     assert pool.calls == []
 
@@ -86,14 +85,18 @@ def test_get_body_is_rejected(l0):
     assert pool.calls == []
 
 
-def test_delete_requires_a_delete_family_definer(l0):
+def test_a_delete_definer_is_optional_but_must_be_a_delete_family_verb(l0):
+    # DF-1: only POST must carry a definer. One sent on DELETE must be of DELETE's family.
     client, pool = l0
-    assert request(client, "DELETE", H, "/delete_thing", query="id=1").json()["error"] == "missing_definer"
-    r = request(client, "DELETE", H, "/delete_thing", query="id=1", headers={"X-Gimme-Definer": "SEND"})
+    r = request(client, "DELETE", H, "/delete_thing", query="id=1", headers={"WebSpec-Definer": "SEND"})
     assert r.json()["error"] == "definer_family_mismatch"
-    r = request(client, "DELETE", H, "/delete_thing", query="id=1", headers={"X-Gimme-Definer": "REMOVE"})
-    assert r.status_code == 200 and r.headers["x-gimme-definer-canonical"] == "REMOVE"
-    assert pool.calls == [("svc", "delete_thing", {"id": "1"})]
+    assert pool.calls == []
+    r = request(client, "DELETE", H, "/delete_thing", query="id=1")
+    assert r.status_code == 200 and "canonical" not in r.json()
+    r = request(client, "DELETE", H, "/delete_thing", query="id=2", headers={"WebSpec-Definer": "remove"})
+    assert r.status_code == 200 and r.json()["canonical"] == "REMOVE"
+    assert not [name for name in r.headers if "definer" in name]  # -Canonical and -Tier are gone (RS-3)
+    assert pool.calls == [("svc", "delete_thing", {"id": "1"}), ("svc", "delete_thing", {"id": "2"})]
 
 
 def test_operator_override_can_unlock_get(monkeypatch):
@@ -140,7 +143,10 @@ def test_options_and_head_describe_the_profile(l0):
     body = one.json()
     assert body["methods"] == ["DELETE", "PUT"]
     assert set(body["scopes_required"]) == {"DELETE", "PUT"}
-    assert body["requirements"]["DELETE"]["definer"] is True
+    assert body["requirements"]["DELETE"]["definer"] is False  # DF-1: optional on DELETE
+    assert "bookend" not in body["requirements"]["DELETE"]
+    send = client.options("/send_thing", headers={"Host": H}).json()
+    assert send["requirements"]["POST"]["definer"] is True and send["requirements"]["PATCH"]["definer"] is False
     every = client.options("/", headers={"Host": H}).json()
     assert {t["name"]: t["methods"] for t in every["tools"]}["read_thing"] == ["GET"]
     head = client.head("/send_thing", headers={"Host": H})
@@ -165,7 +171,7 @@ def test_challenge_endpoint_is_retired(monkeypatch):
     from tests._gateway import KEY
     client, _ = make_client(monkeypatch, [entry(level=1)], _tools())
     mac = compute_guard_hmac(KEY, "GET", H, "/__challenge", "", b"")
-    r = client.get("/__challenge?tool=run", headers={"Host": H, "X-WebSpec-Guard": mac})
+    r = client.get("/__challenge?tool=run", headers={"Host": H, "WebSpec-Guard": mac})
     assert r.status_code == 410
 
 
@@ -189,28 +195,26 @@ def test_qualifiers_rejected_by_default(l0):
     assert request(client, "GET", "eu.svc.localhost", "/read_thing").status_code == 404
 
 
-# ── level 2: bookend + idempotency ──
+# ── level 2: idempotency ──
 
 @pytest.fixture
 def l2(monkeypatch):
     return make_client(monkeypatch, [entry(level=2)], _tools())
 
 
-def test_level2_requires_bookend_and_idempotency_key(l2):
+def test_level2_requires_an_idempotency_key(l2):
+    # The bookend is gone: a plain verb is all the definer carries at every level.
     client, pool = l2
     body = b'{"to":"x"}'
-    r = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers={"X-Gimme-Definer": "SEND"})
-    assert r.status_code == 403 and r.json()["error"] == "bookend_required"
-    r = request(client, "POST", H, "/send_thing", body=body, guarded=True,
-                headers={"X-Gimme-Definer": bookend("POST", "SEND", body)})
-    assert r.json()["error"] == "idempotency_key_required"
+    r = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers={"WebSpec-Definer": "SEND"})
+    assert r.status_code == 400 and r.json()["error"] == "idempotency_key_required"
     assert pool.calls == []
 
 
 def test_idempotent_replay_does_not_resend(l2):
     client, pool = l2
     body = b'{"to":"x"}'
-    hdrs = {"X-Gimme-Definer": bookend("POST", "SEND", body), "Idempotency-Key": "k-1"}
+    hdrs = {"WebSpec-Definer": "SEND", "Idempotency-Key": "k-1"}
     first = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
     again = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
     assert first.status_code == again.status_code == 200
@@ -218,14 +222,14 @@ def test_idempotent_replay_does_not_resend(l2):
     assert len(pool.calls) == 1
     other = b'{"to":"y"}'
     r = request(client, "POST", H, "/send_thing", body=other, guarded=True,
-                headers={"X-Gimme-Definer": bookend("POST", "SEND", other), "Idempotency-Key": "k-1"})
+                headers={"WebSpec-Definer": "SEND", "Idempotency-Key": "k-1"})
     assert r.status_code == 422 and r.json()["error"] == "idempotency_key_reused"
 
 
 def test_timeout_makes_the_outcome_unknown(l2):
     client, pool = l2
     body = b"{}"
-    hdrs = {"X-Gimme-Definer": bookend("POST", "SEND", body), "Idempotency-Key": "k-2"}
+    hdrs = {"WebSpec-Definer": "SEND", "Idempotency-Key": "k-2"}
     pool.raise_on_call = asyncio.TimeoutError()
     assert request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs).status_code == 504
     pool.raise_on_call = None
@@ -238,7 +242,7 @@ def test_put_is_idempotent_so_needs_no_key(l2):
     client, _ = l2
     body = b'{"v":1}'
     r = request(client, "PUT", H, "/set_thing", body=body, guarded=True,
-                headers={"X-Gimme-Definer": bookend("PUT", "SET", body)})
+                headers={"WebSpec-Definer": "SET"})
     assert r.status_code == 200
 
 
@@ -250,16 +254,16 @@ def test_level3_requires_clearance_for_mutations_and_sensitive_reads(monkeypatch
     r = request(client, "GET", H, "/read_secret", query="ref=a", guarded=True)
     assert r.status_code == 403 and r.json()["error"] == "clearance_missing"
     r = request(client, "GET", H, "/read_secret", query="ref=a", guarded=True,
-                headers={"X-UFO-Clearance": clearance("read_secret", {"ref": "a"}, method="GET")})
+                headers={"WebSpec-Clearance": clearance("read_secret", {"ref": "a"}, method="GET")})
     assert r.status_code == 200
     r = request(client, "GET", H, "/read_secret", query="ref=b", guarded=True,
-                headers={"X-UFO-Clearance": clearance("read_secret", {"ref": "a"}, method="GET")})
+                headers={"WebSpec-Clearance": clearance("read_secret", {"ref": "a"}, method="GET")})
     assert r.json()["error"] == "clearance_invalid"  # bound to the exact arguments
     body = b'{"to":"x"}'
-    hdrs = {"X-Gimme-Definer": bookend("POST", "SEND", body), "Idempotency-Key": "c-1"}
+    hdrs = {"WebSpec-Definer": "SEND", "Idempotency-Key": "c-1"}
     r = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
     assert r.json()["error"] == "clearance_missing"
-    hdrs["X-UFO-Clearance"] = clearance("send_thing", {"to": "x"}, method="POST")
+    hdrs["WebSpec-Clearance"] = clearance("send_thing", {"to": "x"}, method="POST")
     assert request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs).status_code == 200
 
 
@@ -272,11 +276,11 @@ def test_level4_human_approval_round_trip(monkeypatch, tmp_path):
     client, pool = make_client(monkeypatch, [entry(level=4)], _tools())
 
     def attempt(query, approval=None):
-        hdrs = {"X-Gimme-Definer": bookend("DELETE", "REMOVE", b""),
-                "X-UFO-Clearance": clearance("delete_thing", dict(p.split("=") for p in query.split("&")),
+        hdrs = {"WebSpec-Definer": "REMOVE",
+                "WebSpec-Clearance": clearance("delete_thing", dict(p.split("=") for p in query.split("&")),
                                              method="DELETE")}
         if approval:
-            hdrs["X-WebSpec-Approval"] = approval
+            hdrs["WebSpec-Approval"] = approval
         return request(client, "DELETE", H, "/delete_thing", query=query, guarded=True, headers=hdrs)
 
     challenge = attempt("id=1")
@@ -301,10 +305,10 @@ def test_level4_rejects_a_signature_from_an_unlisted_key(monkeypatch, tmp_path):
     rogue, _ = make_approver(tmp_path / "rogue")
     monkeypatch.setenv("WEBSPEC_APPROVERS_FILE", str(signers))
     client, pool = make_client(monkeypatch, [entry(level=4)], _tools())
-    hdrs = {"X-Gimme-Definer": bookend("DELETE", "REMOVE", b""),
-            "X-UFO-Clearance": clearance("delete_thing", {"id": "1"}, method="DELETE")}
+    hdrs = {"WebSpec-Definer": "REMOVE",
+            "WebSpec-Clearance": clearance("delete_thing", {"id": "1"}, method="DELETE")}
     ch = request(client, "DELETE", H, "/delete_thing", query="id=1", guarded=True, headers=hdrs).json()
-    hdrs["X-WebSpec-Approval"] = f"{ch['challenge']}:{ssh_sign(rogue, sign_message(ch['challenge'], ch['fingerprint']))}"
+    hdrs["WebSpec-Approval"] = f"{ch['challenge']}:{ssh_sign(rogue, sign_message(ch['challenge'], ch['fingerprint']))}"
     r = request(client, "DELETE", H, "/delete_thing", query="id=1", guarded=True, headers=hdrs)
     assert r.status_code == 403 and r.json()["error"] == "approval_invalid"
     assert pool.calls == []
@@ -314,11 +318,11 @@ def test_level4_without_approvers_fails_closed(monkeypatch):
     # Refused up front: a 428 challenge that nobody could ever approve would only mislead.
     monkeypatch.delenv("WEBSPEC_APPROVERS_FILE", raising=False)
     client, pool = make_client(monkeypatch, [entry(level=4)], _tools())
-    hdrs = {"X-Gimme-Definer": bookend("DELETE", "REMOVE", b""),
-            "X-UFO-Clearance": clearance("delete_thing", {"id": "1"}, method="DELETE")}
+    hdrs = {"WebSpec-Definer": "REMOVE",
+            "WebSpec-Clearance": clearance("delete_thing", {"id": "1"}, method="DELETE")}
     r = request(client, "DELETE", H, "/delete_thing", query="id=1", guarded=True, headers=hdrs)
     assert r.status_code == 503 and r.json()["error"] == "approval_unavailable"
-    hdrs["X-WebSpec-Approval"] = "0123abcd:U1NIU0lH"  # base64("SSHSIG")
+    hdrs["WebSpec-Approval"] = "0123abcd:U1NIU0lH"  # base64("SSHSIG")
     r = request(client, "DELETE", H, "/delete_thing", query="id=1", guarded=True, headers=hdrs)
     assert r.status_code == 503 and r.json()["error"] == "approval_unavailable"
     assert pool.calls == []

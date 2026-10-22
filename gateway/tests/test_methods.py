@@ -138,12 +138,16 @@ def test_requirements_are_monotone_in_level():
 def test_method_rules():
     ro = ToolContract(read_only=True, destructive=False, idempotent=True, tier="open")
     assert requirements("GET", ro, 4).as_dict() == {
-        "guard": True, "definer": False, "bookend": False, "idempotency_key": False,
+        "guard": True, "definer": False, "idempotency_key": False,
         "empty_body": True, "clearance": False, "approval": False,
     }
     add = ToolContract(destructive=False)
     r = requirements("POST", add, 2)
-    assert r.definer and r.bookend and r.idempotency_key and not r.clearance
+    assert r.definer and r.idempotency_key and not r.clearance
+    # DF-1: only POST must carry a definer; on PUT, PATCH and DELETE it is optional.
+    assert not requirements("PATCH", add, 0).definer
+    assert not requirements("PUT", ToolContract(destructive=False, idempotent=True), 0).definer
+    assert not requirements("DELETE", ToolContract(), 0).definer
     assert not requirements("PUT", ToolContract(destructive=False, idempotent=True), 2).idempotency_key
     assert requirements("PATCH", add, 2).idempotency_key
     # The key follows the tool, not the method: DELETE can't dodge it (review finding).

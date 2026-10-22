@@ -47,7 +47,7 @@ class _GuardedHandler(BaseHTTPRequestHandler):
             self._send_json(404, {"error": "not_found"})
             return
         host = self.headers.get("Host", "")
-        guard_header = self.headers.get("X-WebSpec-Guard", "")
+        guard_header = self.headers.get("WebSpec-Guard", "")
         expected = compute_guard_hmac(KEY, "GET", host, "/__nonce", "", b"")
         if guard_header.lower() != expected.lower():
             self._send_json(401, {"error": "guard_invalid"})
@@ -59,8 +59,8 @@ class _GuardedHandler(BaseHTTPRequestHandler):
             self._send_json(404, {"error": "not_found"})
             return
         host = self.headers.get("Host", "")
-        guard_header = self.headers.get("X-WebSpec-Guard")
-        nonce_header = self.headers.get("X-WebSpec-Nonce")
+        guard_header = self.headers.get("WebSpec-Guard")
+        nonce_header = self.headers.get("WebSpec-Nonce")
         if not guard_header or not nonce_header:
             self._send_json(401, {"error": "guard_missing"})
             return

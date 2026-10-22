@@ -48,23 +48,21 @@ def _error_records(caplog) -> list[logging.LogRecord]:
     return [r for r in caplog.records if r.levelno >= logging.ERROR]
 
 
-def test_an_unsafe_request_without_the_key_is_an_audited_plain_500(monkeypatch, tmp_path, caplog):
+def test_an_unsafe_level0_request_needs_no_key(monkeypatch, tmp_path, caplog):
+    # The definer carries no bookend any more, so checking it needs no key (GD-5): at level 0
+    # only the guard and the clearance would, and level 0 has neither.
     client, pool = make_client(monkeypatch, [entry(level=0)], TOOLS)
     _keyless(monkeypatch)
     with caplog.at_level(logging.INFO, logger="webspec"):
         r = request(client, "POST", H, "/send_note", body=b'{"to":"ana"}',
-                    headers={"X-Gimme-Definer": "SEND", "Content-Type": "application/json"})
-    assert (r.status_code, r.headers["content-type"], r.text) == PLAIN_500
-    assert pool.calls == []
+                    headers={"WebSpec-Definer": "SEND", "Content-Type": "application/json"})
+    assert r.status_code == 200, r.text
+    assert pool.calls == [("svc", "send_note", {"to": "ana"})]
     [line] = _audit_lines(tmp_path)
     assert _fields(line, "service", "method", "path", "tool", "level", "outcome", "status", "reason") == {
         "service": "svc", "method": "POST", "path": "/send_note", "tool": "send_note", "level": 0,
-        "outcome": "error", "status": 500, "reason": "guard_key_unavailable"}
-    # One line, no traceback, naming what is missing.
-    [record] = _error_records(caplog)
-    assert record.exc_info is None and "\n" not in record.getMessage()
-    assert "Refused POST on svc with 500" in record.getMessage()
-    assert "WEBSPEC_GUARD_KEY is not set" in record.getMessage()
+        "outcome": "invoked", "status": 200, "reason": None}
+    assert _error_records(caplog) == []
 
 
 def test_a_safe_level0_read_still_needs_no_key(monkeypatch, tmp_path):
@@ -81,8 +79,8 @@ def test_a_guarded_destination_without_the_key(monkeypatch, tmp_path, caplog, me
     client, pool = make_client(monkeypatch, [entry(level=1)], TOOLS)
     _keyless(monkeypatch)
     with caplog.at_level(logging.INFO, logger="webspec"):
-        r = client.request(method, path, headers={"Host": H, "X-WebSpec-Guard": "00000000",
-                                                  "X-WebSpec-Nonce": "n", "X-Gimme-Definer": "SEND"})
+        r = client.request(method, path, headers={"Host": H, "WebSpec-Guard": "00000000",
+                                                  "WebSpec-Nonce": "n", "WebSpec-Definer": "SEND"})
     assert (r.status_code, r.headers["content-type"]) == PLAIN_500[:2]
     if method != "HEAD":
         assert r.text == "Internal Server Error"
@@ -109,9 +107,8 @@ class _KeyVanishesPool(FakePool):
 
 
 @pytest.mark.parametrize("level, method, path, headers", [
-    (1, "POST", "/send_note", {"X-Gimme-Definer": "SEND"}),  # the definer check needs the key
-    (3, "GET", "/read_secret", {}),  # so does the clearance check
-], ids=["definer", "clearance"])
+    (3, "GET", "/read_secret", {}),  # the clearance check needs the key (the definer check does not)
+], ids=["clearance"])
 def test_a_key_lost_after_the_guard_check_is_refused_with_the_tool_resolved(monkeypatch, tmp_path, caplog,
                                                                              level, method, path, headers):
     key_file = tmp_path / "guard.key"
@@ -145,7 +142,7 @@ def test_startup_warns_once_when_no_key_is_configured(monkeypatch, caplog):
     with caplog.at_level(logging.INFO, logger="webspec"):
         appmod.create_app()
     [message] = _startup_warnings(caplog)
-    assert "every guarded request and every unsafe request is refused with a plain-text 500" in message
+    assert "every guarded request is refused with a plain-text 500" in message
     assert "WEBSPEC_GUARD_KEY is not set" in message and "WEBSPEC_GUARD_KEY_FILE" in message
 
 
@@ -199,7 +196,7 @@ def test_a_request_needing_a_key_that_is_not_utf8_is_an_audited_plain_500(monkey
     client, pool = make_client(monkeypatch, [entry(level=1)], TOOLS)
     monkeypatch.setenv("WEBSPEC_GUARD_KEY", NOT_UTF8)
     with caplog.at_level(logging.INFO, logger="webspec"):
-        r = client.get("/__nonce", headers={"Host": H, "X-WebSpec-Guard": "00000000"})
+        r = client.get("/__nonce", headers={"Host": H, "WebSpec-Guard": "00000000"})
     assert (r.status_code, r.headers["content-type"], r.text) == PLAIN_500
     [line] = _audit_lines(tmp_path)
     assert _fields(line, "outcome", "status", "reason") == {
@@ -221,7 +218,7 @@ def test_a_key_of_invisible_characters_only_does_not_admit_its_public_hash(monke
     public_key = hashlib.sha256(ZERO_WIDTH_SPACE.encode()).digest()
     mac = compute_guard_hmac(public_key, "GET", H, "/__nonce", "", b"")
     with caplog.at_level(logging.INFO, logger="webspec"):
-        r = client.get("/__nonce", headers={"Host": H, "X-WebSpec-Guard": mac})
+        r = client.get("/__nonce", headers={"Host": H, "WebSpec-Guard": mac})
     assert (r.status_code, r.headers["content-type"], r.text) == PLAIN_500
     [line] = _audit_lines(tmp_path)
     assert _fields(line, "outcome", "status", "reason") == {

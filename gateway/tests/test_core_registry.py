@@ -71,8 +71,8 @@ class _Handler(BaseHTTPRequestHandler):
     def _record(self) -> tuple[str, str]:
         host = self.headers.get("Host", "")
         self.server.seen.append({"method": self.command, "path": self.path, "host": host,
-                                 "guard": self.headers.get("X-WebSpec-Guard"),
-                                 "nonce": self.headers.get("X-WebSpec-Nonce")})
+                                 "guard": self.headers.get("WebSpec-Guard"),
+                                 "nonce": self.headers.get("WebSpec-Nonce")})
         return host, self.path
 
     def do_GET(self):
@@ -83,7 +83,7 @@ class _Handler(BaseHTTPRequestHandler):
         elif (host, path) == ("guarded-svc.localhost", "/__nonce") and self.server.nonce_redirect_to:
             self._send(302, headers={"Location": self.server.nonce_redirect_to})
         elif (host, path) == ("guarded-svc.localhost", "/__nonce"):
-            ok = self.headers.get("X-WebSpec-Guard") == compute_guard_hmac(KEY, "GET", host, "/__nonce", "", b"")
+            ok = self.headers.get("WebSpec-Guard") == compute_guard_hmac(KEY, "GET", host, "/__nonce", "", b"")
             self._send(200, {"nonce": "n-1"}) if ok else self._send(401, {"error": "guard_invalid"})
         else:
             self._send(404, {"error": "not_found"})
@@ -95,8 +95,8 @@ class _Handler(BaseHTTPRequestHandler):
         elif host == "redirect-svc.localhost":
             self._send(302, headers={"Location": self.server.redirect_to})
         elif host == "guarded-svc.localhost":
-            nonce = self.headers.get("X-WebSpec-Nonce", "")
-            ok = nonce and self.headers.get("X-WebSpec-Guard") == compute_guard_hmac(KEY, "OPTIONS", host, "/",
+            nonce = self.headers.get("WebSpec-Nonce", "")
+            ok = nonce and self.headers.get("WebSpec-Guard") == compute_guard_hmac(KEY, "OPTIONS", host, "/",
                                                                                      nonce, b"")
             self._send(200, {"tools": SECRET_TOOLS}) if ok else self._send(401, {"error": "guard_missing"})
         else:
@@ -279,7 +279,7 @@ def test_a_proxy_set_before_the_registry_starts_is_not_used(servers):
 
 
 def test_a_redirect_does_not_carry_the_guard_tag_elsewhere(monkeypatch, servers):
-    """urllib follows a 302 on GET and sends the Host and X-WebSpec-Guard headers along."""
+    """urllib follows a 302 on GET and sends the Host and WebSpec-Guard headers along."""
     gateway, sink = servers(), servers()
     gateway.nonce_redirect_to = _url(sink) + "/__nonce"
     monkeypatch.setenv("WEBSPEC_GATEWAY_URL", _url(gateway))

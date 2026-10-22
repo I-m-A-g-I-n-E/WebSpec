@@ -19,7 +19,7 @@ EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
 DOCS = Path(__file__).resolve().parents[2] / "docs"
 sys.path.insert(0, str(EXAMPLES))
 import walkthrough  # noqa: E402
-from shim import Shim, bookend, guard_tag  # noqa: E402
+from shim import Shim, guard_tag  # noqa: E402
 
 HOME = (DOCS / "index.md").read_text()
 PAGE = (DOCS / "guide" / "how-it-works.md").read_text()
@@ -83,7 +83,7 @@ def sent(tmp_path_factory):
             got["GET of a delete"] = notes.call("GET", "delete_note", {"id": "welcome"})
             got["preflight"] = http.options("/send_note", headers={
                 **here, "Origin": OTHER_ORIGIN, "Access-Control-Request-Method": "POST",
-                "Access-Control-Request-Headers": "content-type, x-gimme-definer"})
+                "Access-Control-Request-Headers": "content-type, webspec-definer"})
             for content_type, body in FORMS.items():
                 got[f"form, {content_type}"] = http.post("/send_note", content=body, headers={
                     **here, "Content-Type": content_type, "Origin": OTHER_ORIGIN})
@@ -91,14 +91,14 @@ def sent(tmp_path_factory):
             got["repeated query key"] = http.get("/read_note?id=welcome&id=other", headers=here)
             got["repeated JSON key"] = http.post(
                 "/send_note", content=b'{"id":"welcome","to":"ana@example.com","to":"eve@example.com"}',
-                headers={**here, "Content-Type": "application/json", "X-Gimme-Definer": "SEND"})
+                headers={**here, "Content-Type": "application/json", "WebSpec-Definer": "SEND"})
             got["GET from another origin"] = http.get("/read_note?id=welcome", headers={**here, "Origin": OTHER_ORIGIN})
             http.head("/delete_note?id=welcome", headers=here)
             http.options("/delete_note", headers=here)
             got["read after HEAD and OPTIONS"] = http.get("/read_note?id=welcome", headers=here)
             # Last at this level: it deletes the note.
             got["PUT with a PUT verb"] = http.put("/delete_note", content=b'{"id":"welcome"}', headers={
-                **here, "Content-Type": "application/json", "X-Gimme-Definer": "SET"})
+                **here, "Content-Type": "application/json", "WebSpec-Definer": "SET"})
             got["read after the PUT"] = http.get("/read_note?id=welcome", headers=here)
 
         with gateway(1, "notes", "mail") as http:
@@ -111,8 +111,8 @@ def sent(tmp_path_factory):
                 nonce = notes._nonce()
                 tag = guard_tag(KEY, "POST", "notes.localhost", "/send_note", nonce, body, "", "SEND")
                 return http.post("/send_note", content=sent_body, headers={
-                    "Host": sent_to, "Content-Type": "application/json", "X-Gimme-Definer": "SEND",
-                    "X-WebSpec-Nonce": nonce, "X-WebSpec-Guard": tag})
+                    "Host": sent_to, "Content-Type": "application/json", "WebSpec-Definer": "SEND",
+                    "WebSpec-Nonce": nonce, "WebSpec-Guard": tag})
 
             got["signed send"] = signed(to_ana, "notes.localhost", to_ana)
             got["re-addressed"] = signed(to_ana, "notes.localhost", to_eve)
@@ -128,7 +128,7 @@ def sent(tmp_path_factory):
         with gateway(2, "notes") as http:
             notes = Shim(http, "notes.localhost", "notes", KEY)
             got["level 2, no key"] = notes._signed(2, "POST", "/send_note", body=body, headers={
-                "Content-Type": "application/json", "X-Gimme-Definer": f"SEND:{bookend(KEY, 'POST', 'SEND', body)}"})
+                "Content-Type": "application/json", "WebSpec-Definer": "SEND"})
         with gateway(3, "notes") as http:
             unvouched = Shim(http, "notes.localhost", "notes", KEY, vouch=lambda *_: False)
             got["level 3, not vouched for"] = unvouched.call("POST", "send_note", NOTE, "SEND")

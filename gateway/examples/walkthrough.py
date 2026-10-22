@@ -30,14 +30,12 @@ DEMO_KEY = bytes.fromhex("5e" * 32)  # a fixed demo guard key; real keys come fr
 HOST, DESTINATION = "notes.localhost", "notes"
 NOTE = {"id": "welcome", "to": "ana@example.com"}
 
-SHOWN_REQUEST = ["Host", "Content-Type", "X-Gimme-Definer", "Idempotency-Key", "X-UFO-Clearance",
-                 "X-WebSpec-Approval", "X-WebSpec-Nonce", "X-WebSpec-Guard"]
-SHOWN_RESPONSE = ["allow", "cache-control", "idempotent-replayed", "x-webspec-level", "x-webspec-tier",
-                  "x-ufo-taint", "x-gimme-definer-canonical", "x-gimme-definer-tier", "retry-after"]
-DISPLAY = {"x-webspec-level": "X-WebSpec-Level", "x-webspec-tier": "X-WebSpec-Tier",
-           "x-ufo-taint": "X-UFO-Taint", "idempotent-replayed": "Idempotent-Replayed",
-           "x-gimme-definer-canonical": "X-Gimme-Definer-Canonical",
-           "x-gimme-definer-tier": "X-Gimme-Definer-Tier"}
+SHOWN_REQUEST = ["Host", "Content-Type", "WebSpec-Definer", "Idempotency-Key", "WebSpec-Clearance",
+                 "WebSpec-Approval", "WebSpec-Nonce", "WebSpec-Guard"]
+SHOWN_RESPONSE = ["allow", "cache-control", "idempotent-replayed", "webspec-level", "webspec-tier",
+                  "webspec-taint", "retry-after"]
+DISPLAY = {"webspec-level": "WebSpec-Level", "webspec-tier": "WebSpec-Tier",
+           "webspec-taint": "WebSpec-Taint", "idempotent-replayed": "Idempotent-Replayed"}
 
 
 def make_approver(workdir: Path) -> tuple[Path, Path]:
@@ -142,7 +140,7 @@ def render(exchange: Exchange) -> str:
     for name in SHOWN_REQUEST:
         if name in exchange.headers:
             value = exchange.headers[name]
-            lines.append(f"{name}: {_short(value) if name == 'X-WebSpec-Approval' else value}")
+            lines.append(f"{name}: {_short(value) if name == 'WebSpec-Approval' else value}")
     if exchange.body:
         lines += ["", exchange.body.decode()]
     lines += ["", f"→ {exchange.status} {HTTPStatus(exchange.status).phrase}"]

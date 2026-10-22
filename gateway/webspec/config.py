@@ -91,7 +91,7 @@ def is_public_host(host: str) -> bool:
 
 
 # Variables never expanded into an MCP server's env or headers: the guard key signs every
-# guard tag, bookend and clearance, and no backend may hold it (GD-5).
+# guard tag and clearance, and no backend may hold it (GD-5).
 NEVER_EXPANDED_PREFIX = "WEBSPEC_GUARD_KEY"  # WEBSPEC_GUARD_KEY, WEBSPEC_GUARD_KEY_FILE, ...
 
 

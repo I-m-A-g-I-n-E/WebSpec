@@ -20,7 +20,6 @@ from starlette.testclient import TestClient
 
 import webspec.app as appmod
 from webspec.config import ServiceEntry
-from webspec.definer import compute_bookend_hash
 from webspec.guard import canonical_query, compute_clearance_token, compute_guard_hmac
 
 GUARD_KEY_HEX = "11" * 32
@@ -93,10 +92,6 @@ def entry(name: str = "svc", *, level: int = 0, tools: dict | None = None, label
                         guard=level >= 1, level=level, tools=tools or {}, labels=tuple(labels))
 
 
-def bookend(method: str, verb: str, body: bytes) -> str:
-    return f"{verb}:{compute_bookend_hash(KEY, method, verb, body)}"
-
-
 def clearance(tool_name: str, args: dict, *, service: str = "svc", method: str, ts: int | None = None) -> str:
     import time
     ts = int(time.time()) if ts is None else ts
@@ -111,14 +106,14 @@ def request(client: TestClient, method: str, host: str, path: str, *, query: str
     hdrs = {"Host": host, **(headers or {})}
     if guarded:
         boot_mac = compute_guard_hmac(KEY, "GET", host, "/__nonce", "", b"")
-        r = client.get("/__nonce", headers={"Host": host, "X-WebSpec-Guard": boot_mac})
+        r = client.get("/__nonce", headers={"Host": host, "WebSpec-Guard": boot_mac})
         assert r.status_code == 200, r.text
         nonce = r.json()["nonce"]
         q = canonical_query(query if sign_query is None else sign_query)
-        hdrs["X-WebSpec-Guard"] = compute_guard_hmac(
+        hdrs["WebSpec-Guard"] = compute_guard_hmac(
             KEY, method, host, path, nonce, body, q,
-            definer=hdrs.get("X-Gimme-Definer", ""), idempotency_key=hdrs.get("Idempotency-Key", ""))
-        hdrs["X-WebSpec-Nonce"] = nonce
+            definer=hdrs.get("WebSpec-Definer", ""), idempotency_key=hdrs.get("Idempotency-Key", ""))
+        hdrs["WebSpec-Nonce"] = nonce
     url = path + (f"?{query}" if query else "")
     return client.request(method, url, headers=hdrs, content=body)
 

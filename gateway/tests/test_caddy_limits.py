@@ -213,7 +213,7 @@ def test_a_loopback_host_never_comes_through_the_tunnel(served, fd, host):
 
 
 def test_logs_keep_the_path_only(served):
-    secret_headers = {"X-WebSpec-Guard": "SECRETTAG", "Authorization": "Bearer SECRETAUTH",
+    secret_headers = {"WebSpec-Guard": "SECRETTAG", "Authorization": "Bearer SECRETAUTH",
                       "Cookie": "s=SECRETCOOKIE"}
     targets = [
         (3, "svc.localhost", "GET", "http://user:SECRETPW1@svc.localhost/tool?arg=SECRETQ1", "/tool"),

@@ -1,9 +1,9 @@
 """A reference harness shim for WebSpec (spec: docs/spec/levels.md, "The harness shim").
 
 The model decides only the method, the tool, the arguments and one definer verb. The shim
-adds everything cryptographic — nonce, guard HMAC, bookend, Idempotency-Key, clearance — as
-the destination's level requires, which it learns from ``OPTIONS /{tool}``. It holds the
-guard key; the model never sees it.
+adds everything cryptographic — nonce, guard HMAC, Idempotency-Key, clearance — as the
+destination's level requires, which it learns from ``OPTIONS /{tool}``. It holds the guard
+key; the model never sees it.
 
 Standard library only, and written from the spec text rather than from the gateway's code,
 so it doubles as an executable reading of the spec: if the gateway accepts its requests, the
@@ -49,12 +49,6 @@ def guard_tag(key: bytes, method: str, host: str, path: str, nonce: str, body: b
     if idempotency_key:
         message += f":#{idempotency_key}"
     return tag(key, message.encode())
-
-
-def bookend(key: bytes, method: str, verb: str, body: bytes) -> str:
-    """DF-2: HMAC over the method, the verb, and the first and last 16 bytes of the body."""
-    head, tail = (body, body) if len(body) <= 16 else (body[:16], body[-16:])
-    return tag(key, f"{method}:{verb}:".encode() + head + b":" + tail)
 
 
 def clearance(key: bytes, destination: str, method: str, tool: str, args: dict, ts: int | None = None) -> str:
@@ -106,7 +100,7 @@ class Shim:
 
     def _nonce(self) -> str:
         sig = guard_tag(self.key, "GET", self.host, "/__nonce", "", b"")
-        response = self._send("GET", "/__nonce", headers={"X-WebSpec-Guard": sig})
+        response = self._send("GET", "/__nonce", headers={"WebSpec-Guard": sig})
         response.raise_for_status()
         return response.json()["nonce"]
 
@@ -115,10 +109,10 @@ class Shim:
         headers = dict(headers or {})
         if level >= 1:
             nonce = self._nonce()
-            headers["X-WebSpec-Nonce"] = nonce
-            headers["X-WebSpec-Guard"] = guard_tag(
+            headers["WebSpec-Nonce"] = nonce
+            headers["WebSpec-Guard"] = guard_tag(
                 self.key, method, self.host, path, nonce, body, query,
-                headers.get("X-Gimme-Definer", ""), headers.get("Idempotency-Key", ""))
+                headers.get("WebSpec-Definer", ""), headers.get("Idempotency-Key", ""))
         return self._send(method, path, query, body, headers)
 
     def discover(self, tool: str) -> dict:
@@ -151,12 +145,11 @@ class Shim:
         if body:
             headers["Content-Type"] = "application/json"
         if method not in SAFE and definer:
-            verb = definer.upper()
-            headers["X-Gimme-Definer"] = f"{verb}:{bookend(self.key, method, verb, body)}" if needs.get("bookend") else verb
+            headers["WebSpec-Definer"] = definer.upper()  # DF-1: required on POST, optional otherwise
         if method not in SAFE and (needs.get("idempotency_key") or idempotency_key):
             headers["Idempotency-Key"] = idempotency_key or str(uuid.uuid4())
         if needs.get("clearance") and self.vouch(method, tool, args):
-            headers["X-UFO-Clearance"] = clearance(self.key, self.destination, method, tool, args)
+            headers["WebSpec-Clearance"] = clearance(self.key, self.destination, method, tool, args)
         if approval:
-            headers["X-WebSpec-Approval"] = approval
+            headers["WebSpec-Approval"] = approval
         return self._signed(level, method, f"/{tool}", query, body, headers)

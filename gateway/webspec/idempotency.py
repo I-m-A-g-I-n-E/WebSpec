@@ -37,8 +37,9 @@ IN_FLIGHT = "in_flight"
 DONE = "done"
 UNKNOWN = "unknown"
 
-# Response headers worth replaying verbatim (everything else is regenerated).
-_REPLAY_HEADER_PREFIXES = ("x-gimme-", "x-webspec-", "x-ufo-")
+# The response headers a replay repeats verbatim (RS-1, RS-2), named one by one rather than by
+# prefix. Everything else is regenerated.
+REPLAYED_HEADERS = frozenset({"webspec-level", "webspec-tier", "webspec-taint"})
 
 
 def valid_key(key: str) -> bool:
@@ -167,7 +168,7 @@ class IdempotencyStore:
 
 
 def snapshot_response(status_code: int, body: bytes, media_type: str | None, headers) -> StoredResponse:
-    kept = {k: v for k, v in headers.items() if k.lower().startswith(_REPLAY_HEADER_PREFIXES)}
+    kept = {k: v for k, v in headers.items() if k.lower() in REPLAYED_HEADERS}
     replayable = body if len(body) <= MAX_REPLAY_BODY else None
     return StoredResponse(status_code=status_code, body=replayable, media_type=media_type, headers=kept)
 

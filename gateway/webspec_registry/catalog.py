@@ -71,7 +71,7 @@ def _bootstrap_nonce(gateway_url: str, host: str, guard_key: bytes) -> str:
     """GET {gateway_url}/__nonce with the bootstrap HMAC (nonce field empty, body empty)."""
     nonce_url = gateway_url.rstrip("/") + "/__nonce"
     mac = compute_guard_hmac(guard_key, "GET", host, "/__nonce", "", b"")
-    req = urllib.request.Request(nonce_url, method="GET", headers={"Host": host, "X-WebSpec-Guard": mac})
+    req = urllib.request.Request(nonce_url, method="GET", headers={"Host": host, "WebSpec-Guard": mac})
     with open_gateway(req, timeout=5) as resp:
         payload = json.loads(resp.read())
     return payload["nonce"]
@@ -79,7 +79,7 @@ def _bootstrap_nonce(gateway_url: str, host: str, guard_key: bytes) -> str:
 
 def _guarded_options(url: str, host: str, guard_key: bytes, nonce: str) -> list[dict]:
     mac = compute_guard_hmac(guard_key, "OPTIONS", host, "/", nonce, b"")
-    return _options_request(url, host, extra_headers={"X-WebSpec-Guard": mac, "X-WebSpec-Nonce": nonce})
+    return _options_request(url, host, extra_headers={"WebSpec-Guard": mac, "WebSpec-Nonce": nonce})
 
 
 def http_fetch_tools(gateway_url: str, guard_key: bytes | None = None):

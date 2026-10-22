@@ -24,7 +24,7 @@ from . import audit
 from . import guard as guard_mod
 from . import idempotency as idem
 from .config import GuardKeyError, ServiceRegistry, get_session_key, is_public_host
-from .definer import DefinerError, validate_definer
+from .definer import DefinerError, definer_header, validate_definer
 from .guard import canonical_query, loads_strict, validate_clearance_token
 from .methods import (
     SAFE_METHODS,
@@ -37,7 +37,7 @@ from .methods import (
     effective_contract,
     requirements,
 )
-from .permissions import LOCAL_ALLOW_ALL, allowed_methods, authorize, scope_required
+from .permissions import LOCAL_ALLOW_ALL, authorize, scope_required
 from .pool import ConnectionPool, DEFAULT_TIMEOUT
 from .serializers import serialize_tool_result
 
@@ -183,11 +183,11 @@ def _tool_info(entry, tool, contract: ToolContract) -> dict:
 def _decorate(response: Response, contract: ToolContract, level: int) -> Response:
     """Response obligations for every tool invocation (spec § Response obligations)."""
     response.headers["Cache-Control"] = "no-store"
-    response.headers["X-WebSpec-Level"] = str(level)
-    response.headers["X-WebSpec-Tier"] = contract.tier
+    response.headers["WebSpec-Level"] = str(level)
+    response.headers["WebSpec-Tier"] = contract.tier
     if contract.open_world:
-        # Output came from (or touched) the open world: the harness MUST UFO-tag it.
-        response.headers["X-UFO-Taint"] = "open-world"
+        # Output came from (or touched) the open world: the harness MUST UFO-tag it (RS-2).
+        response.headers["WebSpec-Taint"] = "open-world"
     return response
 
 
@@ -232,17 +232,15 @@ async def handle_service_head(request: Request, service: str, pool: ConnectionPo
     if entry is None:
         return _error(**_unknown_service(request, service, registry))
 
-    headers = {"X-WebSpec-Service": service, "X-WebSpec-Level": str(entry.level)}
+    headers = {"WebSpec-Service": service, "WebSpec-Level": str(entry.level)}
 
     if not path:
         # HEAD / → ping + tool count
         try:
             tools = await _list_tools(pool, service)
             healthy = await pool.ping(service)
-            headers["X-WebSpec-Tool-Count"] = str(len(tools))
-            headers["X-WebSpec-Status"] = "connected" if healthy else "degraded"
-            methods = allowed_methods(LOCAL_ALLOW_ALL, f"{service}.localhost", "")
-            headers["X-Gimme-Allowed"] = ", ".join(methods)
+            headers["WebSpec-Tool-Count"] = str(len(tools))
+            headers["WebSpec-Status"] = "connected" if healthy else "degraded"
             return Response(status_code=200, headers=headers)
         except Exception as e:
             logger.warning("HEAD %s failed: %s", service, e)
@@ -258,12 +256,8 @@ async def handle_service_head(request: Request, service: str, pool: ConnectionPo
     if tool is None:
         return Response(status_code=404, headers=headers)
     contract = _contract_for(entry, tool)
-    headers["X-WebSpec-Tool"] = tool.name
-    headers["X-WebSpec-Tier"] = contract.tier
+    headers["WebSpec-Tier"] = contract.tier
     headers["Allow"] = allow_header(contract)
-    # Sanitize description for HTTP header (no newlines, control chars)
-    desc = " ".join((tool.description or "")[:200].split())
-    headers["X-WebSpec-Description"] = desc.encode("ascii", "replace").decode("ascii")
     return Response(status_code=200, headers=headers)
 
 
@@ -365,19 +359,11 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
     if reqs.empty_body and body:
         return deny(400, "body_not_allowed", "GET carries arguments in the query string only; the body must be empty")
 
-    definer_tier, canonical_definer = 0, ""
-    if reqs.definer:
-        try:
-            session_key = get_session_key()
-        except GuardKeyError as exc:
-            return refuse_without_guard_key(request, service, exc, audit_ctx)
-        result = validate_definer(method, request.headers.get("X-Gimme-Definer"), body, session_key)
-        if isinstance(result, DefinerError):
-            return deny(result.status_code, result.error_type, result.detail)
-        if reqs.bookend and result.tier < 2:
-            return deny(403, "bookend_required",
-                        f"Level {level} requires a Tier-2 bookend: X-Gimme-Definer: {result.canonical}:<bookend>")
-        definer_tier, canonical_definer = result.tier, result.canonical
+    # DF-1, DF-2: required on POST; on PUT, PATCH and DELETE checked only when sent.
+    definer = validate_definer(method, definer_header(request.headers))
+    if isinstance(definer, DefinerError):
+        return deny(definer.status_code, definer.error_type, definer.detail)
+    canonical_definer = definer.canonical
 
     try:
         args = _arguments(request, body, tool.inputSchema)
@@ -400,7 +386,7 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
             return _audited_idempotency_response(audit_ctx, early_decision)
 
     # 4. Contract + tier rules (clearance is checked here, spent only at commit — step 5)
-    clearance_header = request.headers.get("X-UFO-Clearance")
+    clearance_header = request.headers.get("WebSpec-Clearance")
     if reqs.clearance:
         try:
             session_key = get_session_key()
@@ -409,7 +395,7 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
         err = validate_clearance_token(session_key, tool_name, args, clearance_header,
                                        service=service, method=method, spend=False)
         if err:
-            return deny(403, err, f"Level {level} requires a valid, unspent X-UFO-Clearance token for "
+            return deny(403, err, f"Level {level} requires a valid, unspent WebSpec-Clearance token for "
                                   f"{method} {tool_name} on {service}")
 
     if reqs.approval:
@@ -417,7 +403,7 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
             return deny(503, "approval_unavailable",
                         f"Level {level} requires human approval, and no approvers are configured")
         summary = approval_mod.request_summary(method, service, host, "/" + path, tool_name, args, body)
-        approval_header = request.headers.get("X-WebSpec-Approval")
+        approval_header = request.headers.get("WebSpec-Approval")
         if not approval_header:
             challenge = approval_mod.store.issue(summary)
             if challenge is None:
@@ -433,7 +419,7 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
     # 5. Commit: check → claim → spend, with no await from here until call_tool starts, so
     #    nothing can be double-spent and nothing one-shot is spent unless the call runs.
     if reqs.clearance and guard_mod.clearance_spent(clearance_header, service):
-        return deny(403, "clearance_reused", "This X-UFO-Clearance token was already spent")
+        return deny(403, "clearance_reused", "This WebSpec-Clearance token was already spent")
     if reqs.approval and not approval_mod.store.can_spend(approval_header):
         return deny(403, "approval_reused", "This approval was already spent")
     if use_idem:
@@ -477,8 +463,7 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
         raise
 
     try:
-        response = _decorate(serialize_tool_result(result, definer_tier=definer_tier, canonical=canonical_definer),
-                             contract, level)
+        response = _decorate(serialize_tool_result(result, canonical=canonical_definer), contract, level)
         if use_idem:
             idem.store.complete(service, idem_key,
                                 idem.snapshot_response(response.status_code, response.body,

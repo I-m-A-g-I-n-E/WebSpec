@@ -43,7 +43,7 @@ def _expected(method: str, body: dict) -> dict:
 @pytest.mark.parametrize("method, path", REQUESTS)
 @pytest.mark.parametrize("host", [f"zzz.{DOMAIN}", f"zzz.{DOMAIN}:443"])
 def test_an_unknown_public_destination_names_no_destinations(client, method, path, host):
-    r = client.request(method, path, headers={"Host": host, "X-Gimme-Definer": "SEND"})
+    r = client.request(method, path, headers={"Host": host, "WebSpec-Definer": "SEND"})
     assert r.status_code == 404
     assert _body(r, method) == _expected(method, UNKNOWN)
 
@@ -51,14 +51,14 @@ def test_an_unknown_public_destination_names_no_destinations(client, method, pat
 @pytest.mark.parametrize("method, path", REQUESTS)
 @pytest.mark.parametrize("host", ["zzz.localhost", "zzz.localhost:7001"])
 def test_a_loopback_name_still_gets_the_list(client, method, path, host):
-    r = client.request(method, path, headers={"Host": host, "X-Gimme-Definer": "SEND"})
+    r = client.request(method, path, headers={"Host": host, "WebSpec-Definer": "SEND"})
     assert r.status_code == 404
     assert _body(r, method) == _expected(method, {**UNKNOWN, "available": ["notes", "vault"]})
 
 
 def test_the_public_refusal_is_still_audited(client, tmp_path):
     # AU-1: a request for an unknown destination on the invocation path is a denial.
-    r = client.post("/send_note", headers={"Host": f"zzz.{DOMAIN}", "X-Gimme-Definer": "SEND"})
+    r = client.post("/send_note", headers={"Host": f"zzz.{DOMAIN}", "WebSpec-Definer": "SEND"})
     assert r.status_code == 404
     [line] = [json.loads(x) for x in (tmp_path / "audit.jsonl").read_text().splitlines()]
     assert (line["host"], line["outcome"], line["status"], line["reason"]) == (

@@ -16,6 +16,7 @@ from starlette.routing import Host, Route
 
 from .config import GuardKeyError, ServiceRegistry, get_session_key, is_public_host
 from . import audit
+from .definer import DEFINER_HEADER, definer_header
 from .guard import GuardError, duplicate_query_keys, generate_nonce, validate_guard
 from .handlers import (
     handle_index,
@@ -145,11 +146,11 @@ async def _service_dispatch(request: Request) -> Response:
                 host=host_header,
                 path=f"/{path}" if path else "/",
                 body=body,
-                guard_header=request.headers.get("X-WebSpec-Guard"),
-                nonce_header=request.headers.get("X-WebSpec-Nonce"),
+                guard_header=request.headers.get("WebSpec-Guard"),
+                nonce_header=request.headers.get("WebSpec-Nonce"),
                 query=request.url.query,
                 audience=service,
-                definer=request.headers.get("X-Gimme-Definer", ""),
+                definer=definer_header(request.headers) or "",
                 idempotency_key=request.headers.get("Idempotency-Key", ""),
             )
             if isinstance(guard_result, GuardError):
@@ -179,7 +180,7 @@ async def _handle_nonce(request: Request, service: str) -> Response:
         host=host,
         path="/__nonce",
         body=b"",
-        guard_header=request.headers.get("X-WebSpec-Guard"),
+        guard_header=request.headers.get("WebSpec-Guard"),
         nonce_header=None,
         is_nonce_request=True,
     )
@@ -236,8 +237,8 @@ def _report_guard_key() -> None:
     try:
         get_session_key()
     except GuardKeyError as exc:
-        logger.warning("No usable guard key, so every guarded request and every unsafe request is "
-                       "refused with a plain-text 500 until there is one (GD-5): %s", exc)
+        logger.warning("No usable guard key, so every guarded request is refused with a plain-text 500 "
+                       "until there is one (GD-5): %s", exc)
 
 
 def create_app() -> Starlette:
@@ -295,8 +296,8 @@ def create_app() -> Starlette:
                 CORSMiddleware,
                 allow_origins=cors_origins(),
                 allow_methods=list(ALL_METHODS),
-                allow_headers=["X-WebSpec-Guard", "X-WebSpec-Nonce", "X-Gimme-Definer",
-                               "X-UFO-Clearance", "X-UFO-Provenance", "X-WebSpec-Approval",
+                allow_headers=["WebSpec-Guard", "WebSpec-Nonce", DEFINER_HEADER,
+                               "WebSpec-Clearance", "WebSpec-Provenance", "WebSpec-Approval",
                                "Idempotency-Key", "Content-Type"],
             ),
         ],

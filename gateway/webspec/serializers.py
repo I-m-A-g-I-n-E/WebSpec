@@ -11,13 +11,14 @@ from starlette.responses import JSONResponse, Response
 from .guard import loads_strict
 
 
-def serialize_tool_result(result: CallToolResult, definer_tier: int = 0, canonical: str = "") -> Response:
-    """Convert a CallToolResult to an HTTP response.
+def serialize_tool_result(result: CallToolResult, canonical: str = "") -> Response:
+    """Convert a CallToolResult to an HTTP response (RS-3).
 
     - Single text block → try JSON parse, else return as string
     - Multiple content blocks → array of typed objects
     - Image blocks → base64 data with MIME type
     - Tool errors (isError=true) → HTTP 422
+    - A definer the request carried → its verb, in upper case, as ``canonical``
     """
     status_code = 422 if result.isError else 200
     body: dict[str, Any] = {}
@@ -35,18 +36,10 @@ def serialize_tool_result(result: CallToolResult, definer_tier: int = 0, canonic
     if result.isError:
         body["error"] = True
 
-    if definer_tier > 0:
-        body["definer_tier"] = definer_tier
     if canonical:
         body["canonical"] = canonical
 
-    headers = {}
-    if definer_tier > 0:
-        headers["X-Gimme-Definer-Tier"] = str(definer_tier)
-    if canonical:
-        headers["X-Gimme-Definer-Canonical"] = canonical
-
-    return JSONResponse(body, status_code=status_code, headers=headers)
+    return JSONResponse(body, status_code=status_code)
 
 
 def _serialize_block(block) -> Any:

@@ -83,9 +83,9 @@ browsers, proxies, and logs already look.</p>
 <section markdown="1">
 <div class="ws-wrap" markdown="1">
 
-<p class="ws-kicker">Read it like a sentence</p>
+<p class="ws-kicker" id="every-part-says-one-thing-and-the-parts-must-agree">Read it like a sentence</p>
 
-## Every part says one thing, and the gateway checks them. { #every-part-says-one-thing-and-the-parts-must-agree }
+## Every part says one thing, and the gateway checks them. { #every-part-says-one-thing }
 
 <p class="ws-intro">The gateway learns what a tool does, its <em>contract</em>, from the
 annotations its MCP server declares or from the operator, never from the request. The method
@@ -253,7 +253,7 @@ compares what each provides.</p>
 <li><span class="ws-lv">L1</span><span>Forged, altered, or replayed requests</span></li>
 <li><span class="ws-lv">L2</span><span>A retry that would run a side effect twice (best effort under load)</span></li>
 <li><span class="ws-lv">L3</span><span>Changes, and reads marked <code>sensitive</code> or <code>dangerous</code>, that the harness's policy didn't vouch for</span></li>
-<li><span class="ws-lv">L4</span><span>Destructive or <code>dangerous</code> calls, and open-world changes, that no person signed, even from a compromised harness</span></li>
+<li><span class="ws-lv">L4</span><span>Destructive or <code>dangerous</code> calls, and open-world changes, that no person signed, even from a harness that can't sign with an approver's key</span></li>
 </ul>
 </div>
 <div class="ws-ledger--no">

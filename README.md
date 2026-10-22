@@ -42,6 +42,7 @@ and rationale.
 ## Try it
 
 ```bash
+git clone https://github.com/I-m-A-g-I-n-E/WebSpec && cd WebSpec
 python -m venv .venv && source .venv/bin/activate
 pip install ./gateway
 export WEBSPEC_GUARD_KEY=$(openssl rand -hex 32)
@@ -49,7 +50,10 @@ echo '{"mcpServers": {"notes": {"command": "python", "args": ["gateway/examples/
 WEBSPEC_CONFIG=$PWD/webspec.json python -m webspec &
 sleep 2
 curl -s "http://notes.localhost:7001/read_note?id=welcome"
+curl -si "http://notes.localhost:7001/delete_note?id=welcome"
 ```
+
+The last call is refused: the gateway answers `405 Method Not Allowed` with `allow: HEAD, OPTIONS, PUT, DELETE`, because the delete tool's contract does not admit `GET`.
 
 Then follow the [quickstart](https://i-m-a-g-i-n-e.github.io/WebSpec/guide/). To run the gateway
 for real, as its own user behind Caddy, see

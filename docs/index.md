@@ -129,9 +129,9 @@ Bodies must be strict JSON, and each query key may appear once.</p>
 
 <div class="ws-part">
 <span class="ws-part__token ws-p--definer">REMOVE</span>
-<p><span class="ws-part__role">The verb, said aloud</span>Like the amount in words on a check,
-on every change the definer restates the method in one word, and the two must agree. A page on another origin
-can't add this header without a CORS preflight, and by default the gateway refuses the
+<p><span class="ws-part__role">The verb, said aloud</span>On every change, the definer
+restates the method in one word, like the amount in words on a check, and the two must agree.
+A page on another origin can't add this header without a CORS preflight, and by default the gateway refuses the
 preflight.</p>
 <p><span class="ws-refusal"><code>REMOVE</code> on a <span class="ws-keep"><code>POST</code>:</span>
 <code>400 definer_family_mismatch</code></span>

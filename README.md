@@ -1,7 +1,7 @@
 # WebSpec
 
-**Every AI tool call as an ordinary HTTP request that says exactly what it does, so the web and
-a gateway in front of your MCP servers can enforce it.**
+**Every AI tool call as an ordinary HTTP request that says what it does, so the web and a
+gateway in front of your MCP servers can enforce it.**
 
 ```http
 POST /send_email HTTP/1.1

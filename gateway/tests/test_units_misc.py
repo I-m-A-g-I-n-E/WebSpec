@@ -156,7 +156,7 @@ from webspec import approve_cli
 
 
 def _challenge():
-    summary = approval_mod.request_summary("DELETE", "svc", "svc.localhost", "/delete_thing",
+    summary = approval_mod.request_summary("DELETE", "svc", "svc.localhost", "/thing",
                                            "delete_thing", {"id": "1\x1b[2K"}, b"")
     return approval_mod.store.issue(summary)
 

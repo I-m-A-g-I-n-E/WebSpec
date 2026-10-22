@@ -74,13 +74,13 @@ if __name__ == "__main__":
 
     # 1. Open tier (list_vaults) — no clearance needed
     print("\n1. Open tier: list_vaults (no clearance)")
-    status, data = guarded_get(key, "/list_vaults")
+    status, data = guarded_get(key, "/vaults")
     assert status not in (401, 403), f"Guard failed: {status} {data}"
     print(f"   PASS: status={status}")
 
     # 2. list_vaults with clearance header (should still work)
     print("\n2. Open tier: list_vaults with clearance (still works)")
-    status, data = guarded_get(key, "/list_vaults", "list_vaults", {})
+    status, data = guarded_get(key, "/vaults", "list_vaults", {})
     assert status not in (401, 403), f"Guard failed: {status} {data}"
     print(f"   PASS: status={status}")
 

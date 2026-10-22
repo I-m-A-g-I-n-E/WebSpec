@@ -44,65 +44,64 @@ gateway still checks that the parts of each request agree, and marks what comes 
 **Read**
 
 ```text
-GET /read_note?id=welcome
+GET /note?id=welcome
 Host: notes.localhost
 
 → 200 OK
 Cache-Control: no-store
-X-WebSpec-Level: 0
-X-WebSpec-Tier: open
+WebSpec-Level: 0
+WebSpec-Tier: open
 
 {"result": "Hello from WebSpec."}
 ```
 
-**A read can't reach a delete**
+**A method /note doesn't map**
 
 ```text
-GET /delete_note?id=welcome
+PUT /note
 Host: notes.localhost
+Content-Type: application/json
+
+{"id":"welcome"}
 
 → 405 Method Not Allowed
-Allow: HEAD, OPTIONS, PUT, DELETE
+Allow: HEAD, OPTIONS, GET, DELETE
+Cache-Control: no-store
 
-{"error": "method_not_allowed", "detail": "GET cannot invoke delete_note; its contract admits DELETE, PUT", "tool": "delete_note", "allowed": ["DELETE", "PUT"], "contract": {"read_only": false, "destructive": true, "idempotent": true, "open_world": false, "tier": "sensitive", "source": "annotations"}}
+{"error": "method_not_allowed", "detail": "/note does not map PUT; it allows HEAD, OPTIONS, GET, DELETE"}
 ```
 
 **Send**
 
 ```text
-POST /send_note
+POST /email
 Host: notes.localhost
 Content-Type: application/json
-X-Gimme-Definer: SEND
+WebSpec-Definer: SEND
 
 {"id":"welcome","to":"ana@example.com"}
 
 → 200 OK
 Cache-Control: no-store
-X-WebSpec-Level: 0
-X-WebSpec-Tier: sensitive
-X-UFO-Taint: open-world
-X-Gimme-Definer-Canonical: SEND
-X-Gimme-Definer-Tier: 1
+WebSpec-Level: 0
+WebSpec-Tier: sensitive
+WebSpec-Taint: open-world
 
-{"result": {"queued": 1, "to": "ana@example.com"}, "definer_tier": 1, "canonical": "SEND"}
+{"result": {"queued": 1, "to": "ana@example.com"}, "canonical": "SEND"}
 ```
 
 **Delete**
 
 ```text
-DELETE /delete_note?id=welcome
+DELETE /note?id=welcome
 Host: notes.localhost
-X-Gimme-Definer: REMOVE
 
 → 200 OK
 Cache-Control: no-store
-X-WebSpec-Level: 0
-X-WebSpec-Tier: sensitive
-X-Gimme-Definer-Canonical: REMOVE
-X-Gimme-Definer-Tier: 1
+WebSpec-Level: 0
+WebSpec-Tier: sensitive
 
-{"result": "deleted", "definer_tier": 1, "canonical": "REMOVE"}
+{"result": "deleted"}
 ```
 
 ## Level 1: signed
@@ -120,25 +119,26 @@ fails, because the nonce has been spent.
 ```text
 GET /__nonce
 Host: notes.localhost
-X-WebSpec-Guard: ca89199e
+WebSpec-Guard: ca89199e
 
 → 200 OK
+Cache-Control: no-store
 
-{"nonce": "702ecdea0fcc48df6b340a21eb1c12a9", "audience": "notes", "expires_at": 1791244698.218, "ttl_seconds": 60}
+{"nonce": "fcf66f4ad6b315c105d47f369aa706cb", "audience": "notes", "expires_at": 1792699135.581, "ttl_seconds": 60}
 ```
 
 **Read, signed**
 
 ```text
-GET /read_note?id=welcome
+GET /note?id=welcome
 Host: notes.localhost
-X-WebSpec-Nonce: 403c28aba42fa462a23469b97db9b204
-X-WebSpec-Guard: ef56efa3
+WebSpec-Nonce: 4e77ef8d78b024923fb44820805d6547
+WebSpec-Guard: 2702dbea
 
 → 200 OK
 Cache-Control: no-store
-X-WebSpec-Level: 1
-X-WebSpec-Tier: open
+WebSpec-Level: 1
+WebSpec-Tier: open
 
 {"result": "Hello from WebSpec."}
 ```
@@ -146,12 +146,13 @@ X-WebSpec-Tier: open
 **The same request again**
 
 ```text
-GET /read_note?id=welcome
+GET /note?id=welcome
 Host: notes.localhost
-X-WebSpec-Nonce: 403c28aba42fa462a23469b97db9b204
-X-WebSpec-Guard: ef56efa3
+WebSpec-Nonce: 4e77ef8d78b024923fb44820805d6547
+WebSpec-Guard: 2702dbea
 
 → 403 Forbidden
+Cache-Control: no-store
 
 {"error": "nonce_reused", "detail": "Nonce already used (single-use)"}
 ```
@@ -169,66 +170,63 @@ different request is refused.
 **Send**
 
 ```text
-POST /send_note
+POST /email
 Host: notes.localhost
 Content-Type: application/json
-X-Gimme-Definer: SEND:8a9975c7
+WebSpec-Definer: SEND
 Idempotency-Key: k-7f3a
-X-WebSpec-Nonce: 720ecc008a06a0eef65c69b3ac184d0e
-X-WebSpec-Guard: 27e12577
+WebSpec-Nonce: b4c0c2082b163858be6db723fe2903aa
+WebSpec-Guard: e39897c9
 
 {"id":"welcome","to":"ana@example.com"}
 
 → 200 OK
 Cache-Control: no-store
-X-WebSpec-Level: 2
-X-WebSpec-Tier: sensitive
-X-UFO-Taint: open-world
-X-Gimme-Definer-Canonical: SEND
-X-Gimme-Definer-Tier: 2
+WebSpec-Level: 2
+WebSpec-Tier: sensitive
+WebSpec-Taint: open-world
 
-{"result": {"queued": 1, "to": "ana@example.com"}, "definer_tier": 2, "canonical": "SEND"}
+{"result": {"queued": 1, "to": "ana@example.com"}, "canonical": "SEND"}
 ```
 
 **Retry with the same key**
 
 ```text
-POST /send_note
+POST /email
 Host: notes.localhost
 Content-Type: application/json
-X-Gimme-Definer: SEND:8a9975c7
+WebSpec-Definer: SEND
 Idempotency-Key: k-7f3a
-X-WebSpec-Nonce: 8bc2aa4c2859da898026a408c2aac0a1
-X-WebSpec-Guard: 25da9432
+WebSpec-Nonce: 22d4389f4c1e045da209ad47d8122bb9
+WebSpec-Guard: ea2a288b
 
 {"id":"welcome","to":"ana@example.com"}
 
 → 200 OK
 Cache-Control: no-store
 Idempotent-Replayed: true
-X-WebSpec-Level: 2
-X-WebSpec-Tier: sensitive
-X-UFO-Taint: open-world
-X-Gimme-Definer-Canonical: SEND
-X-Gimme-Definer-Tier: 2
+WebSpec-Level: 2
+WebSpec-Tier: sensitive
+WebSpec-Taint: open-world
 
-{"result": {"queued": 1, "to": "ana@example.com"}, "definer_tier": 2, "canonical": "SEND"}
+{"result": {"queued": 1, "to": "ana@example.com"}, "canonical": "SEND"}
 ```
 
 **Same key, different request**
 
 ```text
-POST /send_note
+POST /email
 Host: notes.localhost
 Content-Type: application/json
-X-Gimme-Definer: SEND:db370656
+WebSpec-Definer: SEND
 Idempotency-Key: k-7f3a
-X-WebSpec-Nonce: f636af648bc7e20637b049ba30537014
-X-WebSpec-Guard: e90ae9b8
+WebSpec-Nonce: 249bb033da59352672d609ade9ad863d
+WebSpec-Guard: b1579ea9
 
 {"id":"welcome","to":"bo@example.com"}
 
 → 422 Unprocessable Entity
+Cache-Control: no-store
 
 {"error": "idempotency_key_reused", "detail": "This Idempotency-Key was already used for a different request."}
 ```
@@ -246,58 +244,57 @@ it is read-only and its tier is `open`.
 **Send, not vouched for**
 
 ```text
-POST /send_note
+POST /email
 Host: notes.localhost
 Content-Type: application/json
-X-Gimme-Definer: SEND:8a9975c7
-Idempotency-Key: c26b6bc0-df57-41fc-9496-f95b144662ac
-X-WebSpec-Nonce: 785b1d88cc5ea5e3ba0fd6344691543f
-X-WebSpec-Guard: 16e6b1bf
+WebSpec-Definer: SEND
+Idempotency-Key: 59dac5c7-4879-4405-a370-f71615db7aad
+WebSpec-Nonce: 0ed8d90b3c876aa8d8815e20847b8d66
+WebSpec-Guard: 80709765
 
 {"id":"welcome","to":"ana@example.com"}
 
 → 403 Forbidden
+Cache-Control: no-store
 
-{"error": "clearance_missing", "detail": "Level 3 requires a valid, unspent X-UFO-Clearance token for POST send_note on notes"}
+{"error": "clearance_missing", "detail": "Level 3 requires a valid, unspent WebSpec-Clearance token for POST send_email on notes"}
 ```
 
 **Send, vouched for**
 
 ```text
-POST /send_note
+POST /email
 Host: notes.localhost
 Content-Type: application/json
-X-Gimme-Definer: SEND:8a9975c7
-Idempotency-Key: 6764be5a-352f-4629-8162-f48dd4f3ccef
-X-UFO-Clearance: 08db7b72:1791244639
-X-WebSpec-Nonce: 6ebaa50f4841c06f55ad868cf8878d7a
-X-WebSpec-Guard: df285a4b
+WebSpec-Definer: SEND
+Idempotency-Key: cf9ca653-5096-45d1-928d-3a91268d4069
+WebSpec-Clearance: d5727668:1792699077
+WebSpec-Nonce: c1d077278ada3fbdf524f190c0ab7400
+WebSpec-Guard: b426e6f9
 
 {"id":"welcome","to":"ana@example.com"}
 
 → 200 OK
 Cache-Control: no-store
-X-WebSpec-Level: 3
-X-WebSpec-Tier: sensitive
-X-UFO-Taint: open-world
-X-Gimme-Definer-Canonical: SEND
-X-Gimme-Definer-Tier: 2
+WebSpec-Level: 3
+WebSpec-Tier: sensitive
+WebSpec-Taint: open-world
 
-{"result": {"queued": 1, "to": "ana@example.com"}, "definer_tier": 2, "canonical": "SEND"}
+{"result": {"queued": 1, "to": "ana@example.com"}, "canonical": "SEND"}
 ```
 
 **Read (tier open: no clearance needed)**
 
 ```text
-GET /read_note?id=welcome
+GET /note?id=welcome
 Host: notes.localhost
-X-WebSpec-Nonce: cda32467f6b1b29a86748212afce3431
-X-WebSpec-Guard: 252a527d
+WebSpec-Nonce: 38a24ad4007df7f51ce4610074909727
+WebSpec-Guard: 692151a5
 
 → 200 OK
 Cache-Control: no-store
-X-WebSpec-Level: 3
-X-WebSpec-Tier: open
+WebSpec-Level: 3
+WebSpec-Tier: open
 
 {"result": "Hello from WebSpec."}
 ```
@@ -315,15 +312,15 @@ through.
 **Read (no approval needed)**
 
 ```text
-GET /read_note?id=welcome
+GET /note?id=welcome
 Host: notes.localhost
-X-WebSpec-Nonce: c553d7bd908c983323b9020c1cfc2ba5
-X-WebSpec-Guard: a737a4ee
+WebSpec-Nonce: e37db57741c460b3eb678c31841291ab
+WebSpec-Guard: c964f568
 
 → 200 OK
 Cache-Control: no-store
-X-WebSpec-Level: 4
-X-WebSpec-Tier: open
+WebSpec-Level: 4
+WebSpec-Tier: open
 
 {"result": "Hello from WebSpec."}
 ```
@@ -331,30 +328,31 @@ X-WebSpec-Tier: open
 **Send**
 
 ```text
-POST /send_note
+POST /email
 Host: notes.localhost
 Content-Type: application/json
-X-Gimme-Definer: SEND:8a9975c7
+WebSpec-Definer: SEND
 Idempotency-Key: k-91c2
-X-UFO-Clearance: 08db7b72:1791244639
-X-WebSpec-Nonce: f4f6fb3102e526d76c579449e8d62174
-X-WebSpec-Guard: 78a34eca
+WebSpec-Clearance: adcd9a53:1792699078
+WebSpec-Nonce: 1761925b79ca4c74aa23ec7ce46d7c96
+WebSpec-Guard: 95af1ea3
 
 {"id":"welcome","to":"ana@example.com"}
 
 → 428 Precondition Required
+Cache-Control: no-store
 
 {
   "error": "approval_required",
-  "challenge": "e6bcb018cdffb4cc91c2a460bab50b9e",
-  "fingerprint": "4f935160084ad6289b3eb2b1216fd7079f09e6bddc8ea822d4507299599dbb84",
+  "challenge": "0f58b1b1e0d5c25623bc9c3501a4b94d",
+  "fingerprint": "a7f83b4e4407c38945721d25b3491eed7feb56b614a14484ec94a18b888782a1",
   "summary": {
     "v": 1,
     "method": "POST",
     "service": "notes",
     "host": "notes.localhost",
-    "path": "/send_note",
-    "tool": "send_note",
+    "path": "/email",
+    "tool": "send_email",
     "args": {
       "id": "welcome",
       "to": "ana@example.com"
@@ -368,51 +366,49 @@ X-WebSpec-Guard: 78a34eca
 **Send again, with the approval**
 
 ```text
-POST /send_note
+POST /email
 Host: notes.localhost
 Content-Type: application/json
-X-Gimme-Definer: SEND:8a9975c7
+WebSpec-Definer: SEND
 Idempotency-Key: k-91c2
-X-UFO-Clearance: 08db7b72:1791244639
-X-WebSpec-Approval: e6bcb018cdffb4cc91c2a460…
-X-WebSpec-Nonce: b712879c3c9d7b92a014bfc62aa34653
-X-WebSpec-Guard: b85db549
+WebSpec-Clearance: adcd9a53:1792699078
+WebSpec-Approval: 0f58b1b1e0d5c25623bc9c35…
+WebSpec-Nonce: 6c791dc64a0d4528b1a925cba9e999f5
+WebSpec-Guard: 6134de74
 
 {"id":"welcome","to":"ana@example.com"}
 
 → 200 OK
 Cache-Control: no-store
-X-WebSpec-Level: 4
-X-WebSpec-Tier: sensitive
-X-UFO-Taint: open-world
-X-Gimme-Definer-Canonical: SEND
-X-Gimme-Definer-Tier: 2
+WebSpec-Level: 4
+WebSpec-Tier: sensitive
+WebSpec-Taint: open-world
 
-{"result": {"queued": 1, "to": "ana@example.com"}, "definer_tier": 2, "canonical": "SEND"}
+{"result": {"queued": 1, "to": "ana@example.com"}, "canonical": "SEND"}
 ```
 
 **Delete**
 
 ```text
-DELETE /delete_note?id=welcome
+DELETE /note?id=welcome
 Host: notes.localhost
-X-Gimme-Definer: REMOVE:f01b700a
-X-UFO-Clearance: e899d774:1791244639
-X-WebSpec-Nonce: 865692949b1057e4835adca62d4597ab
-X-WebSpec-Guard: 02ccc86a
+WebSpec-Clearance: 003927b8:1792699078
+WebSpec-Nonce: 7b4e493a6243f06a57dcc4396705c6a6
+WebSpec-Guard: 374f8442
 
 → 428 Precondition Required
+Cache-Control: no-store
 
 {
   "error": "approval_required",
-  "challenge": "418f4e7144e73b825ee5c864553edb57",
-  "fingerprint": "fd6d65a8ecab2be78260c5b9b721b3e5de2d27b8c899c945d22728f1b5462d39",
+  "challenge": "ec0645df42623ebe2b049b3364c05d02",
+  "fingerprint": "1fcc3777da37a569522691778b6218792e6a002321ce7646cb6c8ed163771171",
   "summary": {
     "v": 1,
     "method": "DELETE",
     "service": "notes",
     "host": "notes.localhost",
-    "path": "/delete_note",
+    "path": "/note",
     "tool": "delete_note",
     "args": {
       "id": "welcome"
@@ -426,22 +422,19 @@ X-WebSpec-Guard: 02ccc86a
 **Delete again, with the approval**
 
 ```text
-DELETE /delete_note?id=welcome
+DELETE /note?id=welcome
 Host: notes.localhost
-X-Gimme-Definer: REMOVE:f01b700a
-X-UFO-Clearance: e899d774:1791244639
-X-WebSpec-Approval: 418f4e7144e73b825ee5c864…
-X-WebSpec-Nonce: da3dee7c219f2f8de87159866638408c
-X-WebSpec-Guard: 6f828aa2
+WebSpec-Clearance: 003927b8:1792699078
+WebSpec-Approval: ec0645df42623ebe2b049b33…
+WebSpec-Nonce: ea3b2e1e241cb5e3bceec737de0194a4
+WebSpec-Guard: 1a568c6e
 
 → 200 OK
 Cache-Control: no-store
-X-WebSpec-Level: 4
-X-WebSpec-Tier: sensitive
-X-Gimme-Definer-Canonical: REMOVE
-X-Gimme-Definer-Tier: 2
+WebSpec-Level: 4
+WebSpec-Tier: sensitive
 
-{"result": "deleted", "definer_tier": 2, "canonical": "REMOVE"}
+{"result": "deleted"}
 ```
 
 ## What the shim added

@@ -21,7 +21,7 @@ from tests._gateway import GUARD_KEY_HEX, FakePool, entry, make_client, request,
 H = "svc.localhost"
 TOOLS = [
     tool("read_note", read_only=True, open_world=False),
-    tool("send_note", read_only=False, destructive=False, idempotent=False, open_world=False),
+    tool("send_email", read_only=False, destructive=False, idempotent=False, open_world=False),
     tool("read_secret", read_only=True, open_world=False, tier="sensitive"),
 ]
 PLAIN_500 = (500, "text/plain; charset=utf-8", "Internal Server Error")
@@ -54,13 +54,13 @@ def test_an_unsafe_level0_request_needs_no_key(monkeypatch, tmp_path, caplog):
     client, pool = make_client(monkeypatch, [entry(level=0)], TOOLS)
     _keyless(monkeypatch)
     with caplog.at_level(logging.INFO, logger="webspec"):
-        r = request(client, "POST", H, "/send_note", body=b'{"to":"ana"}',
+        r = request(client, "POST", H, "/email", body=b'{"to":"ana"}',
                     headers={"WebSpec-Definer": "SEND", "Content-Type": "application/json"})
     assert r.status_code == 200, r.text
-    assert pool.calls == [("svc", "send_note", {"to": "ana"})]
+    assert pool.calls == [("svc", "send_email", {"to": "ana"})]
     [line] = _audit_lines(tmp_path)
     assert _fields(line, "service", "method", "path", "tool", "level", "outcome", "status", "reason") == {
-        "service": "svc", "method": "POST", "path": "/send_note", "tool": "send_note", "level": 0,
+        "service": "svc", "method": "POST", "path": "/email", "tool": "send_email", "level": 0,
         "outcome": "invoked", "status": 200, "reason": None}
     assert _error_records(caplog) == []
 
@@ -68,13 +68,13 @@ def test_an_unsafe_level0_request_needs_no_key(monkeypatch, tmp_path, caplog):
 def test_a_safe_level0_read_still_needs_no_key(monkeypatch, tmp_path):
     client, pool = make_client(monkeypatch, [entry(level=0)], TOOLS)
     _keyless(monkeypatch)
-    r = request(client, "GET", H, "/read_note", query="id=1")
+    r = request(client, "GET", H, "/note", query="id=1")
     assert r.status_code == 200, r.text
     assert [line["outcome"] for line in _audit_lines(tmp_path)] == ["invoked"]
 
 
-@pytest.mark.parametrize("method, path", [("GET", "/__nonce"), ("GET", "/read_note"), ("POST", "/send_note"),
-                                          ("OPTIONS", "/"), ("HEAD", "/read_note")])
+@pytest.mark.parametrize("method, path", [("GET", "/__nonce"), ("GET", "/note"), ("POST", "/email"),
+                                          ("OPTIONS", "/"), ("HEAD", "/note")])
 def test_a_guarded_destination_without_the_key(monkeypatch, tmp_path, caplog, method, path):
     client, pool = make_client(monkeypatch, [entry(level=1)], TOOLS)
     _keyless(monkeypatch)
@@ -106,11 +106,12 @@ class _KeyVanishesPool(FakePool):
         return self.tools
 
 
-@pytest.mark.parametrize("level, method, path, headers", [
-    (3, "GET", "/read_secret", {}),  # the clearance check needs the key (the definer check does not)
+@pytest.mark.parametrize("level, method, path, tool_name, headers", [
+    (3, "GET", "/secret", "read_secret", {}),  # the clearance check needs the key (the definer check does not)
 ], ids=["clearance"])
 def test_a_key_lost_after_the_guard_check_is_refused_with_the_tool_resolved(monkeypatch, tmp_path, caplog,
-                                                                             level, method, path, headers):
+                                                                             level, method, path, tool_name,
+                                                                             headers):
     key_file = tmp_path / "guard.key"
     key_file.write_text(GUARD_KEY_HEX + "\n")
     client, _ = make_client(monkeypatch, [entry(level=level)], TOOLS)
@@ -123,7 +124,7 @@ def test_a_key_lost_after_the_guard_check_is_refused_with_the_tool_resolved(monk
     assert pool.calls == []
     [line] = _audit_lines(tmp_path)
     assert _fields(line, "path", "tool", "level", "outcome", "status", "reason") == {
-        "path": path, "tool": path[1:], "level": level,
+        "path": path, "tool": tool_name, "level": level,
         "outcome": "error", "status": 500, "reason": "guard_key_unavailable"}
     [record] = _error_records(caplog)
     assert record.exc_info is None and str(key_file) in record.getMessage()

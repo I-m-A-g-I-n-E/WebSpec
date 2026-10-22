@@ -43,7 +43,7 @@ def l0(monkeypatch):
 
 def test_get_reads_a_read_only_tool(l0):
     client, pool = l0
-    r = request(client, "GET", H, "/read_thing", query="id=1")
+    r = request(client, "GET", H, "/thing", query="id=1")
     assert r.status_code == 200 and r.json()["result"] == {"ok": "read_thing"}
     assert r.headers["cache-control"] == "no-store"
     assert r.headers["webspec-level"] == "0"
@@ -53,18 +53,20 @@ def test_get_reads_a_read_only_tool(l0):
 
 def test_open_world_output_is_marked_tainted(l0):
     client, _ = l0
-    r = request(client, "GET", H, "/search_web", query="q=x")
+    r = request(client, "GET", H, "/web", query="q=x")
     assert r.headers["webspec-taint"] == "open-world"
 
 
-@pytest.mark.parametrize("tool_name,allow", [
-    ("delete_thing", "HEAD, OPTIONS, PUT, DELETE"),
-    ("send_thing", "HEAD, OPTIONS, POST, PATCH"),
-    ("plain", "HEAD, OPTIONS, POST, DELETE"),
+@pytest.mark.parametrize("tool_name,path,allow", [
+    ("delete_thing", "/thing", "HEAD, OPTIONS, DELETE"),
+    ("send_thing", "/thing", "HEAD, OPTIONS, POST"),
+    ("plain", "/plain", "HEAD, OPTIONS, POST"),
 ])
-def test_get_cannot_reach_a_mutating_tool(l0, tool_name, allow):
-    client, pool = l0
-    r = request(client, "GET", H, f"/{tool_name}", query="to=x")
+def test_get_cannot_reach_a_mutating_tool(monkeypatch, tool_name, path, allow):
+    # The route rule never gives a mutating tool GET (PA-4): on its path, GET is a 405 whose
+    # Allow lists the methods that can reach it.
+    client, pool = make_client(monkeypatch, [entry(level=0)], [t for t in _tools() if t.name == tool_name])
+    r = request(client, "GET", H, path, query="to=x")
     assert r.status_code == 405
     assert r.headers["allow"] == allow
     assert r.json()["error"] == "method_not_allowed"
@@ -73,14 +75,14 @@ def test_get_cannot_reach_a_mutating_tool(l0, tool_name, allow):
 
 def test_post_cannot_reach_a_read_only_tool(l0):
     client, pool = l0
-    r = request(client, "POST", H, "/read_thing", body=b"{}", headers={"WebSpec-Definer": "CREATE"})
+    r = request(client, "POST", H, "/web", body=b"{}", headers={"WebSpec-Definer": "CREATE"})
     assert r.status_code == 405 and r.headers["allow"] == "HEAD, OPTIONS, GET"
     assert pool.calls == []
 
 
 def test_get_body_is_rejected(l0):
     client, pool = l0
-    r = request(client, "GET", H, "/read_thing", body=b'{"id": 1}')
+    r = request(client, "GET", H, "/thing", body=b'{"id": 1}')
     assert r.status_code == 400 and r.json()["error"] == "body_not_allowed"
     assert pool.calls == []
 
@@ -88,12 +90,12 @@ def test_get_body_is_rejected(l0):
 def test_a_delete_definer_is_optional_but_must_be_a_delete_family_verb(l0):
     # DF-1: only POST must carry a definer. One sent on DELETE must be of DELETE's family.
     client, pool = l0
-    r = request(client, "DELETE", H, "/delete_thing", query="id=1", headers={"WebSpec-Definer": "SEND"})
+    r = request(client, "DELETE", H, "/thing", query="id=1", headers={"WebSpec-Definer": "SEND"})
     assert r.json()["error"] == "definer_family_mismatch"
     assert pool.calls == []
-    r = request(client, "DELETE", H, "/delete_thing", query="id=1")
+    r = request(client, "DELETE", H, "/thing", query="id=1")
     assert r.status_code == 200 and "canonical" not in r.json()
-    r = request(client, "DELETE", H, "/delete_thing", query="id=2", headers={"WebSpec-Definer": "remove"})
+    r = request(client, "DELETE", H, "/thing", query="id=2", headers={"WebSpec-Definer": "remove"})
     assert r.status_code == 200 and r.json()["canonical"] == "REMOVE"
     assert not [name for name in r.headers if "definer" in name]  # -Canonical and -Tier are gone (RS-3)
     assert pool.calls == [("svc", "delete_thing", {"id": "1"}), ("svc", "delete_thing", {"id": "2"})]
@@ -106,62 +108,70 @@ def test_operator_override_can_unlock_get(monkeypatch):
 
 def test_invalid_override_fails_closed(monkeypatch):
     client, _ = make_client(monkeypatch, [entry(tools={"read_thing": {"read_only": "sure"}})], _tools())
-    r = request(client, "GET", H, "/read_thing")
+    r = request(client, "GET", H, "/thing")
     assert r.status_code == 405
-    info = client.options("/read_thing", headers={"Host": H}).json()
-    assert info["contract"]["tier"] == "dangerous"
+    # The strictest contract does not admit GET, so read_thing falls back to POST /read_thing (PA-4).
+    [moved] = client.options("/read_thing", headers={"Host": H}).json()["entries"]
+    assert (moved["method"], moved["definer"], moved["tool"]) == ("POST", "INVOKE", "read_thing")
+    assert moved["contract"]["tier"] == "dangerous"
 
 
 def test_contract_rug_pull_is_blocked(l0):
     client, pool = l0
-    assert request(client, "GET", H, "/read_thing").status_code == 200
+    assert request(client, "GET", H, "/thing").status_code == 200
     # Server re-lists the tool as destructive: tightening takes effect immediately.
     pool.tools = [tool("read_thing", read_only=False, destructive=True)] + pool.tools[1:]
-    assert request(client, "GET", H, "/read_thing").status_code == 405
+    assert request(client, "GET", H, "/thing").status_code == 405
     # Server flips it back to read-only: loosening is NOT accepted (pinned).
     pool.tools = [tool("read_thing", read_only=True)] + pool.tools[1:]
-    assert request(client, "GET", H, "/read_thing").status_code == 405
+    assert request(client, "GET", H, "/thing").status_code == 405
 
 
 def test_a_listed_tool_is_pinned_before_anything_asks_about_it(l0):
     # TC-6 pins every contract observed. Serving read_thing lists delete_thing too, so a later
-    # listing cannot loosen it, though nothing has yet described or called it.
+    # listing cannot loosen it, though nothing has yet described or called it: it keeps
+    # DELETE /thing, and GET /thing still reaches only read_thing.
     client, pool = l0
-    assert request(client, "GET", H, "/read_thing").status_code == 200
+    assert request(client, "GET", H, "/thing").status_code == 200
     pool.tools = [tool("delete_thing", read_only=True) if t.name == "delete_thing" else t for t in pool.tools]
-    r = request(client, "GET", H, "/delete_thing")
-    assert r.status_code == 405 and r.headers["allow"] == "HEAD, OPTIONS, PUT, DELETE"
-    assert pool.calls == [("svc", "read_thing", {})]
+    assert request(client, "GET", H, "/thing").status_code == 200
+    entries = client.options("/thing", headers={"Host": H}).json()["entries"]
+    [delete] = [e for e in entries if e["method"] == "DELETE"]
+    assert delete["tool"] == "delete_thing" and delete["contract"]["read_only"] is False
+    assert [e["tool"] for e in entries if e["method"] == "GET"] == ["read_thing"]
+    assert pool.calls == [("svc", "read_thing", {}), ("svc", "read_thing", {})]
 
 
 # ── discovery tells the AI exactly what to send ──
 
 def test_options_and_head_describe_the_profile(l0):
     client, _ = l0
-    one = client.options("/delete_thing", headers={"Host": H})
-    assert one.status_code == 200 and one.headers["allow"] == "HEAD, OPTIONS, PUT, DELETE"
-    body = one.json()
-    assert body["methods"] == ["DELETE", "PUT"]
-    assert set(body["scopes_required"]) == {"DELETE", "PUT"}
-    assert body["requirements"]["DELETE"]["definer"] is False  # DF-1: optional on DELETE
-    assert "bookend" not in body["requirements"]["DELETE"]
-    send = client.options("/send_thing", headers={"Host": H}).json()
-    assert send["requirements"]["POST"]["definer"] is True and send["requirements"]["PATCH"]["definer"] is False
+    one = client.options("/thing", headers={"Host": H})
+    assert one.status_code == 200 and one.headers["allow"] == "HEAD, OPTIONS, GET, POST, PUT, DELETE"
+    entries = {(e["method"], e.get("definer")): e for e in one.json()["entries"]}
+    assert {key: e["tool"] for key, e in entries.items()} == {
+        ("GET", None): "read_thing", ("POST", "SEND"): "send_thing", ("PUT", None): "set_thing",
+        ("DELETE", None): "delete_thing"}
+    assert entries[("DELETE", None)]["requirements"]["definer"] is False  # DF-1: optional on DELETE
+    assert "bookend" not in entries[("DELETE", None)]["requirements"]
+    assert entries[("POST", "SEND")]["requirements"]["definer"] is True
+    assert entries[("PUT", None)]["requirements"]["definer"] is False
     every = client.options("/", headers={"Host": H}).json()
-    assert {t["name"]: t["methods"] for t in every["tools"]}["read_thing"] == ["GET"]
-    head = client.head("/send_thing", headers={"Host": H})
-    assert head.headers["allow"] == "HEAD, OPTIONS, POST, PATCH"
+    assert {e["tool"]: (e["method"], e["path"]) for e in every["entries"]}["read_thing"] == ("GET", "/thing")
+    head = client.head("/thing", headers={"Host": H})
+    assert head.headers["allow"] == "HEAD, OPTIONS, GET, POST, PUT, DELETE"
     listing = client.get("/", headers={"Host": H}).json()
-    assert {t["name"]: t["methods"] for t in listing["tools"]}["plain"] == ["DELETE", "POST"]
+    assert {t["name"]: (t["method"], t["path"], t.get("definer")) for t in listing["tools"]}["plain"] == (
+        "POST", "/plain", "INVOKE")
 
 
 # ── level 1: the guard signs the query too ──
 
 def test_guard_covers_the_query_string(monkeypatch):
     client, pool = make_client(monkeypatch, [entry(level=1)], _tools())
-    ok = request(client, "GET", H, "/read_thing", query="id=1&b=2", guarded=True)
+    ok = request(client, "GET", H, "/thing", query="id=1&b=2", guarded=True)
     assert ok.status_code == 200
-    forged = request(client, "GET", H, "/read_thing", query="id=999", guarded=True, sign_query="id=1")
+    forged = request(client, "GET", H, "/thing", query="id=999", guarded=True, sign_query="id=1")
     assert forged.status_code == 403 and forged.json()["error"] == "guard_invalid"
     assert [c[2] for c in pool.calls] == [{"id": "1", "b": "2"}]
 
@@ -181,18 +191,18 @@ def test_qualifier_labels(monkeypatch):
     client, pool = make_client(monkeypatch, [entry(level=1, labels=("eu", "v2"))], _tools())
     # Allowed by grammar, but there is no per-qualifier backend yet: fail closed rather than
     # serve "eu" from the default backend (review finding: false sense of residency).
-    r = request(client, "GET", "eu.v2.svc.localhost", "/read_thing")
+    r = request(client, "GET", "eu.v2.svc.localhost", "/thing")
     assert r.status_code == 404 and r.json()["error"] == "qualifier_not_routable"
     assert pool.calls == []
-    r = request(client, "GET", "v2.eu.svc.localhost", "/read_thing")
+    r = request(client, "GET", "v2.eu.svc.localhost", "/thing")
     assert r.status_code == 404 and r.json()["error"] == "unknown_qualifier"
-    assert request(client, "GET", "ap.svc.localhost", "/read_thing").status_code == 404
-    assert request(client, "GET", "EU.svc.localhost", "/read_thing").json()["error"] == "invalid_host"
+    assert request(client, "GET", "ap.svc.localhost", "/thing").status_code == 404
+    assert request(client, "GET", "EU.svc.localhost", "/thing").json()["error"] == "invalid_host"
 
 
 def test_qualifiers_rejected_by_default(l0):
     client, _ = l0
-    assert request(client, "GET", "eu.svc.localhost", "/read_thing").status_code == 404
+    assert request(client, "GET", "eu.svc.localhost", "/thing").status_code == 404
 
 
 # ── level 2: idempotency ──
@@ -206,7 +216,7 @@ def test_level2_requires_an_idempotency_key(l2):
     # The bookend is gone: a plain verb is all the definer carries at every level.
     client, pool = l2
     body = b'{"to":"x"}'
-    r = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers={"WebSpec-Definer": "SEND"})
+    r = request(client, "POST", H, "/thing", body=body, guarded=True, headers={"WebSpec-Definer": "SEND"})
     assert r.status_code == 400 and r.json()["error"] == "idempotency_key_required"
     assert pool.calls == []
 
@@ -215,13 +225,13 @@ def test_idempotent_replay_does_not_resend(l2):
     client, pool = l2
     body = b'{"to":"x"}'
     hdrs = {"WebSpec-Definer": "SEND", "Idempotency-Key": "k-1"}
-    first = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
-    again = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
+    first = request(client, "POST", H, "/thing", body=body, guarded=True, headers=hdrs)
+    again = request(client, "POST", H, "/thing", body=body, guarded=True, headers=hdrs)
     assert first.status_code == again.status_code == 200
     assert again.headers["idempotent-replayed"] == "true" and again.content == first.content
     assert len(pool.calls) == 1
     other = b'{"to":"y"}'
-    r = request(client, "POST", H, "/send_thing", body=other, guarded=True,
+    r = request(client, "POST", H, "/thing", body=other, guarded=True,
                 headers={"WebSpec-Definer": "SEND", "Idempotency-Key": "k-1"})
     assert r.status_code == 422 and r.json()["error"] == "idempotency_key_reused"
 
@@ -231,9 +241,9 @@ def test_timeout_makes_the_outcome_unknown(l2):
     body = b"{}"
     hdrs = {"WebSpec-Definer": "SEND", "Idempotency-Key": "k-2"}
     pool.raise_on_call = asyncio.TimeoutError()
-    assert request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs).status_code == 504
+    assert request(client, "POST", H, "/thing", body=body, guarded=True, headers=hdrs).status_code == 504
     pool.raise_on_call = None
-    r = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
+    r = request(client, "POST", H, "/thing", body=body, guarded=True, headers=hdrs)
     assert r.status_code == 409 and r.json()["error"] == "idempotency_outcome_unknown"
     assert len(pool.calls) == 1
 
@@ -241,7 +251,7 @@ def test_timeout_makes_the_outcome_unknown(l2):
 def test_put_is_idempotent_so_needs_no_key(l2):
     client, _ = l2
     body = b'{"v":1}'
-    r = request(client, "PUT", H, "/set_thing", body=body, guarded=True,
+    r = request(client, "PUT", H, "/thing", body=body, guarded=True,
                 headers={"WebSpec-Definer": "SET"})
     assert r.status_code == 200
 
@@ -250,21 +260,21 @@ def test_put_is_idempotent_so_needs_no_key(l2):
 
 def test_level3_requires_clearance_for_mutations_and_sensitive_reads(monkeypatch):
     client, pool = make_client(monkeypatch, [entry(level=3)], _tools())
-    assert request(client, "GET", H, "/read_thing", guarded=True).status_code == 200  # open read: none needed
-    r = request(client, "GET", H, "/read_secret", query="ref=a", guarded=True)
+    assert request(client, "GET", H, "/thing", guarded=True).status_code == 200  # open read: none needed
+    r = request(client, "GET", H, "/secret", query="ref=a", guarded=True)
     assert r.status_code == 403 and r.json()["error"] == "clearance_missing"
-    r = request(client, "GET", H, "/read_secret", query="ref=a", guarded=True,
+    r = request(client, "GET", H, "/secret", query="ref=a", guarded=True,
                 headers={"WebSpec-Clearance": clearance("read_secret", {"ref": "a"}, method="GET")})
     assert r.status_code == 200
-    r = request(client, "GET", H, "/read_secret", query="ref=b", guarded=True,
+    r = request(client, "GET", H, "/secret", query="ref=b", guarded=True,
                 headers={"WebSpec-Clearance": clearance("read_secret", {"ref": "a"}, method="GET")})
     assert r.json()["error"] == "clearance_invalid"  # bound to the exact arguments
     body = b'{"to":"x"}'
     hdrs = {"WebSpec-Definer": "SEND", "Idempotency-Key": "c-1"}
-    r = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
+    r = request(client, "POST", H, "/thing", body=body, guarded=True, headers=hdrs)
     assert r.json()["error"] == "clearance_missing"
     hdrs["WebSpec-Clearance"] = clearance("send_thing", {"to": "x"}, method="POST")
-    assert request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs).status_code == 200
+    assert request(client, "POST", H, "/thing", body=body, guarded=True, headers=hdrs).status_code == 200
 
 
 # ── level 4: a human signs the exact request ──
@@ -281,7 +291,7 @@ def test_level4_human_approval_round_trip(monkeypatch, tmp_path):
                                              method="DELETE")}
         if approval:
             hdrs["WebSpec-Approval"] = approval
-        return request(client, "DELETE", H, "/delete_thing", query=query, guarded=True, headers=hdrs)
+        return request(client, "DELETE", H, "/thing", query=query, guarded=True, headers=hdrs)
 
     challenge = attempt("id=1")
     assert challenge.status_code == 428
@@ -307,9 +317,9 @@ def test_level4_rejects_a_signature_from_an_unlisted_key(monkeypatch, tmp_path):
     client, pool = make_client(monkeypatch, [entry(level=4)], _tools())
     hdrs = {"WebSpec-Definer": "REMOVE",
             "WebSpec-Clearance": clearance("delete_thing", {"id": "1"}, method="DELETE")}
-    ch = request(client, "DELETE", H, "/delete_thing", query="id=1", guarded=True, headers=hdrs).json()
+    ch = request(client, "DELETE", H, "/thing", query="id=1", guarded=True, headers=hdrs).json()
     hdrs["WebSpec-Approval"] = f"{ch['challenge']}:{ssh_sign(rogue, sign_message(ch['challenge'], ch['fingerprint']))}"
-    r = request(client, "DELETE", H, "/delete_thing", query="id=1", guarded=True, headers=hdrs)
+    r = request(client, "DELETE", H, "/thing", query="id=1", guarded=True, headers=hdrs)
     assert r.status_code == 403 and r.json()["error"] == "approval_invalid"
     assert pool.calls == []
 
@@ -320,10 +330,10 @@ def test_level4_without_approvers_fails_closed(monkeypatch):
     client, pool = make_client(monkeypatch, [entry(level=4)], _tools())
     hdrs = {"WebSpec-Definer": "REMOVE",
             "WebSpec-Clearance": clearance("delete_thing", {"id": "1"}, method="DELETE")}
-    r = request(client, "DELETE", H, "/delete_thing", query="id=1", guarded=True, headers=hdrs)
+    r = request(client, "DELETE", H, "/thing", query="id=1", guarded=True, headers=hdrs)
     assert r.status_code == 503 and r.json()["error"] == "approval_unavailable"
     hdrs["WebSpec-Approval"] = "0123abcd:U1NIU0lH"  # base64("SSHSIG")
-    r = request(client, "DELETE", H, "/delete_thing", query="id=1", guarded=True, headers=hdrs)
+    r = request(client, "DELETE", H, "/thing", query="id=1", guarded=True, headers=hdrs)
     assert r.status_code == 503 and r.json()["error"] == "approval_unavailable"
     assert pool.calls == []
 
@@ -332,12 +342,14 @@ def test_level4_without_approvers_fails_closed(monkeypatch):
 
 def test_every_decision_is_audited_and_chained(l0, tmp_path):
     client, _ = l0
-    request(client, "GET", H, "/read_thing")
-    request(client, "GET", H, "/delete_thing")
+    request(client, "GET", H, "/thing")
+    request(client, "GET", H, "/plain")
     log = tmp_path / "audit.jsonl"
     entries = [json.loads(line) for line in log.read_text().splitlines()]
-    assert [(e["tool"], e["outcome"], e["reason"]) for e in entries] == [
-        ("read_thing", "invoked", None),
-        ("delete_thing", "denied", "method_not_allowed"),  # a GET probe at a destructive tool is evidence
+    assert [(e["method"], e["path"], e["tool"], e["outcome"], e["reason"]) for e in entries] == [
+        ("GET", "/thing", "read_thing", "invoked", None),
+        # A GET probe at a destructive tool's path is evidence. The path maps no GET, so no
+        # tool is resolved (PA-10 step 2).
+        ("GET", "/plain", None, "denied", "method_not_allowed"),
     ]
     assert audit.verify_chain(log) is None

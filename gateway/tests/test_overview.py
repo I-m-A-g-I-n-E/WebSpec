@@ -65,6 +65,7 @@ def sent(tmp_path_factory):
         def gateway(level: int, *destinations: str):
             # A fresh gateway process: nothing one-time carries over.
             mp.setattr(handlers, "contract_pins", ContractPins())
+            mp.setattr(handlers, "route_maps", {})
             mp.setattr(idempotency, "store", idempotency.IdempotencyStore())
             mp.setattr(approval, "store", approval.ApprovalStore())
             mp.setattr(guard, "spent_clearances", guard._SpentClearances())
@@ -78,28 +79,29 @@ def sent(tmp_path_factory):
         with gateway(0, "notes") as http:
             notes = Shim(http, "notes.localhost", "notes", KEY)
             here = {"Host": "notes.localhost"}
-            got["unserved host"] = http.get("/read_note?id=welcome", headers={"Host": "mail.localhost"})
+            got["unserved host"] = http.get("/note?id=welcome", headers={"Host": "mail.localhost"})
             got["unknown tool"] = http.get("/no_such_tool", headers=here)
-            got["GET of a delete"] = notes.call("GET", "delete_note", {"id": "welcome"})
-            got["preflight"] = http.options("/send_note", headers={
+            # /note maps GET to read_note and DELETE to delete_note. PUT is admissible for
+            # delete_note under MB-1, but the map does not give it PUT (PA-5).
+            got["a method /note doesn't map"] = notes.call("PUT", "/note", {"id": "welcome"})
+            got["preflight"] = http.options("/email", headers={
                 **here, "Origin": OTHER_ORIGIN, "Access-Control-Request-Method": "POST",
                 "Access-Control-Request-Headers": "content-type, webspec-definer"})
             for content_type, body in FORMS.items():
-                got[f"form, {content_type}"] = http.post("/send_note", content=body, headers={
+                got[f"form, {content_type}"] = http.post("/email", content=body, headers={
                     **here, "Content-Type": content_type, "Origin": OTHER_ORIGIN})
-            got["DELETE verb on a POST"] = notes.call("POST", "send_note", NOTE, "REMOVE")
-            got["repeated query key"] = http.get("/read_note?id=welcome&id=other", headers=here)
+            got["DELETE verb on a POST"] = notes.call("POST", "/email", NOTE, "REMOVE")
+            got["repeated query key"] = http.get("/note?id=welcome&id=other", headers=here)
             got["repeated JSON key"] = http.post(
-                "/send_note", content=b'{"id":"welcome","to":"ana@example.com","to":"eve@example.com"}',
+                "/email", content=b'{"id":"welcome","to":"ana@example.com","to":"eve@example.com"}',
                 headers={**here, "Content-Type": "application/json", "WebSpec-Definer": "SEND"})
-            got["GET from another origin"] = http.get("/read_note?id=welcome", headers={**here, "Origin": OTHER_ORIGIN})
-            http.head("/delete_note?id=welcome", headers=here)
-            http.options("/delete_note", headers=here)
-            got["read after HEAD and OPTIONS"] = http.get("/read_note?id=welcome", headers=here)
+            got["GET from another origin"] = http.get("/note?id=welcome", headers={**here, "Origin": OTHER_ORIGIN})
+            http.head("/note?id=welcome", headers=here)
+            http.options("/note", headers=here)
+            got["read after HEAD and OPTIONS"] = http.get("/note?id=welcome", headers=here)
             # Last at this level: it deletes the note.
-            got["PUT with a PUT verb"] = http.put("/delete_note", content=b'{"id":"welcome"}', headers={
-                **here, "Content-Type": "application/json", "WebSpec-Definer": "SET"})
-            got["read after the PUT"] = http.get("/read_note?id=welcome", headers=here)
+            got["DELETE with ARCHIVE"] = notes.call("DELETE", "/note", {"id": "welcome"}, "ARCHIVE")
+            got["read after the DELETE"] = http.get("/note?id=welcome", headers=here)
 
         with gateway(1, "notes", "mail") as http:
             notes = Shim(http, "notes.localhost", "notes", KEY)
@@ -109,38 +111,38 @@ def sent(tmp_path_factory):
             def signed(body: bytes, sent_to: str, sent_body: bytes):
                 """A send signed for notes with body, then sent to sent_to with sent_body."""
                 nonce = notes._nonce()
-                tag = guard_tag(KEY, "POST", "notes.localhost", "/send_note", nonce, body, "", "SEND")
-                return http.post("/send_note", content=sent_body, headers={
+                tag = guard_tag(KEY, "POST", "notes.localhost", "/email", nonce, body, "", "SEND")
+                return http.post("/email", content=sent_body, headers={
                     "Host": sent_to, "Content-Type": "application/json", "WebSpec-Definer": "SEND",
                     "WebSpec-Nonce": nonce, "WebSpec-Guard": tag})
 
             got["signed send"] = signed(to_ana, "notes.localhost", to_ana)
             got["re-addressed"] = signed(to_ana, "notes.localhost", to_eve)
             got["sent to another destination"] = signed(to_ana, "mail.localhost", to_ana)
-            got["shim's send"] = notes.call("POST", "send_note", NOTE, "SEND")
+            got["shim's send"] = notes.call("POST", "/email", NOTE, "SEND")
             last = notes.log[-1]
             got["same bytes again"] = notes._send(last.method, last.target, "", last.body,
                                                   {k: v for k, v in last.headers.items() if k != "Host"})
-            got["unsigned"] = http.get("/read_note?id=welcome", headers={"Host": "notes.localhost"})
+            got["unsigned"] = http.get("/note?id=welcome", headers={"Host": "notes.localhost"})
 
         # The home page's dial: the send at each level, without what that level adds.
         body = json.dumps(NOTE, separators=(",", ":")).encode()
         with gateway(2, "notes") as http:
             notes = Shim(http, "notes.localhost", "notes", KEY)
-            got["level 2, no key"] = notes._signed(2, "POST", "/send_note", body=body, headers={
+            got["level 2, no key"] = notes._signed(2, "POST", "/email", body=body, headers={
                 "Content-Type": "application/json", "WebSpec-Definer": "SEND"})
         with gateway(3, "notes") as http:
             unvouched = Shim(http, "notes.localhost", "notes", KEY, vouch=lambda *_: False)
-            got["level 3, not vouched for"] = unvouched.call("POST", "send_note", NOTE, "SEND")
+            got["level 3, not vouched for"] = unvouched.call("POST", "/email", NOTE, "SEND")
         with gateway(4, "notes") as http:
-            got["level 4, no approval"] = Shim(http, "notes.localhost", "notes", KEY).call("POST", "send_note", NOTE, "SEND")
+            got["level 4, no approval"] = Shim(http, "notes.localhost", "notes", KEY).call("POST", "/email", NOTE, "SEND")
     return got
 
 
 @pytest.mark.parametrize("request_text", [
-    "DELETE /delete_note?id=welcome\nHost: notes.localhost\nX-Gimme-Definer: REMOVE\n",
-    "GET /read_note?id=welcome\nHost: notes.localhost\nX-WebSpec-Nonce: 403c28aba42fa462a23469b97db9b204\n"
-    "X-WebSpec-Guard: ef56efa3\n",
+    "DELETE /note?id=welcome\nHost: notes.localhost\n",
+    "GET /note?id=welcome\nHost: notes.localhost\nWebSpec-Nonce: 4e77ef8d78b024923fb44820805d6547\n"
+    "WebSpec-Guard: 2702dbea\n",
 ], ids=["the delete", "the signed read"])
 def test_the_requests_on_the_page_are_the_walkthroughs(request_text):
     # test_examples.py replays them: the delete gets 200, the signed read 200 and then 403 nonce_reused.
@@ -163,10 +165,10 @@ def test_each_level_refuses_a_send_without_what_it_adds(sent):
     assert answer(sent["level 4, no approval"]) == (428, "approval_required")
 
 
-def test_a_get_cannot_reach_a_delete(sent):
-    response = sent["GET of a delete"]
-    assert answer(response)[0] == 405 and response.headers["allow"] == "HEAD, OPTIONS, PUT, DELETE"
-    assert "`405 Method Not Allowed` with `Allow: HEAD, OPTIONS, PUT, DELETE`" in PAGE
+def test_a_method_the_path_does_not_map(sent):
+    response = sent["a method /note doesn't map"]
+    assert answer(response)[0] == 405 and response.headers["allow"] == "HEAD, OPTIONS, GET, DELETE"
+    assert "`405 Method Not Allowed` with `Allow: HEAD, OPTIONS, GET, DELETE`" in PAGE
 
 
 def test_another_origin_cannot_add_the_definer(sent):
@@ -192,10 +194,10 @@ def test_a_verb_from_another_methods_family(sent):
 
 
 def test_the_definer_is_checked_against_the_method_not_the_tool(sent):
-    # A PUT to the delete, with a PUT verb, deletes the note.
-    response = sent["PUT with a PUT verb"]
+    # A DELETE with ARCHIVE, a DELETE verb, reaches the delete, which deletes the note outright.
+    response = sent["DELETE with ARCHIVE"]
     assert answer(response) == (200, None) and response.json()["result"] == "deleted"
-    assert sent["read after the PUT"].json()["result"] == ""
+    assert sent["read after the DELETE"].json()["result"] == ""
 
 
 def test_each_query_key_once(sent):

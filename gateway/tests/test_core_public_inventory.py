@@ -15,8 +15,8 @@ import webspec.app as appmod
 from tests._gateway import GUARD_KEY_HEX, FakePool, FakeRegistry, entry, tool
 
 DOMAIN = "example.test"
-REQUESTS = [("HEAD", "/"), ("OPTIONS", "/"), ("GET", "/"), ("GET", "/read_note"), ("POST", "/send_note"),
-            ("HEAD", "/read_note"), ("OPTIONS", "/read_note"), ("DELETE", "/read_note")]
+REQUESTS = [("HEAD", "/"), ("OPTIONS", "/"), ("GET", "/"), ("GET", "/note"), ("POST", "/email"),
+            ("HEAD", "/note"), ("OPTIONS", "/note"), ("DELETE", "/note")]
 UNKNOWN = {"error": "unknown_service", "detail": "Unknown service: zzz"}
 
 
@@ -58,7 +58,7 @@ def test_a_loopback_name_still_gets_the_list(client, method, path, host):
 
 def test_the_public_refusal_is_still_audited(client, tmp_path):
     # AU-1: a request for an unknown destination on the invocation path is a denial.
-    r = client.post("/send_note", headers={"Host": f"zzz.{DOMAIN}", "WebSpec-Definer": "SEND"})
+    r = client.post("/email", headers={"Host": f"zzz.{DOMAIN}", "WebSpec-Definer": "SEND"})
     assert r.status_code == 404
     [line] = [json.loads(x) for x in (tmp_path / "audit.jsonl").read_text().splitlines()]
     assert (line["host"], line["outcome"], line["status"], line["reason"]) == (
@@ -68,5 +68,5 @@ def test_the_public_refusal_is_still_audited(client, tmp_path):
 def test_known_destinations_keep_their_public_answers(client):
     # HG-7 is unchanged: a level-0 destination is refused, a guarded one asks for the guard.
     assert client.get("/", headers={"Host": f"notes.{DOMAIN}"}).json()["error"] == "unguarded_public"
-    r = client.get("/read_note", headers={"Host": f"vault.{DOMAIN}"})
+    r = client.get("/note", headers={"Host": f"vault.{DOMAIN}"})
     assert (r.status_code, r.json()["error"]) == (401, "guard_missing")

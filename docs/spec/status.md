@@ -52,7 +52,8 @@ These are true of the reference gateway today. Some come from the rules themselv
   key that no tool held, gets the contract that its new listing claims, and no override written
   for the old name applies. For example, a destructive `purge_notes` re-listed as a read-only
   `get_notes` is served on `GET /notes`. When the new tool shares the old one's path, a `POST`
-  with the old verb answers `404`, and its `detail` lists the new verb
+  with the old verb answers `400 unknown_action`, and its body points to `OPTIONS /{noun}`,
+  which lists the new verb
   ([PA-10](addressing.md#allow-and-refusals)).
 - **Stdio servers run as the gateway's user.** Each one can read what the gateway reads (on
   macOS, the guard-key file and every secret), read the other servers' environment, write the

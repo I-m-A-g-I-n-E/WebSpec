@@ -136,7 +136,7 @@ in responses, and `webspec-ctl` call a destination a *service*.
     | Contract | Fallback method |
     |---|---|
     | read-only | `GET` |
-    | destructive and idempotent | `DELETE` |
+    | destructive and idempotent | `PUT` |
     | anything else | `POST`, with the definer `INVOKE` |
 
 Examples:
@@ -148,6 +148,7 @@ Examples:
 | `send_email` | not read-only, not destructive | `POST /email` with `WebSpec-Definer: SEND` |
 | `run_query` | not read-only, not destructive | `POST /run_query` with `WebSpec-Definer: INVOKE` |
 | `get_weather` | unannotated, so destructive and not idempotent ([TC-2](methods.md#tool-contracts)) | `POST /get_weather` with `INVOKE`, because `GET` is not admissible |
+| `write_file` | destructive, idempotent | `PUT /write_file`, because `write` is not in the table |
 | `delete_draft` | unannotated, so destructive and not idempotent | `POST /delete_draft` with `INVOKE`, because the tool is not idempotent |
 | `get_and_delete_x` | destructive, not idempotent | `POST /get_and_delete_x` with `INVOKE`, so `GET /get_and_delete_x` answers `405` with `Allow: HEAD, OPTIONS, POST` |
 | `read` | read-only, no `_` in the name | `GET /read` |
@@ -178,7 +179,7 @@ destructive, because the gateway keeps the strictest contract it has seen
 - **PA-7** The gateway rebuilds the map, and checks it again, in one atomic step every time it
   lists the destination's tools again and every time it reloads the configuration. A rebuild
   gives each tool its entry as PA-4 does, except that a tool the first build moved stays at
-  `/{name}`. If two or more entries share a key in a rebuild, that key answers
+  `/{name}`, unless a `bindings` entry returns it to its key (PA-8). If two or more entries share a key in a rebuild, that key answers
   `503 route_collision` until a rebuild finds it unshared. The gateway never picks one of them.
   A key that is new, has never been pinned, and is not shared is bound and pinned (PA-8).
 
@@ -193,9 +194,11 @@ destructive, because the gateway keeps the strictest contract it has seen
     ```
 
     An entry that names the tool the key now resolves to re-pins the key to that tool, and the
-    key is served again. An entry only confirms: it never sends a key to a tool that the route
-    rule did not give it, and it never opens a key that two or more tools share
-    (`503 route_collision`, PA-7). If a pinned key resolves to no tool after a rebuild, because
+    key is served again. An entry may also return a tool that the first build moved (PA-6) to the key
+    that PA-4 gives it. That tool then takes the key, and the other tools that share it stay at
+    `/{name}`: the operator picks, never the gateway. Otherwise an entry only confirms: it never
+    sends a key to a tool that the route rule did not give it, and it never opens a key that two
+    or more tools share (`503 route_collision`, PA-7). If a pinned key resolves to no tool after a rebuild, because
     its tool was removed or now has another key, a request on it gets the `404` or `405` of the
     new map (PA-10) and never reaches another tool. The gateway audits both the change and the
     confirmation ([AU-5](audit-deployment.md#audit)). Binding pins MUST survive the destination
@@ -206,7 +209,7 @@ A binding pin defends against the rug pull of [TC-6](methods.md#tool-contracts) 
 a server that replaces `create_email` with an `add_email` that has a looser contract lands on the
 same key, `POST /email` with `CREATE`, but cannot take it over unnoticed. A tool renamed onto a
 different key, such as `send_email` renamed to `create_email`, gets a key of its own, and
-`POST /email` with `SEND` answers `404`. `create_email` itself is a new tool, with the contract
+`POST /email` with `SEND` answers `400 unknown_action`. `create_email` itself is a new tool, with the contract
 it is listed with ([known limits](status.md#known-limits)).
 
 ### Allow and refusals
@@ -225,11 +228,14 @@ it is listed with ([known limits](status.md#known-limits)).
     3. On `POST`, the definer ([DF-1, DF-2](methods.md#per-method-rules)). A missing definer is
        `400 missing_definer`, and a value that is not one verb of `POST`'s family is
        `400 unknown_definer` or `400 definer_family_mismatch`. A `POST` verb that maps no tool
-       on the path is `404 tool_not_found`, and its `detail` lists the definers that the path
-       maps.
+       on the path is `400 unknown_action`, and its body points to `OPTIONS /{noun}`, which lists
+       the definers that the path maps ([DS-1](methods.md#discovery)).
     4. The key is closed: `503 route_collision` (PA-7) or `503 binding_changed` (PA-8).
     5. The tool's contract does not admit the method: `405 method_not_allowed`
        ([MB-2](methods.md#method-binding)).
+
+    Any other method, such as `TRACE`, is `405 method_not_allowed` with the path's `Allow`, or
+    `404 tool_not_found` if the path maps nothing.
 
     `HEAD` and `OPTIONS` stop after step 1, and are answered as
     [DS-1 and DS-2](methods.md#discovery) say, even when a key on the path is closed.

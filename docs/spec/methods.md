@@ -161,8 +161,8 @@ by default is an [open question](status.md#open-questions).
 
 - **RS-4** The gateway refuses with a JSON object `{"error": code, "detail": text, …}` and the
   status that the rule names. A few answers come from the web framework before the gateway's
-  handlers run, and they have plain-text bodies: a host that matches no route (`404`), a method
-  not in the [per-method table](#per-method-rules) (`405`), a rejected CORS preflight (`400`),
+  handlers run, and they have plain-text bodies: a host that matches no route (`404`), a rejected CORS
+  preflight (`400`),
   and an unhandled error (`500`). A request that needs the guard key while no usable key is set
   also gets a plain-text `500` ([GD-5](levels.md#level-1-signed)). Every refusal, the plain-text
   ones included, MUST carry `Cache-Control: no-store`, so that no cache keeps a `404` or `405`

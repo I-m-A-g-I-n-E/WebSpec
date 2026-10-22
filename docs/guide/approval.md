@@ -1,14 +1,17 @@
 # Human approval
 
-At level 4, a person signs every destructive call, every `dangerous` call, and every call that
-changes something in the open world, before it runs ([AP-1 to
-AP-7](../spec/levels.md#level-4-witnessed)). The gateway holds only the approvers' *public*
-keys. An agent harness that holds every other key, and is fully compromised, still cannot make
-those calls on its own.
+At level 4, a person signs every destructive call, every call to a tool marked `dangerous`
+(the highest [tier](annotating.md#raising-the-tier)), and every call that changes something in
+the open world, before it runs ([RQ-1](../spec/methods.md#requirements),
+[AP-1 to AP-7](../spec/levels.md#level-4-witnessed)). The gateway holds only the approvers'
+*public* keys. An agent harness that holds every other key, and is fully compromised, still
+cannot make those calls on its own, provided it cannot sign with an approver's key
+([step 1](#1-make-an-approver-key)).
 
 ## 1. Make an approver key
 
-For a quick test, a key on disk is enough:
+For a quick test, a key on disk is enough. Without a passphrase, though, any process running
+as you can sign approvals with it:
 
 ```bash
 ssh-keygen -t ed25519 -f ~/.ssh/webspec-approver -C ana@example.com
@@ -16,9 +19,11 @@ ssh-keygen -t ed25519 -f ~/.ssh/webspec-approver -C ana@example.com
 
 For real use, keep the private half in an agent that asks for Touch ID or another gesture
 before it signs. The 1Password SSH agent and keys backed by the Secure Enclave both do this.
-Set the agent to ask as often as your risk calls for. Save the public key as
-`~/.ssh/webspec-approver.pub`. `ssh-keygen -Y sign` signs with an agent-held key when it is
-given the public key file.
+Set the agent to ask as often as it allows: the gateway checks only the signature, so any
+process that gets one from the agent without a gesture, a compromised harness included, can
+approve without `webspec-ctl`. Save the public key as `~/.ssh/webspec-approver.pub`. In step 4
+you pass it to `webspec-ctl approve --key`, and the signer uses the matching private key in the
+agent.
 
 ## 2. Tell the gateway who may approve
 
@@ -29,26 +34,40 @@ List approvers in an OpenSSH *allowed signers* file, and restrict each entry to 
 ana@example.com namespaces="webspec-approval" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA…
 ```
 
-Point the gateway at the file with `WEBSPEC_APPROVERS_FILE=/etc/webspec/allowed_signers`.
+The Linux and macOS installers create this file as `/etc/webspec/allowed_signers`, with no
+approver in it, and point the gateway at it, so level 4 starts working once you add a line.
+For a development run, start the gateway with `WEBSPEC_APPROVERS_FILE` set to your file's
+path. The Docker image has neither the file nor `ssh-keygen`, so level 4 there needs a derived
+image ([docker/README.md](https://github.com/I-m-A-g-I-n-E/WebSpec/blob/main/docker/README.md)).
 Anyone who can add a line to this file can approve, so the agent must not be able to write it
-([DP-4](../spec/audit-deployment.md#deployment)). If the variable is unset, the file names
-nobody, or there is no `ssh-keygen` to verify with, calls that need approval are refused with
-`503 approval_unavailable`, and no challenge is issued. The reference installers create the file with no approver in it, so level 4 starts working only once
-you add a line.
+([DP-4](../spec/audit-deployment.md#deployment)). Until the file names someone, calls that
+need approval are refused ([When it fails](#when-it-fails)).
 
 ## 3. Raise the destination to level 4
 
+Add `"level": 4` to the destination's entry: in `webspec.json` if you followed the
+[Quickstart](index.md#2-point-the-gateway-at-an-mcp-server), or in `/etc/webspec/config.json`
+on an installed host. The gateway picks up the change within 30 seconds.
+
 ```json
-{"mcpServers": {"notes": {"command": "python", "args": ["gateway/examples/demo_server.py"],
-                          "level": 4}}}
+{
+  "mcpServers": {
+    "notes": {
+      "command": "python",
+      "args": ["gateway/examples/demo_server.py"],
+      "level": 4
+    }
+  }
+}
 ```
 
 ## 4. Approve a request
 
 When a call needs approval, the gateway answers `428 Precondition Required`. The body is a
-challenge that describes exactly that request ([walkthrough](walkthrough.md#level-4-witnessed)).
-The harness hands the challenge to a person, for example by saving it as `challenge.json`.
-The person runs the following. The challenge here is the one from the walkthrough:
+challenge that describes exactly that request ([AP-1](../spec/levels.md#level-4-witnessed)
+shows one in full). The harness hands the whole body to a person, for example by saving it as
+`challenge.json`, and the person runs the following. The request here is the
+[walkthrough's](walkthrough.md#level-4-witnessed) send:
 
 ```console
 $ webspec-ctl approve challenge.json --key ~/.ssh/webspec-approver.pub
@@ -70,10 +89,10 @@ $ webspec-ctl approve challenge.json --key ~/.ssh/webspec-approver.pub
 fingerprint: 4f935160084ad6289b3eb2b1216fd7079f09e6bddc8ea822d4507299599dbb84
 
 Type 'approve' to sign this exact request: approve
-X-WebSpec-Approval: 053f02f8b18f3e5c0a8eb7762777f8be:U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAg…
+X-WebSpec-Approval: e6bcb018cdffb4cc91c2a460bab50b9e:U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAg…
 ```
 
-Before it asks anything, `webspec-ctl approve` does three things:
+Before it signs, `webspec-ctl approve` does three things:
 
 - It recomputes the fingerprint from the summary it is about to show, and refuses a challenge
   whose fingerprint doesn't match. What you see is what you sign.
@@ -88,14 +107,17 @@ The key can also come from `WEBSPEC_APPROVER_KEY`. A different signer that accep
 
 ## 5. Retry
 
-Within 300 seconds, the harness retries the same request: the same method, path, arguments,
-and body, with a fresh nonce and guard, a clearance minted within the last 30 seconds, and the
-printed header. The reference shim does all of this. Reuse the same `Idempotency-Key` so that
-the retry is the same operation:
+Within 300 seconds of the first `428`, retry the identical request with the printed header,
+and reuse the same `Idempotency-Key` so that the retry is the same operation. The retry also
+needs a fresh nonce and guard, and a clearance minted within the last 30 seconds
+([AP-3](../spec/levels.md#level-4-witnessed)), which the reference shim adds. Here `notes` is
+a new shim, made as in [Quickstart step 5](index.md#5-raise-the-security-level) once the
+level is 4:
 
 ```python
 note = {"id": "welcome", "to": "ana@example.com"}
 first = notes.call("POST", "send_note", note, "SEND", idempotency_key="k-91c2")    # 428
+open("challenge.json", "w").write(first.text)   # for the person in step 4
 header = "…"   # the X-WebSpec-Approval value from webspec-ctl approve
 notes.call("POST", "send_note", note, "SEND", approval=header, idempotency_key="k-91c2")  # 200
 ```
@@ -110,18 +132,24 @@ once.
 | `403 approval_mismatch` | The retry is not identical to the request that was approved |
 | `403 approval_reused` | The approval was already spent |
 | `403 approval_invalid` | The signature isn't from a listed key, in the `webspec-approval` namespace. Five failures burn the challenge |
-| `403 approval_expired` / `approval_unknown` | More than 300 seconds have passed, or the challenge was burned. Start over |
+| `403 approval_expired` / `approval_unknown` | More than 300 seconds have passed, the challenge was burned, or the gateway restarted after issuing it. Start over |
 | `403 approval_malformed` | The header isn't `<challenge>:<base64 signature>` |
 | `403 approval_in_progress` | The same challenge is being verified by another request. Retry in a moment |
 | `429 approval_queue_full` | 100 challenges were issued for this destination in the last 300 seconds. Try again later |
-| `503 approval_unavailable` | No approvers are configured |
+| `503 approval_unavailable` | `WEBSPEC_APPROVERS_FILE` is unset or names nobody, or there is no `ssh-keygen` to verify with. No challenge is issued |
 
 A retry of the same request that carries no approval gets the same pending challenge back, so
 an impatient agent can't flood the queue with copies of one request.
 
-## What level 4 does and doesn't do
+## Limits of level 4
 
-Level 4 holds against a fully compromised harness for the calls that it witnesses. Reads, and
-changes that stay inside your own systems, follow the lower levels' rules. Its weak point is
-the person: someone who approves a prompt they didn't expect defeats it. Level 4 asks only
-for destructive, dangerous, and open-world changes, so prompts stay rare enough to read.
+Unless a tool is `dangerous`, two kinds of call follow the lower levels' rules: reads, and
+changes that destroy nothing and stay inside your own systems. The reads include calls to
+read-only open-world tools, such as a URL fetcher, which can carry data out in their arguments
+([Known limits](../spec/status.md#known-limits)). To put a person in front of such a tool,
+raise it to `dangerous` ([Raising the tier](annotating.md#raising-the-tier)).
+
+Level 4's weak point is the person: someone who approves a prompt they didn't expect defeats
+it. Prompts stay rare enough to read only if your tools are annotated. An unannotated tool
+counts as destructive, so every call to it needs a person's signature
+([What an unannotated tool costs](annotating.md#what-an-unannotated-tool-costs)).

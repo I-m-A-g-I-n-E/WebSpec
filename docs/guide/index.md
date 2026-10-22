@@ -16,8 +16,8 @@ pip install ./gateway
 ## 2. Point the gateway at an MCP server
 
 The gateway reads MCP server definitions in the same format an MCP client uses. Save this as
-`webspec.json`. It registers the guide's demo server, which has one read tool, one send tool,
-and one delete tool:
+`webspec.json` in the repository root. It registers the guide's demo server, which has one
+read tool, one send tool, and one delete tool:
 
 ```json
 {
@@ -30,22 +30,29 @@ and one delete tool:
 }
 ```
 
-With no `level` set, the destination runs at level 0, which is loopback only.
-
 ## 3. Start the gateway
 
+The gateway checks signed requests against a guard key. Create one now, even though nothing is
+signed until step 5: without it, the send in step 4 fails
+([Known limits](../spec/status.md#known-limits)).
+
 ```bash
-openssl rand -hex 32 > guard.key                    # in real use, keep the key in your password manager
+# in real use, keep the key in your password manager
+openssl rand -hex 32 > guard.key
 export WEBSPEC_GUARD_KEY=$(cat guard.key)
 WEBSPEC_CONFIG=$PWD/webspec.json python -m webspec
 ```
 
 The gateway listens on `127.0.0.1:7001`. Each MCP server becomes a destination under
-`.localhost`. Here that is `notes.localhost:7001`.
+`.localhost`. Here that is `notes.localhost:7001`. Its entry sets no
+[`level`](../spec/audit-deployment.md#configuration), so it runs at level 0, the lowest of five
+security levels, where the gateway serves it only under loopback names like this one.
 
 ## 4. Call it
 
-In a second terminal, list the tools. Each tool comes with the methods its contract admits:
+In a second terminal, list the tools. The gateway builds each tool's contract from its MCP
+annotations ([Annotating MCP servers](annotating.md)), and each tool comes with the methods its
+contract admits:
 
 ```console
 $ curl -s http://notes.localhost:7001/
@@ -72,7 +79,8 @@ allow: HEAD, OPTIONS, PUT, DELETE
 {"error":"method_not_allowed","detail":"GET cannot invoke delete_note; its contract admits DELETE, PUT", …}
 ```
 
-Send, saying the verb aloud:
+Send a note with `POST`. The `X-Gimme-Definer` header restates the method in one word from
+`POST`'s verb family, here `SEND` ([the definer](how-it-works.md#the-verb-said-aloud-the-definer)):
 
 ```console
 $ curl -s -X POST http://notes.localhost:7001/send_note \
@@ -81,17 +89,19 @@ $ curl -s -X POST http://notes.localhost:7001/send_note \
 {"result":{"queued":1,"to":"ana@example.com"},"definer_tier":1,"canonical":"SEND"}
 ```
 
-Leave the verb out and the gateway refuses with `missing_definer`. Ask what a tool needs before
-calling it:
+Leave `X-Gimme-Definer` out and the gateway refuses with `400 missing_definer`.
+
+Ask what a tool needs before calling it ([DS-1](../spec/methods.md#discovery)):
 
 ```console
 $ curl -s -X OPTIONS http://notes.localhost:7001/send_note
+{"name":"send_note", …, "methods":["PATCH","POST"],
+ "contract":{"read_only":false,"destructive":false,"idempotent":false,"open_world":true, …},
+ "level":0,"level_name":"local",
+ "requirements":{"PATCH":{…},"POST":{"guard":false,"definer":true,"bookend":false,"idempotency_key":false, …}}, …}
 ```
 
-The answer lists the contract, the methods, and the per-method requirements
-([DS-1](../spec/methods.md#discovery)).
-
-## 5. Turn the dial
+## 5. Raise the security level
 
 Add `"level": 2` to the `notes` entry in `webspec.json`. The gateway picks up the change
 within 30 seconds. Unsigned requests are now refused:
@@ -101,16 +111,19 @@ $ curl -s "http://notes.localhost:7001/read_note?id=welcome"
 {"error":"guard_missing","detail":"X-WebSpec-Guard header required"}
 ```
 
-From here on, a harness shim signs the requests. The reference shim
-(`gateway/examples/shim.py`) uses only the standard library. In the second terminal, from the
-repository root with the virtual environment active, load the same key and start Python:
+From here on, the reference shim, `gateway/examples/shim.py`, signs the requests as an agent's
+harness (the program that runs the model) would, so the model never needs the key. In the
+second terminal, from the repository root, activate the virtual environment, load the same
+key, and start Python:
 
 ```bash
+source .venv/bin/activate
 export WEBSPEC_GUARD_KEY=$(cat guard.key)
 python
 ```
 
-Then point the shim at the gateway:
+Then point the shim at the gateway. It connects to `127.0.0.1`, and `host` is the `Host`
+header it signs and sends:
 
 ```python
 import os, sys, httpx
@@ -126,16 +139,21 @@ notes.call("POST", "send_note", {"id": "welcome", "to": "ana@example.com"}, "SEN
 # {'result': {'queued': 2, 'to': 'ana@example.com'}, 'definer_tier': 2, 'canonical': 'SEND'}
 ```
 
-The calls are the same ones the model would write. The shim learned the level from
-`OPTIONS`, and added the nonce, the guard, the bookend, and the `Idempotency-Key`.
+You gave the shim the same method, tool, arguments, and verb that you sent with `curl` at
+level 0, and that is all a model decides. The shim read the level from `OPTIONS` and added
+what level 2 requires: a single-use nonce and a guard (an HMAC over the request) on both calls,
+plus a bookend (a short tag on the verb) and an `Idempotency-Key` on the send
+([What the shim added](walkthrough.md#what-the-shim-added)).
 
-Every call since step 4 is also in the audit log, `~/.webspec/gateway-audit.jsonl`, each line
-chained to the one before it.
+Every tool call and refusal above is also in the audit log, `~/.webspec/gateway-audit.jsonl`,
+each line chained to the one before it. Discovery (`GET /`, `OPTIONS`) and nonce issuance are
+not logged ([AU-1](../spec/audit-deployment.md#audit)).
 
 ## Next
 
 - [How it works](how-it-works.md) explains what each part of a request says, and why.
-- [A request at every level](walkthrough.md) shows the same three calls at levels 0 to 4.
+- [A request at every level](walkthrough.md) shows what each level adds, with real transcripts
+  of reads, sends, and deletes.
 - [Annotating MCP servers](annotating.md) explains how your tools get the right contract.
 - [Human approval](approval.md) sets up level 4.
 - [Deploying](deploy.md) runs the gateway as its own user on Linux, macOS, or Docker, behind

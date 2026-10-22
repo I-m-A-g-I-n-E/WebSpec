@@ -1,13 +1,9 @@
 # Methods and tool contracts
 
 The method says what kind of act a request is. The tool's **contract** says what kind of act
-the tool performs. The gateway refuses any request in which the two disagree.
-
-Without this rule, per-method rules would mean nothing. If the caller could pick the method, an
-attacker or a coerced agent would call a destructive tool with `GET`, the method with the
-weakest rules. So the method states the class of the action (safe, idempotent, or destructive,
-which are classes the web already understands), the path names the specific act
-(`send_email`), and the definer verb says it aloud. All three must agree.
+the tool performs. The gateway refuses any request in which the two disagree, so a caller cannot
+reach a destructive tool with `GET`, the method with the fewest requirements
+([threat model](../guide/threat-model.md#the-design-in-five-decisions)).
 
 ## Tool contracts
 
@@ -29,41 +25,48 @@ A contract is five facts about a tool:
 
 - **TC-3** The tier is derived from the server's annotations: `open` for a read-only tool and
   `sensitive` otherwise. A server MAY raise the tier with `_meta["webspec/tier"]`. It MUST NOT
-  be able to lower it. An operator override does not re-derive the tier, so an override that
-  changes `read_only` should also set `tier`.
+  be able to lower it.
 
 - **TC-4** A read-only tool is treated as non-destructive and idempotent. Its `openWorldHint`
   still applies.
 
 - **TC-5** An operator override is authoritative and MAY loosen a contract. Overrides live in
-  the destination's configuration as `tools.{tool}`, with any of the five fields. An override
-  with an unknown key or a wrongly typed value MUST fail closed to the *strictest* contract:
-  destructive, non-idempotent, open-world, and `dangerous`. So must a `tools` value that is not
-  an object, for every tool of the destination. An empty or false-like override (`{}`, `false`,
-  `0`, `[]`) is ignored. An override that sets `read_only` to false on a read-only tool MUST
-  start from the strict defaults (tier `sensitive`), not from the read-only contract, even if
-  the server had raised the tier. Starting from the read-only contract would make the tool
-  weaker than an unannotated one.
+  the destination's configuration as `tools.{tool}`, with any of the five fields.
+
+    - An empty or false-like override (`{}`, `false`, `0`, `[]`) is ignored, and so is an empty
+      or false-like `tools` value.
+    - An override with an unknown key or a wrongly typed value MUST fail closed to the
+      *strictest* contract: destructive, non-idempotent, open-world, and `dangerous`. So must
+      any other `tools` value that is not an object, for every tool of the destination.
+    - An override does not re-derive the tier, so an override that changes `read_only` should
+      also set `tier`.
+    - An override that sets `read_only` to false on a read-only tool MUST start from the strict
+      defaults (tier `sensitive`), not from the read-only contract, even if the server had
+      raised the tier. Starting from the read-only contract would make the tool weaker than an
+      unannotated one.
 
 - **TC-6** **Pinning.** For each destination and tool, the gateway MUST keep the *join* of every
-  contract it has observed from the server, and use that join instead of the latest listing. A
-  server can tighten a contract but can never loosen it. A tightening takes effect the next time
-  the gateway lists the server's tools, which in the reference gateway is within 5 minutes or on
-  reconnect. Only an operator override loosens. Pins MUST survive the service being removed from
-  the configuration and added back. Otherwise editing the configuration would reset them.
+  contract it has observed from the server, and use that join instead of the latest listing.
+  The join takes the stricter value of each field: read-only only if both contracts are,
+  destructive if either is, idempotent only if both are, open-world if either is, and the higher
+  tier. A server can tighten a contract but can never loosen it. A tightening takes effect the
+  next time the gateway lists the server's tools, which in the reference gateway is within 5
+  minutes or on reconnect. Only an operator override loosens. Pins MUST survive the service
+  being removed from the configuration and added back. Otherwise editing the configuration
+  would reset them.
 
-The join is the least upper bound in strictness. A tool is read-only only if both contracts
-say so. It is destructive if either does (unless read-only), idempotent only if both are, and
-open-world if either is. Its tier is the higher of the two. Pinning defends against a "rug
-pull": a server that re-lists a destructive tool as read-only to unlock `GET`.
+Pinning defends against a "rug pull": a server that re-lists a destructive tool as read-only to
+unlock `GET`. The reference gateway keeps pins in memory, so a restart resets them, and a stdio
+server, which runs as the gateway's user, can force a restart
+([known limits](status.md#known-limits)).
 
 ## Method binding
 
 | Contract | Methods that may invoke the tool |
 |---|---|
 | read-only | `GET` |
-| not destructive | `POST`, `PATCH`, plus `PUT` if idempotent |
-| destructive | `DELETE`, plus `PUT` if idempotent, otherwise `POST` |
+| neither read-only nor destructive | `POST`, `PATCH`, plus `PUT` if idempotent |
+| destructive | `DELETE`, plus `PUT` if idempotent or `POST` if not |
 
 - **MB-1** The gateway, not the caller, decides which methods may invoke a tool. It decides from
   the tool's contract, according to the table above.
@@ -75,17 +78,17 @@ pull": a server that re-lists a destructive tool as read-only to unlock `GET`.
 - **MB-3** `HEAD` and `OPTIONS` are available on every tool path, and they MUST NOT invoke the
   tool.
 
-## Per-method rules
+## Per-method rules and definers { #per-method-rules }
 
-| Method | Safe | Invokes | Arguments | Definer family |
-|---|---|---|---|---|
-| `HEAD` | yes | never | none | none |
-| `OPTIONS` | yes | never | none | none |
-| `GET` | yes | read-only tools | query only, empty body | none |
-| `POST` | no | tools that are neither read-only nor destructive, and destructive tools that are not idempotent | JSON object body and/or query | `CREATE` `SEND` `INVOKE` `TRIGGER` `UPLOAD` |
-| `PUT` | no | idempotent tools that are not read-only | JSON object body and/or query | `REPLACE` `OVERWRITE` `SET` |
-| `PATCH` | no | tools that are neither read-only nor destructive | JSON object body and/or query | `MODIFY` `APPEND` `AMEND` `RENAME` |
-| `DELETE` | no | destructive tools | query and/or JSON object body | `REMOVE` `REVOKE` `ARCHIVE` `CANCEL` `PURGE` |
+| Method | Safe | Arguments | Definer family |
+|---|---|---|---|
+| `HEAD` | yes | none | none |
+| `OPTIONS` | yes | none | none |
+| `GET` | yes | query only, empty body | none |
+| `POST` | no | JSON object body and/or query | `CREATE` `SEND` `INVOKE` `TRIGGER` `UPLOAD` |
+| `PUT` | no | JSON object body and/or query | `REPLACE` `OVERWRITE` `SET` |
+| `PATCH` | no | JSON object body and/or query | `MODIFY` `APPEND` `AMEND` `RENAME` |
+| `DELETE` | no | query and/or JSON object body | `REMOVE` `REVOKE` `ARCHIVE` `CANCEL` `PURGE` |
 
 - **DF-1** Every `POST`, `PUT`, `PATCH`, and `DELETE` MUST carry `X-Gimme-Definer: VERB`, where
   the verb belongs to that method's family. Verbs are case-insensitive. A missing header is
@@ -95,8 +98,9 @@ pull": a server that re-lists a destructive tool as read-only to unlock `GET`.
 - **DF-2** A definer MAY carry a bookend, written `X-Gimme-Definer: VERB:bookend`. From level 2
   on, the bookend is required (`403 bookend_required`). If a bookend is present, it MUST verify at
   every level (`403 bookend_mismatch`). The bookend is the hex encoding of the first 4 bytes of
-  `HMAC-SHA256(key, METHOD ":" VERB ":" head ":" tail)`, where `head` and `tail` are the first
-  and last 16 bytes of the body (the whole body if it is 16 bytes or shorter).
+  `HMAC-SHA256(guard key, METHOD ":" VERB ":" head ":" tail)`, where `VERB` is the verb in upper
+  case, whatever case was sent, and `head` and `tail` are the first and last 16 bytes of the body
+  (the whole body if it is 16 bytes or shorter).
 
 - **DF-3** The definer does not select the tool, and it does not change the method's rules. It
   states the intent aloud so that the intent is signed ([GD-2](levels.md#level-1-signed)),
@@ -104,12 +108,11 @@ pull": a server that re-lists a destructive tool as read-only to unlock `GET`.
 
 ## Requirements
 
-- **RQ-1** What a request must carry is the union of the method's rules, the contract's rules,
-  and the tier's rules, each switched on by the destination's level:
+- **RQ-1** A request must carry every item below whose condition holds:
 
     | Requirement | Applies when |
     |---|---|
-    | Guard (HMAC and nonce) | the level is 1 or higher, on every request except `GET /__nonce` (tag only) and the retired `GET /__challenge` |
+    | Guard (HMAC and nonce) | the level is 1 or higher, on every request except `GET /__nonce`, which carries the tag without a nonce ([GD-4](levels.md#level-1-signed)), and the retired `GET /__challenge` |
     | Definer | the method is `POST`, `PUT`, `PATCH`, or `DELETE` |
     | Empty body | the method is `GET` |
     | Bookend | the method is unsafe and the level is 2 or higher |
@@ -139,34 +142,39 @@ by default is an [open question](status.md#open-questions).
 - **RS-3** A successful call answers `200 {"result": …}`. A tool that reports an error (MCP
   `isError`) answers `422 {"result": …, "error": true}`. Each text block that parses as strict
   JSON is returned as JSON, and several blocks become an array. MCP `structuredContent` is not
-  passed through. If a definer was validated, the response echoes it in
-  `X-Gimme-Definer-Canonical` and `X-Gimme-Definer-Tier` (and in `canonical` and `definer_tier`
-  in the body).
+  passed through. If a definer was validated, the response carries its verb, in upper case, in
+  `X-Gimme-Definer-Canonical`, and how it was checked in `X-Gimme-Definer-Tier`: `1` for the
+  verb alone, `2` for the verb and a verified bookend. The definer tier is unrelated to the
+  tool's `tier`. The body repeats both as `canonical` and `definer_tier`.
 
 - **RS-4** The gateway refuses with a JSON object `{"error": code, "detail": text, …}` and the
   status that the rule names. A few answers come from the web framework before the gateway's
   handlers run, and they have plain-text bodies: a host that matches no route (`404`), a method
-  outside the seven (`405`), a rejected CORS preflight (`400`), and an unhandled error (`500`).
+  not in the [per-method table](#per-method-rules) (`405`), a rejected CORS preflight (`400`),
+  and an unhandled error (`500`). A request that needs the guard key while no usable key is set
+  also gets a plain-text `500` ([GD-5](levels.md#level-1-signed)).
 
-Failures after the request is accepted:
+Failures after commit ([CO-1](levels.md#commit)), when any clearance and approval have already
+been spent:
 
 | Status | Code | Meaning |
 |---|---|---|
 | `502` | `tool_rejected` | The server answered with a JSON-RPC error, so the tool did not run. The idempotency key is released |
-| `503` | `service_unavailable` | The server could not be reached, or the connection closed during the call. In the second case the tool may have run, and the idempotency key is marked *outcome unknown* |
+| `503` | `service_unavailable` | The connection to the server failed or closed during the call. The tool may have run, and the idempotency key is marked *outcome unknown* |
 | `504` | `tool_timeout` | No answer within 30 s. The tool may have run, and the idempotency key is marked *outcome unknown* |
 | `500` | `result_unserializable` | The tool ran, but its result could not be returned |
 
-In every one of these cases the clearance and the approval, if any, are already spent
-([CO-1](levels.md#commit)). After a timeout or a broken connection, the reference gateway drops
-its connection to the server and reconnects on the next request.
+After a timeout or a broken connection, the reference gateway drops its connection to the
+server and reconnects on the next request.
 
 ## Discovery
 
 - **DS-1** `OPTIONS /{tool}` returns the tool's input schema, contract, admissible methods,
   and level, together with the requirements for each admissible method, plus an `Allow` header.
-  That is enough for a client to build a correct request before it sends one. `OPTIONS /`
-  returns the same information for every tool.
+  That is enough for a client to build a correct request before it sends one, except for a
+  level-4 approval, which needs the challenge from the `428` answer to a first attempt
+  ([AP-1](levels.md#level-4-witnessed)). `OPTIONS /` returns the same information for every
+  tool.
 
 - **DS-2** `HEAD /{tool}` answers `200` with `Allow`, `X-WebSpec-Tool`, `X-WebSpec-Tier`,
   `X-WebSpec-Level`, and `X-WebSpec-Description` (the first 200 characters of the description,
@@ -176,25 +184,30 @@ its connection to the server and reconnects on the next request.
 - **DS-3** `GET /` lists the tools with their descriptions and admissible methods.
 
 On a destination at level 1 or higher, discovery requests carry the guard like any other
-request. Here is `OPTIONS /send_note` on the [guide's](../guide/walkthrough.md) demo server at
-level 4 (with `Allow: HEAD, OPTIONS, POST, PATCH`):
+request. Here is the answer to `OPTIONS /send_note` at level 4, from the demo server in
+[A request at every level](../guide/walkthrough.md). Its `Allow` header is
+`HEAD, OPTIONS, POST, PATCH`, and its body is:
 
 ```json
 {
   "name": "send_note",
-  "description": "Send a note to someone (simulated: queued in an in-memory outbox).",
+  "description":
+    "Send a note to someone (simulated: queued in an in-memory outbox).",
   "inputSchema": {"type": "object", "required": ["id", "to"],
-                  "properties": {"id": {"type": "string"}, "to": {"type": "string"}}},
+                  "properties": {"id": {"type": "string"},
+                                 "to": {"type": "string"}}},
   "methods": ["PATCH", "POST"],
   "contract": {"read_only": false, "destructive": false, "idempotent": false,
                "open_world": true, "tier": "sensitive", "source": "annotations"},
   "level": 4,
   "level_name": "witnessed",
   "requirements": {
-    "PATCH": {"guard": true, "definer": true, "bookend": true, "idempotency_key": true,
-              "empty_body": false, "clearance": true, "approval": true},
-    "POST":  {"guard": true, "definer": true, "bookend": true, "idempotency_key": true,
-              "empty_body": false, "clearance": true, "approval": true}
+    "PATCH": {"guard": true, "definer": true, "bookend": true,
+              "idempotency_key": true, "empty_body": false,
+              "clearance": true, "approval": true},
+    "POST":  {"guard": true, "definer": true, "bookend": true,
+              "idempotency_key": true, "empty_body": false,
+              "clearance": true, "approval": true}
   },
   "scopes_required": {"PATCH": "PATCH:notes.localhost/send_note",
                       "POST": "POST:notes.localhost/send_note"}

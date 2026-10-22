@@ -1,23 +1,21 @@
 # Security levels
 
 Each destination runs at a level from 0 to 4. Each level adds requirements to the ones below
-it ([RQ-1](methods.md#requirements)), and none removes any.
+it ([RQ-1](methods.md#requirements)), and none removes any. A harness shim, not the model, adds
+what levels 1 to 4 require ([SH-1](#the-harness-shim)).
 
 | Level | Name | Adds |
 |---|---|---|
-| 0 | local | Method binding, definers, strict arguments. Loopback only |
+| 0 | local | Method binding ([MB-1](methods.md#method-binding)), definers ([DF-1](methods.md#per-method-rules)), strict arguments ([AR-1 to AR-5](addressing.md#arguments)). Loopback names only ([HG-7](addressing.md#host)) |
 | 1 | signed | Guard HMAC over the method, host, path, query, body, definer, and idempotency key, with a single-use nonce bound to the destination |
-| 2 | bound | Bookend on every unsafe method, and `Idempotency-Key` for every non-idempotent tool |
+| 2 | bound | `Idempotency-Key` for every non-idempotent tool, and a bookend on every unsafe method |
 | 3 | cleared | Single-use clearance for every tool that is not read-only and every tool above tier `open` |
-| 4 | witnessed | A person's signature over the exact request, for destructive tools, `dangerous` tools, and open-world mutations |
+| 4 | witnessed | A person's signature over the request's method, destination, path, arguments, and body, for destructive tools, `dangerous` tools, and open-world mutations |
 
 - **LV-1** A destination's level comes from its configuration key `level`. If `level` is
   absent, the level is 1 when `guard: true` is set and 0 otherwise. `guard: true` forces at
   least level 1, and every level of 1 or higher enables the guard. An invalid value MUST fail
   closed to level 4.
-
-A destination served on a public domain must be at level 1 or higher
-([HG-7](addressing.md#host)).
 
 ## Processing order
 
@@ -26,16 +24,19 @@ A destination served on a public domain must be at level 1 or higher
     1. Host labels ([HG-2](addressing.md#host)), then repeated query keys ([AR-1](addressing.md#arguments))
     2. Qualifiers ([HG-3, HG-5](addressing.md#host))
     3. For a configured destination: public exposure ([HG-7](addressing.md#host)), then the guard
-       ([GD-1](#level-1-signed)). `GET /__nonce` and `GET /__challenge` are answered here.
+       ([GD-1](#level-1-signed)). `GET /__nonce` is answered here, and so is the retired
+       `GET /__challenge` (`410 Gone`, [PA-2](addressing.md#path)).
     4. Destination (`404 unknown_service`), tool path (`400 missing_tool`), the server's tool list
        (`503 service_unavailable`), then the tool ([PA-1](addressing.md#path))
     5. Method binding ([MB-2](methods.md#method-binding))
     6. Method rules: empty `GET` body ([AR-2](addressing.md#arguments)), definer and bookend
        ([DF-1, DF-2](methods.md#per-method-rules))
     7. Arguments ([AR-3 to AR-5](addressing.md#arguments))
-    8. `Idempotency-Key` present and well formed ([ID-1](#level-2-bound)), then replay ([ID-3](#level-2-bound))
+    8. `Idempotency-Key` present and well formed ([ID-1](#level-2-bound)), then a key seen before:
+       a replay, `422`, or `409` ([ID-3](#level-2-bound))
     9. Clearance ([CL-1](#level-3-cleared)), then approval ([AP-7, AP-1](#level-4-witnessed))
-    10. Commit ([CO-1](#commit)): an in-flight key or a full store is detected here. Then the call.
+    10. Commit ([CO-1](#commit)): a full store is detected here, and so is a clearance, approval,
+        or key that another attempt took after it was checked. Then the call.
 
 - **PO-2** Whatever its order, a gateway MUST NOT spend a clearance or an approval, or claim an
   idempotency key, before every check has passed ([CO-1](#commit)). A nonce, by contrast, is
@@ -58,12 +59,13 @@ A destination served on a public domain must be at level 1 or higher
     ```
     METHOD ":" host ":" path ":" nonce ":" hex(sha256(body))
       [ ":?" canonical-query ]   ; only if the request has a query
-      [ ":!" definer-header ]    ; only if X-Gimme-Definer is present (raw value, bookend included)
+      [ ":!" definer-header ]    ; only if X-Gimme-Definer is present
       [ ":#" idempotency-key ]   ; only if Idempotency-Key is present
     ```
 
     `host` is the `Host` header as the gateway receives it, port included. `path` is the decoded
-    path with its surrounding slashes trimmed, prefixed by a single `/`.
+    path with its surrounding slashes trimmed, prefixed by a single `/`. `definer-header` is the
+    raw `X-Gimme-Definer` value, bookend included.
 
 - **GD-3** The canonical query is built in three steps:
     1. Decode every pair as a form would (`+` is a space, percent-escapes are decoded as UTF-8),
@@ -79,28 +81,33 @@ A destination served on a public domain must be at level 1 or higher
   "expires_at", "ttl_seconds"}`, where `expires_at` is in Unix seconds. A nonce is bound to its
   destination, valid for 60 s, and usable once.
 
-- **GD-5** The guard key MUST be supplied from outside the gateway's code and configuration. The
-  gateway MUST refuse to serve requests that need the key when it is absent. The reference
-  gateway reads `WEBSPEC_GUARD_KEY`, which is either 64 hex digits or a passphrase hashed with
-  SHA-256, in both cases once the whitespace around it is trimmed, and is meant to be filled
-  from a password manager when the gateway is launched. A value of only whitespace or
-  invisible characters counts as unset. Failing that, it reads the file that
-  `WEBSPEC_GUARD_KEY_FILE` names, on every request. A byte order mark, and whitespace or
-  invisible format characters around the key, are trimmed. What remains must be one line of at
-  least 16 characters, with no control or format character, and anything else is refused. The gateway needs the key for every unsafe request at every level, including level
-  0, because it validates definers with it. Without a usable key it still starts, logs a
-  warning, and answers those requests with a plain-text `500`, which it audits. With
-  `WEBSPEC_REQUIRE_GUARD_KEY` set, as the Linux unit sets it, it does not start at all without a
-  usable key in `WEBSPEC_GUARD_KEY` itself.
+- **GD-5** The guard key MUST be supplied from outside the gateway's code and configuration,
+  and the gateway MUST refuse to serve requests that need the key when it is absent. The
+  reference gateway needs the key for every unsafe request at every level, including level 0,
+  because it validates definers with it. It reads the key from:
+    1. `WEBSPEC_GUARD_KEY`: 64 hex digits, or a passphrase hashed with SHA-256, once the
+       whitespace around it is trimmed. A value of only whitespace or invisible characters
+       counts as unset.
+    2. Failing that, the file that `WEBSPEC_GUARD_KEY_FILE` names, read on every request. A byte
+       order mark, and whitespace or invisible format characters around the key, are trimmed.
+       What remains must be one line of at least 16 characters, with no control or format
+       character, and anything else is refused.
+
+    Without a usable key, the gateway still starts, logs a warning, and answers those requests
+    with a plain-text `500`, which it audits. With `WEBSPEC_REQUIRE_GUARD_KEY` set, as the Linux
+    unit sets it, it does not start at all without a usable key in `WEBSPEC_GUARD_KEY` itself.
 
 ## Level 2: bound
 
-Every unsafe method carries a bookend in its definer ([DF-2](methods.md#per-method-rules)).
+From level 2, the definer of every unsafe request carries a bookend
+([DF-2](methods.md#per-method-rules)), which adds nothing over the guard today
+([Known limits](status.md#known-limits)).
 
-- **ID-1** Every unsafe request to a tool that is not idempotent MUST carry an
-  `Idempotency-Key` (`400 idempotency_key_required`). That includes `DELETE`. The key is 1 to
-  255 visible ASCII characters (`400 idempotency_key_invalid`). Below level 2, a key is honored
-  on any unsafe method that sends one.
+- **ID-1** From level 2, every unsafe request to a tool that is not idempotent MUST carry an
+  `Idempotency-Key` (`400 idempotency_key_required`). That includes a `DELETE`, because the
+  tool's contract, not HTTP, decides whether a call is idempotent. The key is 1 to 255 visible
+  ASCII characters (`400 idempotency_key_invalid`). Below level 2, a key is honored on any
+  unsafe method that sends one.
 
 - **ID-2** Keys are scoped per destination. A request's fingerprint is the SHA-256 of its
   method, path, canonical query, and body hash.
@@ -115,25 +122,32 @@ Every unsafe method carries a bookend in its definer ([DF-2](methods.md#per-meth
     | a call that timed out, lost its connection, or failed after reaching the tool | `409 idempotency_outcome_unknown`. The tool may have run, so the client MUST check the outcome and then use a new key |
     | a call that completed with a result too large to keep (over 256 KiB) | `409 idempotency_result_not_replayable` |
 
-- **ID-4** A replay is answered *before* one-time credentials are checked, so a legitimate
-  retry never needs a second clearance or a second human signature.
+- **ID-4** A replay is answered *before* the clearance and the approval are checked, so retrying
+  a completed request needs no second clearance or human signature, as long as the gateway still
+  holds its record ([ID-5](#level-2-bound)).
 
-- **ID-5** The gateway MUST NOT evict in-flight or unknown records to make room, because a
-  forgotten record could let a side effect run twice. When only such records remain, it refuses
-  new keys for that destination with `503 idempotency_store_full`. The reference store holds
-  2,000 keys per destination. When it is full, the oldest *completed* records are evicted
-  first, and a retry whose record was evicted runs the tool again. Settled records (completed or
-  unknown) are kept for up to 24 hours, and an in-flight record older than 15 minutes becomes
-  unknown.
+- **ID-5** The gateway MUST NOT evict in-flight records, or records whose outcome is unknown, to
+  make room, because a forgotten record could let a side effect run twice. When only such
+  records remain, it refuses new keys for that destination with `503 idempotency_store_full`.
+  The reference store holds 2,000 keys per destination. When it is full, only *completed*
+  records are evicted, oldest first, and a retry whose record was evicted runs the tool again.
+  Settled records (completed, or with an unknown outcome) are kept for up to 24 hours, and an
+  in-flight record older than 15 minutes is marked *outcome unknown*.
 
 ## Level 3: cleared
+
+A clearance is the harness's policy vouching for one call, typically after it has checked that
+untrusted data (a response marked `X-UFO-Taint`, [RS-2](methods.md#responses)) did not steer
+the call. In the reference gateway it is keyed with the guard key, so it is a policy checkpoint,
+not a separate lock ([Known limits](status.md#known-limits)).
 
 - **CL-1** A request that needs clearance ([RQ-1](methods.md#requirements)) MUST carry
   `X-UFO-Clearance: tag:ts`. Here `ts` is Unix time in seconds, and `tag` is the hex encoding of
   the first 4 bytes of:
 
     ```
-    HMAC-SHA256(key, "ufo2:" destination ":" METHOD ":" tool ":" canonical-args ":" ts)
+    HMAC-SHA256(key, "ufo2:" destination ":" METHOD ":" tool ":"
+                     canonical-args ":" ts)
     ```
 
     `canonical-args` is the arguments object as the gateway derives it from the request (decoded
@@ -150,18 +164,12 @@ Every unsafe method carries a bookend in its definer ([DF-2](methods.md#per-meth
   ([CO-1](#commit)). A request refused later, for example by a level-4 challenge, therefore does
   not burn the clearance that its approved retry needs.
 
-A clearance is the point where the harness's policy vouches for a sensitive call, typically
-after checking that untrusted (UFO-tagged) data did not steer it. In the reference gateway the
-clearance is keyed with the guard key. It adds a policy checkpoint bound to the exact call, but
-not a separate cryptographic boundary. Independent signers per level are
-[proposed](status.md#roadmap).
-
 ## Level 4: witnessed
 
 - **AP-1** A request that needs approval and has no `X-WebSpec-Approval` header gets `428
   Precondition Required` with a challenge:
 
-    ```json
+    ``` json
     {
       "error": "approval_required",
       "detail": "This action requires human approval (level 4). …",
@@ -187,12 +195,11 @@ not a separate cryptographic boundary. Independent signers per level are
   the controlling terminal, never from stdin. And it MUST sign `sign_message` in the SSH
   signature namespace `webspec-approval`. The reference tool is `webspec-ctl approve`.
 
-- **AP-3** The client retries the identical request with
+- **AP-3** The client retries the same method, path, arguments, and body, with a fresh nonce
+  and guard, a clearance minted within the last 30 s, and
   `X-WebSpec-Approval: <challenge>:<base64 SSH signature>`. The gateway verifies the signature
   with OpenSSH (`ssh-keygen -Y verify`) against an allowed-signers file
-  (`WEBSPEC_APPROVERS_FILE`). The gateway holds only *public* keys. The retry is the same
-  method, path, arguments, and body, with a fresh nonce and guard, a clearance minted within the
-  last 30 s, and the approval header.
+  (`WEBSPEC_APPROVERS_FILE`), so it holds only the approvers' *public* keys.
 
 - **AP-4** A challenge is valid for 300 s and is single-use. The gateway answers `403` when an
   approval:
@@ -212,24 +219,23 @@ not a separate cryptographic boundary. Independent signers per level are
   ([CO-1](#commit)). A retry that carries the same signature is accepted again until then. A
   retry of the same request without a signature gets the same pending challenge back.
 
-- **AP-6** Pending challenges MUST NOT be evicted to make room. When the queue is full, new
-  challenges are refused with `429 approval_queue_full`. In the reference gateway, the queue
-  holds at most 100 challenges issued for the destination in the last 300 s, whatever their
-  state. Otherwise anyone holding the guard key could flush out the challenge a person is in the
-  middle of signing.
+- **AP-6** Pending challenges MUST NOT be evicted to make room. Otherwise anyone holding the
+  guard key could flush out the challenge a person is in the middle of signing. When the queue
+  is full, new challenges are refused with `429 approval_queue_full`. In the reference gateway,
+  the queue holds at most 100 challenges issued for the destination in the last 300 s, whatever
+  their state.
 
 - **AP-7** If no approvers are configured, a request that needs approval MUST be refused with
   `503 approval_unavailable`, before any challenge is issued.
 
-The signing key should live in an agent that asks for a biometric gesture before it signs, such
-as the 1Password SSH agent or a key backed by the Secure Enclave. The remaining risk is a person
-who approves a prompt they did not initiate.
+[Human approval](../guide/approval.md) shows how to set up approvers and their keys, and what
+level 4 does not cover.
 
 ## Commit
 
-- **CO-1** One-time credentials are spent at commit, immediately before the call is attempted,
-  and never earlier. Once every check has passed, the gateway runs these steps with nothing
-  interleaved until the call is attempted:
+- **CO-1** The clearance and the approval are spent at commit, immediately before the call is
+  attempted, and never earlier. Once every check has passed, the gateway runs these steps with
+  nothing interleaved until the call is attempted:
     1. Confirm that the clearance and the approval are still unspent.
     2. Claim the idempotency key.
     3. Spend the clearance and the approval.
@@ -249,11 +255,9 @@ who approves a prompt they did not initiate.
 ## The harness shim
 
 - **SH-1** The model SHOULD write only the method, host, path, arguments, and definer verb.
-  Keys, nonces, tags, idempotency keys, and clearances SHOULD be added by a harness component
-  whose secrets the model cannot read and whose behavior text cannot instruct.
+  Nonces, guard and bookend tags, idempotency keys, and clearances SHOULD be added by a harness
+  component, the shim, that keeps its keys where the model cannot read them and takes no
+  instructions from text.
 
 - **SH-2** The shim SHOULD learn what to add from `OPTIONS /{tool}`
   ([DS-1](methods.md#discovery)).
-
-This is what makes WebSpec easy for the AI and hard for an attacker. The model's request is the
-same at every level. Only the shim's work, and the operator's choice of level, change.

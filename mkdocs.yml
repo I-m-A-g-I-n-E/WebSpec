@@ -1,10 +1,10 @@
 site_name: WebSpec
-site_description: An open spec and reference gateway that gives each MCP tool its own URL and each call an HTTP method that says what it does, then refuses the calls whose parts disagree.
+site_description: A spec and reference gateway that gives each MCP tool its own URL and each call an HTTP method that says what it does, then refuses the calls whose parts disagree.
 site_url: https://i-m-a-g-i-n-e.github.io/WebSpec/
 repo_url: https://github.com/I-m-A-g-I-n-E/WebSpec
 repo_name: I-m-A-g-I-n-E/WebSpec
 edit_uri: edit/main/docs/
-copyright: WebSpec, an open specification and reference gateway for MCP.
+copyright: WebSpec, a specification and reference gateway for MCP.
 
 exclude_docs: |
   tests/
@@ -88,5 +88,5 @@ nav:
     - Addressing: spec/addressing.md
     - Methods and contracts: spec/methods.md
     - Security levels: spec/levels.md
-    - Audit and deployment: spec/audit-deployment.md
+    - Audit, deployment, and configuration: spec/audit-deployment.md
     - Status and roadmap: spec/status.md

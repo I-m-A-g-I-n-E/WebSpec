@@ -1,0 +1,8 @@
+{% extends "main.html" %}
+
+{#- GitHub Pages serves this page at any depth, so its links are absolute. -#}
+{% block content %}
+  <h1>Page not found</h1>
+  <p>There is no page at this address.</p>
+  <p><a href="{{ config.site_url }}">Home</a> · <a href="{{ config.site_url }}guide/">Quickstart</a> · <a href="{{ config.site_url }}spec/">Spec</a></p>
+{% endblock %}

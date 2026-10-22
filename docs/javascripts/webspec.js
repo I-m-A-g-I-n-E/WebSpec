@@ -55,6 +55,27 @@
   dial.classList.add("ws-dial--live");
   show(0, false);
 
+  // Hold the panel at its tallest level's height, so turning the dial never moves the page.
+  // Measure again once the web fonts have loaded, and whenever the panel's width changes.
+  const panel = dial.querySelector(".ws-dial__panel");
+  let measuredWidth = 0;
+  function reserve(force = false) {
+    if (!force && panel.offsetWidth === measuredWidth) return;
+    measuredWidth = panel.offsetWidth;
+    const current = tabs.findIndex((tab) => tab.getAttribute("aria-selected") === "true");
+    panel.style.minHeight = "";
+    let tallest = 0;
+    for (const tab of tabs) {
+      show(Number(tab.dataset.level), false);
+      tallest = Math.max(tallest, panel.offsetHeight);
+    }
+    panel.style.minHeight = `${tallest}px`;
+    show(Math.max(current, 0), false);
+  }
+  reserve(true);
+  document.fonts?.ready.then(() => reserve(true));
+  addEventListener("resize", () => reserve());
+
   // Turn the dial once, from 0 to 4, the first time it is in view.
   if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
   const observer = new IntersectionObserver(([entry]) => {

@@ -14,13 +14,14 @@ X-Gimme-Definer: SEND
 Each part of the call sits in its own slot. The host says who handles it, the method what
 kind of act it is, the path which act, the definer says the verb aloud, and the body says
 with what. The gateway refuses any request whose parts disagree. A *security level* from 0
-to 4 decides how much proof each call must carry. At the top, a person signs the exact
+to 4 decides how much proof each call must carry. At the top, a person signs the
 request before anything destructive, dangerous, or open-world and mutating happens. WebSpec
 complements MCP: it is the HTTP face and the firewall in front of unchanged MCP servers.
 
 **Read it:** <https://i-m-a-g-i-n-e.github.io/WebSpec/>. Start with the home page and
-[How it works](https://i-m-a-g-i-n-e.github.io/WebSpec/guide/how-it-works/). The **Spec** tab is
-normative; the **Guide** tab has the quickstart, walkthroughs, and rationale.
+[How it works](https://i-m-a-g-i-n-e.github.io/WebSpec/guide/how-it-works/). The **Spec** pages are
+normative (except Status and roadmap); the **Guide** pages have the quickstart, walkthroughs,
+and rationale.
 
 ## What's here
 

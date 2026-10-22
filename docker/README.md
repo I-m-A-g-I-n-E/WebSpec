@@ -472,7 +472,8 @@ experimental and not part of the hardened deployment. Its block in `docker-compo
 - It has no authentication and no Caddy route. It binds **localhost only**
   (`WEBSPEC_REGISTRY_HOST`, default `127.0.0.1`, at `WEBSPEC_REGISTRY_PORT`, default `7004`) and
   shows your tool inventory to every local process. Exposing it safely (a ported guard
-  middleware or a Caddy front) is tracked as a `TODO(C)` in `docs/spec/status.md`.
+  middleware or a Caddy front) is proposed under Registry in the
+  [roadmap](../docs/spec/status.md#roadmap).
 - It has no dedicated user and none of the gateway's process hardening. **Never give it the
   guard key** (`WEBSPEC_GUARD_KEY` or `WEBSPEC_GUARD_KEY_FILE`), and leave
   `WEBSPEC_REGISTRY_HARVEST_GUARDED` unset, so that it never reads the key: DP-1 keeps the key in

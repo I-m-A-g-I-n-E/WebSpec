@@ -2,8 +2,9 @@
 
 A gateway on your laptop is fine for trying WebSpec. A gateway that an agent works through
 every day needs a deployment that meets the deployment rules,
-[DP-1 to DP-9](../spec/audit-deployment.md#deployment), and keeps the guard key out of reach
-([GD-5](../spec/levels.md#level-1-signed)). The repository ships one for each platform:
+[DP-1 to DP-9](../spec/audit-deployment.md#deployment), and supplies the guard key from outside
+the gateway's code and configuration ([GD-5](../spec/levels.md#level-1-signed)). The repository
+ships one for each platform:
 
 | Platform | Files | What runs it |
 |---|---|---|
@@ -11,8 +12,12 @@ every day needs a deployment that meets the deployment rules,
 | macOS | `gateway/deploy/macos/` | a LaunchDaemon (no proxy is shipped) |
 | Docker | `docker/` | a compose stack: the gateway and Caddy |
 
+Each deployment leaves some parts to you, the agent's egress among them: see
+[What stays your job](#what-stays-your-job).
+
 `gateway/systemd` and `gateway/launchd` are development units. They run the gateway as your
-login user, so they meet neither DP-1 nor DP-4. Don't expose them.
+login user, so they meet neither DP-1 nor DP-4. Don't expose them. To replace one on Linux, see
+[Moving off the development setup](#moving-off-the-development-setup).
 
 ## The shape of a deployment
 
@@ -33,25 +38,28 @@ The agent runs as its own user and may reach only 127.0.0.1:7001 and [::1]:7001 
 
 Three ideas hold it together:
 
-- **Nobody can stand in for a listener.** On Linux, systemd binds every port and keeps it bound
-  while Caddy or the gateway restarts; launchd does the same for the gateway's port on macOS,
-  and the container's init for the gateway's port in Docker. If the processes bound their
-  own ports, any local process could take a port in the gap between one process and the next,
-  and receive full URLs, bodies, and the signed headers ([DP-9](../spec/audit-deployment.md#deployment)).
-- **The agent reaches the gateway only through the proxy.** Caddy listens on loopback only. It
-  serves a service's public name only when the service is at level 1 or higher, and it never
-  serves a `*.localhost` name that came through the tunnel ([DP-5](../spec/audit-deployment.md#deployment)).
-  Sites that bypass the gateway are served on a port of their own, `7003`, which the agent's
-  egress allow-list leaves out ([DP-3](../spec/audit-deployment.md#deployment)).
+- **Nobody can stand in for a held listener.** On Linux, systemd binds every port and keeps it
+  bound while Caddy or the gateway restarts. On macOS, launchd holds the gateway's port; the
+  proxy is yours. In Docker, the container's init holds the gateway's port for the container's
+  life, but Docker frees Caddy's port while Caddy's container is down ([Docker](#docker)). A
+  port that is free between one process and the next can be taken by any local process, which
+  then receives full URLs, bodies, and the signed headers ([DP-9](../spec/audit-deployment.md#deployment)).
+- **The agent reaches the gateway only through the proxy, once you confine its egress.** Caddy
+  listens on loopback only. It serves a service's public name only when the service is at level
+  1 or higher, and it never serves a `*.localhost` name that came through the tunnel
+  ([DP-5](../spec/audit-deployment.md#deployment)). The agent's egress allow-list names only
+  Caddy's `:7001`. It leaves out the gateway's own `:7002` and Caddy's `:7003`, which serves
+  sites that bypass the gateway ([Egress](#egress-dp-3)).
 - **What configures the gateway is root's.** The code, the configuration, the secrets, and the
   units can be changed only by root ([DP-4](../spec/audit-deployment.md#deployment)), and the
   installers refuse to run code that another user could have changed.
 
 ## Who can do what
 
-The table is for Linux. macOS is the same with `_webspec` in place of `webspec`, except that
-there the stdio servers can also read the guard key, the secrets file, and the gateway's
-environment: macOS has no non-dumpable process.
+The table is for Linux. On macOS the account is `_webspec`, and no proxy is shipped. There the
+`_webspec` user is the only boundary: the stdio servers can also read `guard.key` and
+`gateway.env`, which the gateway reads as `_webspec`, and the gateway's environment, which macOS
+cannot hide from processes of the same user.
 
 | Account | Runs | Can read | Can write |
 |---|---|---|---|
@@ -63,7 +71,8 @@ environment: macOS has no non-dumpable process.
 The agent's user must not be `webspec` or root. It must not be in the groups `webspec`,
 `sudo`, `docker`, `adm`, or `systemd-journal`: the journal holds the gateway's log lines and
 whatever the stdio servers print. On Debian, keep it out of `staff` too, which can write
-`/usr/local`. On macOS, keep it out of `_webspec` and `admin`, the group that may use `sudo`.
+`/usr/local` where `/etc/staff-group-for-usr-local` exists. On macOS, keep it out of
+`_webspec` and `admin`, the group that may use `sudo`.
 
 Every stdio MCP server runs as the gateway's user. On Linux the gateway makes itself
 non-dumpable, so the servers can't read its memory or environment. They can still read each other's
@@ -104,16 +113,20 @@ command here from an account that the agent does not use.
     It creates the `webspec` account, the virtual environment in `/opt/webspec/venv`, the files
     in `/etc/webspec`, and the two units. It starts `webspec-gateway.socket`, so systemd holds
     `127.0.0.1:7002` from now on. It does not start the gateway, because there is no key yet. Add
-    `--python=/usr/bin/python3.12` if the `python3` on the system path is older than 3.11. The
-    installer refuses an interpreter, a standard library, or a pip configuration that a user
-    other than root can change, including where a link in the standard library leads (Debian's
-    `sitecustomize.py` leads to `/etc/python3.X/`). It also refuses an existing `webspec` account
-    that someone can log in to. `--help` lists the options that override the interpreter and
-    account refusals. A pip configuration that others can change has no override: fix its owner.
-    It refuses systemd drop-ins for its two units in `/etc` or `/run`, unless you pass
-    `--allow-drop-ins` for ones you have reviewed. Even then it refuses a drop-in that changes
-    who runs what, the environment, the sandbox, or the listener: variables for the gateway
-    belong in `gateway.env`.
+    `--python=/usr/bin/python3.12` if the `python3` on the system path is older than 3.11.
+
+    It refuses:
+
+    - an interpreter, a standard library, or a pip configuration that a user other than root
+      can change, including where a link in the standard library leads (Debian's
+      `sitecustomize.py` leads to `/etc/python3.X/`). `--allow-nonroot-python` accepts such an
+      interpreter and standard library. A pip configuration has no override: fix its owner.
+    - an existing `webspec` account that someone can log in to, unless you pass
+      `--allow-existing-user`.
+    - systemd drop-ins for its two units in `/etc` or `/run`, unless you pass `--allow-drop-ins`
+      for ones you have reviewed. Even then it refuses a drop-in that changes who runs what, the
+      environment, the sandbox, or the listener: variables for the gateway belong in
+      `gateway.env`.
 
 4. **Add the guard key.** Generate 64 hex digits once (`openssl rand -hex 32`), keep them in
    your password manager, and pipe them in as root, so they never appear on a command line:
@@ -124,8 +137,10 @@ command here from an account that the agent does not use.
     ```
 
 5. **List your MCP servers** in `/etc/webspec/config.json`, in the format of
-   `/etc/webspec/config.example.json`. Each secret is written there as `"${NAME}"`, and its
-   value goes in `/etc/webspec/gateway.env` as `NAME=value`. Give every stdio server an absolute
+   `/etc/webspec/config.example.json`. Each secret is written there as `"${NAME}"`, in a stdio
+   server's `env` or an HTTP server's `headers`, the only places the gateway fills it
+   ([Configuration](../spec/audit-deployment.md#configuration)). Its value goes in
+   `/etc/webspec/gateway.env` as `NAME=value`. Give every stdio server an absolute
    command that root owns, outside every home directory, for example under
    `/opt/webspec/services/`. Edit both files as root with a fixed editor:
 
@@ -170,12 +185,13 @@ command here from an account that the agent does not use.
     ```
 
     It runs Caddy as the `caddy` user, with every listener held by `caddy-webspec.socket`, and
-    writes a site block for every service in `/etc/webspec/config.json`. At the end it prints
-    the cloudflared ingress rules. Use them as printed, and keep the original `Host` header (no
-    `httpHostHeader`), because the guard signs it. Run cloudflared as the systemd unit
-    `cloudflared.service` (`cloudflared service install`), with these rules in its
-    configuration: the scripts stop and start that unit while ports change hands. Run the script again whenever you turn IPv6
-    on or off at boot (`ipv6.disable=1`): the listeners it records depend on it.
+    writes a site block for every service in `/etc/webspec/config.json`. Run the script again
+    whenever you turn IPv6 on or off at boot (`ipv6.disable=1`): the listeners it records depend
+    on it.
+
+9. **Point cloudflared at Caddy.** `setup-caddy.sh` ends by printing the ingress rules. Use them
+   as printed, and keep the original `Host` header (no `httpHostHeader`), because the guard
+   signs it:
 
     ```yaml
     ingress:
@@ -186,7 +202,11 @@ command here from an account that the agent does not use.
       - service: http_status:404
     ```
 
-9. **Confine the agent's egress** ([below](#egress-dp-3)). Nothing that ships does this for you.
+    Run cloudflared as the systemd unit `cloudflared.service` (`cloudflared service install`),
+    with these rules in its configuration: the scripts stop and start that unit while ports
+    change hands.
+
+10. **Confine the agent's egress** ([below](#egress-dp-3)).
 
 ### Files
 
@@ -224,18 +244,16 @@ Run `webspec-ctl` as root by its full path. On a production host it edits
     A stdio server takes `--command /opt/webspec/services/<name>/<program>` and `--args`
     instead. `--secret` adds an empty `TICKETS_TOKEN=` line to `gateway.env`: fill it as in
     step 4, then restart the gateway, which reads `gateway.env` only when it starts. A new
-    service is at level 1 unless you give `--level`. `--no-guard`, and the `--port` shorthand
-    for a local app, make it an unguarded level-0 service, served on loopback names only.
+    service is at level 1 unless you give `--level`. `--no-guard` makes it an unguarded level-0
+    service, served on loopback names only. So does `--port`, the shorthand for an HTTP MCP
+    server at `http://127.0.0.1:PORT`, unless you also give `--guard` or a `--level` above 0.
 
 - **Remove a service**: `sudo /opt/webspec/venv/bin/webspec-ctl rm tickets --clean-env TICKETS_TOKEN`.
   The gateway drops it within 30 seconds.
 
 - **Check what runs**: `sudo /opt/webspec/venv/bin/webspec-ctl ls`. A guarded service shows
   `ok (guarded)` when the gateway answers its unsigned probe with the guard's `401`; the MCP
-  server behind it is not checked. `ls` reads the file, not what the gateway applied. Direct
-  sites are not in `config.json`, so neither `ls` nor `health` lists them: they are the site
-  blocks in `/etc/caddy/conf.d` whose second line records `"kind":"direct"`. Remove one with
-  `sudo /opt/webspec/venv/bin/webspec-ctl rm <name>`, then remove its ingress rule.
+  server behind it is not checked. `ls` reads the file, not what the gateway applied.
 
 - **Edit the configuration by hand**, then bring Caddy in line:
   `sudo -H /usr/bin/vi /etc/webspec/config.json` and
@@ -251,7 +269,10 @@ Run `webspec-ctl` as root by its full path. On a production host it edits
   it prints, above the wildcard rule. The port must be the app's own: `webspec-ctl` refuses
   Caddy's ports and the gateway's. It also refuses to give a gateway service the name of a
   direct site unless you pass `--force`, and then reminds you to remove that site's ingress
-  rule.
+  rule. Direct sites are not in `config.json`, so neither `webspec-ctl ls` nor
+  `webspec-ctl health` lists them: they are the site blocks in `/etc/caddy/conf.d` whose second
+  line records `"kind":"direct"`. Remove one with
+  `sudo /opt/webspec/venv/bin/webspec-ctl rm <name>`, then remove its ingress rule.
 
 - **Change the public domain.** Caddy records the domain in its Caddyfile, so a routine
   `caddy-sync` keeps it. To change it, run all three steps:
@@ -266,12 +287,10 @@ Run `webspec-ctl` as root by its full path. On a production host it edits
     at all.
 
 - **Restart** with `sudo systemctl restart webspec-gateway.service`. The socket keeps the port
-  bound, and new connections wait for the new gateway. The old one stops taking connections,
-  then for a quarter of a second answers what arrives on those it has open, each time with
-  `Connection: close`, so that clients such as Caddy open their next connection to the new one.
-  A stop signals the gateway alone and lets it finish the calls in flight, for up to 40
-  seconds, before it kills what is left. A restart is needed after any
-  change to `gateway.env`, and it forgets the in-memory state (nonces, approvals, idempotency
+  bound, and new connections wait for the new gateway. A stop signals the gateway alone. It
+  finishes the calls in flight for up to 35 seconds and exits, and systemd kills what is left
+  once it has exited, or after 40 seconds. A restart is needed after any change to
+  `gateway.env`, and it forgets the in-memory state (nonces, clearances, approvals, idempotency
   records, pins).
 
 - **Stop** in this order, and start again in the reverse order:
@@ -296,7 +315,11 @@ Run `webspec-ctl` as root by its full path. On a production host it edits
 - **The audit log.** Check the chain with:
 
     ```bash
-    sudo /opt/webspec/venv/bin/python -I -c 'from pathlib import Path; from webspec.audit import verify_chain; print(verify_chain(Path("/var/lib/webspec/gateway-audit.jsonl")))'
+    sudo /opt/webspec/venv/bin/python -I - <<'EOF'
+    from pathlib import Path
+    from webspec.audit import verify_chain
+    print(verify_chain(Path("/var/lib/webspec/gateway-audit.jsonl")))
+    EOF
     ```
 
     It prints `None` when the chain is intact, or the number of the first line that breaks it.
@@ -304,16 +327,23 @@ Run `webspec-ctl` as root by its full path. On a production host it edits
     schedule and watch its disk use. Rotate it by renaming the file while the gateway runs
     ([AU-4](../spec/audit-deployment.md#audit)), never by truncating it. The gateway goes on
     chaining from the last line it wrote, so check the file that follows a rotation against the
-    renamed one's last line, or it reports line 1:
+    renamed one's last line, or the check reports line 1 as broken:
 
     ```bash
-    sudo /opt/webspec/venv/bin/python -I -c 'import hashlib; from pathlib import Path; from webspec.audit import verify_chain; old = Path("/var/lib/webspec/gateway-audit.jsonl.1").read_bytes().splitlines()[-1]; print(verify_chain(Path("/var/lib/webspec/gateway-audit.jsonl"), first_prev=hashlib.sha256(old).hexdigest()))'
+    sudo /opt/webspec/venv/bin/python -I - <<'EOF'
+    import hashlib
+    from pathlib import Path
+    from webspec.audit import verify_chain
+    old = Path("/var/lib/webspec/gateway-audit.jsonl.1").read_bytes().splitlines()[-1]
+    print(verify_chain(Path("/var/lib/webspec/gateway-audit.jsonl"),
+                       first_prev=hashlib.sha256(old).hexdigest()))
+    EOF
     ```
 
-    A gateway that had written nothing since it last started when you renamed the file, or
-    that restarted before its next entry, starts the new file from the beginning of a chain,
-    and the first command checks it. The stdio servers can write the
-    log, so ship it, or at least its latest hash, off the host.
+    If the gateway wrote no entry between its last start and the rename, or restarted after the
+    rename before writing one, the new file starts a chain of its own: check it with the first
+    command. The stdio servers can write the log, so ship it, or at least its latest hash, off
+    the host.
 
 - **Upgrade**: bring `/opt/webspec/src` to a newer commit you have reviewed, then run
   `install.sh` and then `setup-caddy.sh` again, in that order, with the same
@@ -322,15 +352,14 @@ Run `webspec-ctl` as root by its full path. On a production host it edits
 ### Moving off the development setup
 
 If the gateway runs today as your login user, from `gateway/systemd` or from a hand-written
-system unit, reading `~/.claude.json`:
+system unit, reading `~/.claude.json`, do step 1 of [Install](#install), then the steps below in
+place of Install steps 3 to 5 and 7 to 9. Install steps 6 and 10 still apply.
 
 1. Treat its guard key as exposed: your login user could read it. Make a new one.
-2. While the old gateway still runs, write the new configuration as root. Copy into
-   `/etc/webspec/config.json` only the servers you mean to expose. Give each an absolute
-   command that root owns, outside every home directory, and turn each secret into
-   `"${NAME}"`, with its value in `gateway.env`. Then add the new key as in step 4 above. The
-   production gateway never reads `~/.claude.json`, and its stdio servers start in `/`, so
-   relative paths fail.
+2. While the old gateway still runs, write the new configuration and the new key as root, as in
+   Install steps 4 and 5. Copy into `/etc/webspec/config.json` only the servers you mean to
+   expose. The production gateway never reads `~/.claude.json`, and its stdio servers start in
+   `/`, so relative paths fail.
 
     ```bash
     sudo install -d -m 0700 /etc/webspec
@@ -364,7 +393,10 @@ system unit, reading `~/.claude.json`:
 ## macOS
 
 The macOS deployment runs the gateway as a LaunchDaemon, as the hidden user `_webspec`, with
-launchd holding `127.0.0.1:7002`. It ships no proxy and no egress rules: those are yours.
+launchd holding `127.0.0.1:7002`. It ships no proxy and no egress rules: those are yours. Give
+`sudo` every program by its absolute path, as the commands below do: macOS keeps your `PATH`
+under `sudo`, so a bare name runs whatever comes first on it, and the agent may be able to
+write a directory there, such as Homebrew's.
 
 1. **Clone where only root can change it:**
 
@@ -417,13 +449,6 @@ it without the checks, and launchd keeps the port bound either way. A restart ca
 first, then run
 `sudo /bin/launchctl disable system/com.webspec.gateway.daemon && sudo /bin/launchctl bootout system/com.webspec.gateway.daemon`.
 
-On macOS, give `sudo` every program by its absolute path, as above. macOS keeps your `PATH`
-under `sudo`, so a bare name runs whatever comes first on it, and the agent may be able to
-write a directory there, such as Homebrew's.
-
-On macOS there is no non-dumpable process (DP-2), and every stdio server can read
-`guard.key`, `gateway.env`, and `config.json`. The `_webspec` user is the only boundary.
-
 ## Docker
 
 The compose stack runs the gateway as uid 10001 behind Caddy, both with read-only root
@@ -431,7 +456,8 @@ filesystems, on a network pinned to IPv4. Caddy is published on `127.0.0.1:7001`
 `[::1]:7001` only. The image's own init runs as PID 1 and makes itself non-dumpable. It holds
 the gateway's port for the container's whole life, and when the gateway exits it kills the
 container's other processes before it lets the port go. It also reaps orphaned processes. A
-stop gives the gateway 40 seconds to finish the calls in flight.
+stop lets the gateway finish the calls in flight for up to 35 seconds, within Docker's
+40-second grace period.
 
 ```bash
 cd /path/to/WebSpec                              # a checkout the agent cannot write
@@ -441,21 +467,20 @@ export WEBSPEC_GUARD_KEY=$(op read 'op://WebSpec/gateway-guard/key')   # an op t
 WEBSPEC_CONFIG_DIR=/etc/webspec-docker docker compose -f docker/docker-compose.yml up --build -d
 ```
 
-Docker holds Caddy's published port only while Caddy's container runs, and lets it go whenever
-that container is down, so a local process could take it then
-([DP-9](../spec/audit-deployment.md#deployment)). One that still holds it when Docker starts
-Caddy again keeps it, and receives every local request on it until it stops
-([docker/README.md](https://github.com/I-m-A-g-I-n-E/WebSpec/blob/main/docker/README.md)).
-Run cloudflared as a service of the stack,
-which reaches Caddy over the stack's network, and keep users you do not trust off the host.
-On a host whose loopback has no IPv6, add `-f docker/ipv4-only.yml`. `WEBSPEC_HOST` must stay
-an IP address (`0.0.0.0` in the stack): the init refuses a host name. Access to the Docker
-daemon is access to the guard key (`docker inspect`), so the agent must not have it. On Linux,
-keep the agent out of the `docker` group. With Docker Desktop on a Mac, the agent must not run
-as the logged-in user.
+- **Access to the Docker daemon is access to the guard key** (`docker inspect`), so the agent
+  must not have it. On Linux, keep the agent out of the `docker` group. With Docker Desktop on a
+  Mac, the agent must not run as the logged-in user.
+- **Caddy's port is free while its container is down**
+  ([DP-9](../spec/audit-deployment.md#deployment)). A local process could take it then, keep it
+  after Docker starts Caddy again, and receive every local request on it until it stops. Run
+  cloudflared as a service of the stack, which reaches Caddy over the stack's network, and keep
+  users you do not trust off the host.
+- On a host whose loopback has no IPv6, add `-f docker/ipv4-only.yml`.
+- `WEBSPEC_HOST` must stay an IP address (`0.0.0.0` in the stack): the init refuses a host name.
+
 [docker/README.md](https://github.com/I-m-A-g-I-n-E/WebSpec/blob/main/docker/README.md) covers
-the rest: the key from 1Password at start (`OP_GUARD_KEY_REF`), the audit log, restarts, the
-public tunnel, and running your own MCP servers.
+the rest: the key from 1Password at start (`OP_GUARD_KEY_REF`), the ports, the audit log,
+restarts, the public tunnel, and running your own MCP servers.
 
 ## Egress (DP-3)
 
@@ -546,20 +571,17 @@ Then:
   server's `args`, or in a unit or plist file: those are readable by others.
 - On Linux, `gateway.env` is a systemd environment file: one `NAME=value` per line, without
   `export`. systemd ignores `export NAME=…` lines, and logs each one, value included, to the
-  journal at every start. On macOS the file is read by `/bin/sh`, and `NAME='value'` is right.
+  journal at every start.
 - Edit secret files as root with a fixed editor, `sudo -H /usr/bin/vi <file>`. **Never use
   `sudo -e` or `sudoedit`**: it copies the file, key included, into a file of your own user,
   and opens it in your own editor, with your own environment. If the agent shares your
   account, it can read the copy.
-- Refer to an MCP secret in `config.json` as `"${NAME}"`, in a stdio server's `env` or an HTTP
-  server's headers. The gateway fills it from its environment when it loads the file. It never
-  fills `${WEBSPEC_GUARD_KEY…}`.
 - Keep `WEBSPEC_*` settings out of `gateway.env`, apart from `WEBSPEC_DOMAIN` and, on Linux,
-  `WEBSPEC_GUARD_KEY`. On macOS the key belongs in `guard.key` alone: a `WEBSPEC_GUARD_KEY` in
-  `gateway.env` would take its place, and `--fill-key` would then change nothing.
-  Values there override the units: `WEBSPEC_AUDIT_LOG=` would turn the audit log off,
-  `WEBSPEC_ACCESS_LOG=1` would log `GET` arguments, and `WEBSPEC_CORS_ORIGINS` would open the
-  gateway to other origins.
+  `WEBSPEC_GUARD_KEY`. Values in `gateway.env` override the units: `WEBSPEC_AUDIT_LOG=` would
+  turn the audit log off, `WEBSPEC_ACCESS_LOG=1` would log `GET` arguments, and
+  `WEBSPEC_CORS_ORIGINS` would open the gateway to other origins. On macOS the key belongs in
+  `guard.key` alone: a `WEBSPEC_GUARD_KEY` in `gateway.env` would take its place, and
+  `--fill-key` would then change nothing.
 - A key that ever lived in a file your login user could read is exposed. Replace it.
 
 ## The rules, platform by platform

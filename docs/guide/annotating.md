@@ -128,10 +128,9 @@ an override produces:
 
 ## When a server changes its annotations
 
-Servers can re-list their tools at any time. Once the gateway has described or called a tool,
+Servers can re-list their tools at any time. Once the gateway has listed a tool,
 it *pins* the tool's contract: it keeps the strictest contract it has seen for that tool
-([TC-6](../spec/methods.md#tool-contracts)). A tool that no request has described or called yet
-has no pin, so its server can still loosen it. For a pinned tool:
+([TC-6](../spec/methods.md#tool-contracts)). For a pinned tool:
 
 - A server that **tightens** a tool, for example by marking it destructive, takes effect the
   next time the gateway lists its tools: within 5 minutes, or on reconnect.

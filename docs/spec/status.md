@@ -49,10 +49,6 @@ These are true of the reference gateway today. Some come from the rules themselv
   macOS, the guard-key file and every secret), read the other servers' environment, write the
   audit log, and signal the gateway, forcing a restart that empties its memory. Run only stdio
   servers you trust as much as the gateway ([Deploying](../guide/deploy.md#who-can-do-what)).
-- **Pins follow requests.** The reference gateway pins a tool's contract only when a request
-  describes or calls that tool, and `GET /` and `OPTIONS /` describe every tool. Until then, a
-  server can re-list the tool with a looser contract, for example as read-only to open it to
-  `GET`.
 - **Arguments are checked for form only.** The gateway enforces
   [AR-1 to AR-5](addressing.md#arguments), such as strict JSON and unique query keys, but does
   not validate arguments against the tool's `inputSchema` or refuse duplicate keys inside a

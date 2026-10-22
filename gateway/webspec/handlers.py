@@ -52,6 +52,9 @@ contract_pins = ContractPins()
 # being removed from the config and added back (PA-8): re-adding it is a rebuild.
 route_maps: dict[str, RouteMap] = {}
 
+# The methods of `/` itself (PA-2): the listing and discovery. OPTIONS / and every refusal on / say so.
+ROOT_ALLOW = "HEAD, OPTIONS, GET"
+
 
 def _error(status: int, error_type: str, detail: str, headers: dict | None = None, **extra) -> JSONResponse:
     body = {"error": error_type, "detail": detail, **extra}
@@ -73,7 +76,7 @@ def refuse_without_guard_key(request: Request, service: str, exc: GuardKeyError,
         audit.record_request(request, service=service, outcome="error", status=500, reason=GUARD_KEY_UNAVAILABLE)
     else:
         audit.record(ctx, outcome="error", status=500, reason=GUARD_KEY_UNAVAILABLE)
-    logger.error("Refused %s on %s with 500, the guard key is unavailable (GD-5): %s", request.method.upper(),
+    logger.error("Refused %s on %s with 500, the guard key is unavailable (GD-5): %s", request.method,
                  service, exc)
     return PlainTextResponse("Internal Server Error", status_code=500)
 
@@ -220,14 +223,17 @@ def _refusal(refuse, r: Refusal) -> JSONResponse:
     return refuse(r.status, r.error, r.detail, headers={"Allow": r.allow} if r.allow else None, **extra)
 
 
+def _taint(contract: ToolContract) -> dict[str, str]:
+    """RS-2: an open-world tool's output, and its server's own error text, is untrusted data."""
+    return {"WebSpec-Taint": "open-world"} if contract.open_world else {}
+
+
 def _decorate(response: Response, contract: ToolContract, level: int) -> Response:
-    """Response obligations for every tool invocation (spec § Response obligations)."""
+    """Response obligations for every tool invocation (RS-1, RS-2)."""
     response.headers["Cache-Control"] = "no-store"
     response.headers["WebSpec-Level"] = str(level)
     response.headers["WebSpec-Tier"] = contract.tier
-    if contract.open_world:
-        # Output came from (or touched) the open world: the harness MUST UFO-tag it (RS-2).
-        response.headers["WebSpec-Taint"] = "open-world"
+    response.headers.update(_taint(contract))
     return response
 
 
@@ -304,11 +310,11 @@ async def handle_service_options(request: Request, service: str, pool: Connectio
     except Exception as e:
         return _error(503, "service_unavailable", f"Could not connect to {service}: {e}")
 
-    allow = route_map.allow(path) if path else None
-    if path and allow is None:
+    allow = route_map.allow(path) if path else ROOT_ALLOW
+    if allow is None:
         return _error(404, "tool_not_found", f"/{path} maps no tool")
     body = {"service": service, "level": entry.level, "entries": _entries(entry, tools, route_map, path or None)}
-    return JSONResponse(body, headers={"Allow": allow} if allow else None)
+    return JSONResponse(body, headers={"Allow": allow})
 
 
 async def handle_service_list(request: Request, service: str, pool: ConnectionPool, registry: ServiceRegistry) -> Response:
@@ -335,7 +341,7 @@ async def handle_service_list(request: Request, service: str, pool: ConnectionPo
 async def handle_service_invoke(request: Request, service: str, pool: ConnectionPool, registry: ServiceRegistry) -> Response:
     """Every other method on /{noun}: resolve the tool (PA-10), then call it under its method profile."""
     path = request.path_params.get("path", "").strip("/")
-    method = request.method.upper()
+    method = request.method  # exact: a token that is not one of ALL_METHODS is an unknown method (PA-10)
 
     def early(status: int, error_type: str, detail: str, headers: dict | None = None, **extra) -> JSONResponse:
         audit.record_request(request, service=service, outcome="denied", status=status, reason=error_type)
@@ -347,7 +353,7 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
     if not path:
         if method in INVOKING_METHODS:  # PA-3; GET / is the listing and never gets here
             return early(400, "missing_tool", f"{method} requires a tool path")
-        return early(405, "method_not_allowed", f"/ does not allow {method}", headers={"Allow": "HEAD, OPTIONS, GET"})
+        return early(405, "method_not_allowed", f"/ does not allow {method}", headers={"Allow": ROOT_ALLOW})
     if not authorize(LOCAL_ALLOW_ALL, method, f"{service}.localhost", path):
         return early(403, "forbidden", "Not authorized")
     try:
@@ -478,7 +484,9 @@ async def handle_service_invoke(request: Request, service: str, pool: Connection
         if use_idem:
             idem.store.abandon(service, idem_key)
         audit.record(audit_ctx, outcome="rejected", status=502, reason="tool_rejected")
-        return _error(502, "tool_rejected", f"{service} rejected the call: {e}", tool=tool_name)
+        # The detail quotes the server's error text, which is open-world output too (RS-2).
+        return _error(502, "tool_rejected", f"{service} rejected the call: {e}", headers=_taint(contract),
+                      tool=tool_name)
     except asyncio.TimeoutError:
         if use_idem:
             idem.store.mark_unknown(service, idem_key)

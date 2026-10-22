@@ -41,6 +41,15 @@ TOOLS = [{"name": "list_notes", "description": "List notes", "inputSchema": {}}]
 SECRET_TOOLS = [{"name": "read_secret", "description": "Read a secret", "inputSchema": {}}]
 
 
+def _discovery_body(method: str, tools: list[dict]) -> dict:
+    """What a v2 destination answers: GET / lists the tools (DS-3), OPTIONS / gives the route map (DS-1)."""
+    if method == "GET":
+        return {"tools": [{"name": t["name"], "description": t["description"], "method": "POST",
+                           "path": f"/{t['name']}", "definer": "INVOKE"} for t in tools]}
+    return {"entries": [{"path": f"/{t['name']}", "method": "POST", "definer": "INVOKE", "tool": t["name"],
+                         "inputSchema": t["inputSchema"]} for t in tools]}
+
+
 class _Recorder(HTTPServer):
     def __init__(self, address, handler, family=socket.AF_INET):
         self.address_family = family
@@ -51,7 +60,7 @@ class _Recorder(HTTPServer):
 
 
 class _Handler(BaseHTTPRequestHandler):
-    """A gateway as the registry sees it: index, OPTIONS per destination, the guard flow."""
+    """A gateway as the registry sees it: index, GET / and OPTIONS / per destination, the guard flow."""
 
     protocol_version = "HTTP/1.1"
 
@@ -75,11 +84,29 @@ class _Handler(BaseHTTPRequestHandler):
                                  "nonce": self.headers.get("WebSpec-Nonce")})
         return host, self.path
 
+    def _discovery(self, host: str) -> None:
+        if host == "open-svc.localhost":
+            self._send(200, _discovery_body(self.command, TOOLS))
+        elif host == "redirect-svc.localhost":
+            self._send(302, headers={"Location": self.server.redirect_to})
+        elif host == "guarded-svc.localhost":
+            nonce = self.headers.get("WebSpec-Nonce", "")
+            ok = nonce and self.headers.get("WebSpec-Guard") == compute_guard_hmac(KEY, self.command, host, "/",
+                                                                                     nonce, b"")
+            if ok:
+                self._send(200, _discovery_body(self.command, SECRET_TOOLS))
+            else:
+                self._send(401, {"error": "guard_missing"})
+        else:
+            self._send(404, {"error": "unknown_service"})
+
     def do_GET(self):
         host, path = self._record()
         if (host, path) == ("localhost", "/"):
             self._send(200, {"services": [{"name": n} for n in
                                           ("open-svc", "guarded-svc", "redirect-svc", "Bad Name")]})
+        elif path == "/":
+            self._discovery(host)
         elif (host, path) == ("guarded-svc.localhost", "/__nonce") and self.server.nonce_redirect_to:
             self._send(302, headers={"Location": self.server.nonce_redirect_to})
         elif (host, path) == ("guarded-svc.localhost", "/__nonce"):
@@ -90,17 +117,7 @@ class _Handler(BaseHTTPRequestHandler):
 
     def do_OPTIONS(self):
         host, path = self._record()
-        if host == "open-svc.localhost":
-            self._send(200, {"tools": TOOLS})
-        elif host == "redirect-svc.localhost":
-            self._send(302, headers={"Location": self.server.redirect_to})
-        elif host == "guarded-svc.localhost":
-            nonce = self.headers.get("WebSpec-Nonce", "")
-            ok = nonce and self.headers.get("WebSpec-Guard") == compute_guard_hmac(KEY, "OPTIONS", host, "/",
-                                                                                     nonce, b"")
-            self._send(200, {"tools": SECRET_TOOLS}) if ok else self._send(401, {"error": "guard_missing"})
-        else:
-            self._send(404, {"error": "unknown_service"})
+        self._discovery(host)
 
 
 def _serve(host: str = "127.0.0.1", family=socket.AF_INET):
@@ -225,9 +242,10 @@ def test_it_sends_loopback_host_names_and_no_guard_tags_by_default(monkeypatch, 
     assert [(r.service, r.tool) for r in records] == [("open-svc", "list_notes")]
     assert [(s["method"], s["path"], s["host"]) for s in gateway.seen] == [
         ("GET", "/", "localhost"),
+        ("GET", "/", "open-svc.localhost"),
         ("OPTIONS", "/", "open-svc.localhost"),
-        ("OPTIONS", "/", "guarded-svc.localhost"),  # 401: skipped, no guard flow
-        ("OPTIONS", "/", "redirect-svc.localhost"),  # 302: not followed
+        ("GET", "/", "guarded-svc.localhost"),  # 401: skipped, no guard flow
+        ("GET", "/", "redirect-svc.localhost"),  # 302: not followed
     ]
     assert not any(s["guard"] or s["nonce"] for s in gateway.seen)
     assert sink.seen == []
@@ -241,7 +259,7 @@ def test_guarded_harvest_is_opt_in(monkeypatch, servers):
     records = registry_main._default_catalog()
     assert sorted((r.service, r.tool) for r in records) == [("guarded-svc", "read_secret"), ("open-svc", "list_notes")]
     assert [(s["method"], s["path"]) for s in gateway.seen if s["host"] == "guarded-svc.localhost"] == [
-        ("OPTIONS", "/"), ("GET", "/__nonce"), ("OPTIONS", "/")]
+        ("GET", "/"), ("GET", "/__nonce"), ("GET", "/"), ("GET", "/__nonce"), ("OPTIONS", "/")]
 
 
 def test_guarded_harvest_without_a_key_says_so(monkeypatch, servers, caplog):

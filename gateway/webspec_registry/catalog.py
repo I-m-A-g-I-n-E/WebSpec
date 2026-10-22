@@ -57,14 +57,24 @@ def harvest(services: list[str], fetch_tools) -> list[ToolRecord]:
     return records
 
 
-def _options_request(url: str, host: str, extra_headers: dict | None = None) -> list[dict]:
+def _discovery_request(url: str, method: str, host: str, extra_headers: dict | None = None) -> dict:
     headers = {"Host": host}
     if extra_headers:
         headers.update(extra_headers)
-    req = urllib.request.Request(url, method="OPTIONS", headers=headers)
+    req = urllib.request.Request(url, method=method, headers=headers)
     with open_gateway(req, timeout=5) as resp:
-        payload = json.loads(resp.read())
-    return payload.get("tools", [])
+        return json.loads(resp.read())
+
+
+def _tools(listing: dict, route_map: dict) -> list[dict]:
+    """The destination's tools as harvest() takes them, from v2 discovery.
+
+    The names and descriptions come from GET / (DS-3), each tool's inputSchema from the
+    OPTIONS / entries (DS-1). An entry whose key is closed names no tool, so it adds no schema.
+    """
+    schemas = {e["tool"]: e.get("inputSchema") or {} for e in route_map.get("entries", []) if "tool" in e}
+    return [{"name": t.get("name", ""), "description": t.get("description") or "",
+             "inputSchema": schemas.get(t.get("name"), {})} for t in listing.get("tools", [])]
 
 
 def _bootstrap_nonce(gateway_url: str, host: str, guard_key: bytes) -> str:
@@ -77,36 +87,41 @@ def _bootstrap_nonce(gateway_url: str, host: str, guard_key: bytes) -> str:
     return payload["nonce"]
 
 
-def _guarded_options(url: str, host: str, guard_key: bytes, nonce: str) -> list[dict]:
-    mac = compute_guard_hmac(guard_key, "OPTIONS", host, "/", nonce, b"")
-    return _options_request(url, host, extra_headers={"WebSpec-Guard": mac, "WebSpec-Nonce": nonce})
-
-
 def http_fetch_tools(gateway_url: str, guard_key: bytes | None = None):
-    """Return a fetch_tools callable that reads OPTIONS {gateway_url}/ per service subdomain.
+    """Return a fetch_tools callable that reads each destination's GET / and OPTIONS /.
 
-    The gateway's index (GET {gateway_url}/) lists services; OPTIONS {service}.<host>/ lists tools.
-    Here we hit the gateway index for the tool list per service via its JSON `tools` array.
-    ``gateway_url`` says only where to connect (dial a loopback gateway by IP, see
-    __main__._gateway_url); the Host header is always the loopback name ``{service}.localhost``.
+    The gateway's index (GET {gateway_url}/) lists services. On ``{service}.localhost``, GET /
+    lists the tools with their descriptions (DS-3) and OPTIONS / gives the route map, whose
+    entries carry each tool's inputSchema (DS-1). ``gateway_url`` says only where to connect
+    (dial a loopback gateway by IP, see __main__._gateway_url); the Host header is always the
+    loopback name ``{service}.localhost``.
 
-    Guard-aware: if the unauthenticated OPTIONS is rejected with 401/403 and a
-    guard_key is supplied (and webspec.guard is importable), retry via the
-    gateway's own guard flow — GET /__nonce (bootstrap HMAC) then OPTIONS /
-    with the guard HMAC + nonce. Unguarded services are unaffected: they
-    succeed on the first unauthenticated OPTIONS and never take this path.
-    If the guarded retry also fails, the HTTPError propagates so harvest()
-    skips the service exactly as it does today — this never crashes.
+    Guard-aware: if an unauthenticated request is rejected with 401/403 and a
+    guard_key is supplied (and webspec.guard is importable), it and every later
+    request to that destination go through the gateway's own guard flow — GET
+    /__nonce (bootstrap HMAC), then the request with the guard HMAC + nonce.
+    Unguarded services are unaffected: they succeed unauthenticated and never
+    take this path. If a guarded request also fails, the HTTPError propagates so
+    harvest() skips the service exactly as it does today — this never crashes.
     """
+    url = gateway_url.rstrip("/") + "/"
+
     def _fetch(service: str) -> list[dict]:
-        # The gateway serves OPTIONS /{service}/ as {"service","tools":[...]}
-        url = gateway_url.rstrip("/") + "/"
         host = f"{service}.localhost"
-        try:
-            return _options_request(url, host)
-        except urllib.error.HTTPError as e:
-            if e.code in (401, 403) and guard_key is not None and compute_guard_hmac is not None:
-                nonce = _bootstrap_nonce(gateway_url, host, guard_key)
-                return _guarded_options(url, host, guard_key, nonce)
-            raise
+        guarded = False
+
+        def discover(method: str) -> dict:
+            nonlocal guarded
+            if not guarded:
+                try:
+                    return _discovery_request(url, method, host)
+                except urllib.error.HTTPError as e:
+                    if e.code not in (401, 403) or guard_key is None or compute_guard_hmac is None:
+                        raise
+                    guarded = True
+            nonce = _bootstrap_nonce(gateway_url, host, guard_key)
+            mac = compute_guard_hmac(guard_key, method, host, "/", nonce, b"")
+            return _discovery_request(url, method, host, {"WebSpec-Guard": mac, "WebSpec-Nonce": nonce})
+
+        return _tools(discover("GET"), discover("OPTIONS"))
     return _fetch

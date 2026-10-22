@@ -1,6 +1,6 @@
 """Scope enforcement: METHOD:host/path pattern matching.
 
-In-scope: fnmatch-based authorize(), LOCAL_ALLOW_ALL, header generation.
+In-scope: fnmatch-based authorize(), LOCAL_ALLOW_ALL.
 Stubbed: JWT validation, scope negotiation, token revocation.
 """
 
@@ -30,20 +30,6 @@ def authorize(scopes: ScopeSet, method: str, host: str, path: str) -> bool:
         if fnmatch(target, pattern):
             return True
     return False
-
-
-def allowed_methods(scopes: ScopeSet, host: str, path: str) -> list[str]:
-    """Return which HTTP methods are allowed for this host/path under the given scopes."""
-    methods = []
-    for m in ("HEAD", "OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"):
-        if authorize(scopes, m, host, path):
-            methods.append(m)
-    return methods
-
-
-def scope_required(service: str, method: str, tool: str) -> str:
-    """Return the scope string required for a given method on a service tool."""
-    return f"{method}:{service}.localhost/{tool}"
 
 
 # ── Stubs for future JWT-based auth ──

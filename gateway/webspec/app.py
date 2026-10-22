@@ -90,7 +90,9 @@ def _deny(request: Request, service: str, status: int, error: str, detail: str) 
 
 async def _service_dispatch(request: Request) -> Response:
     """Dispatch to the correct handler based on HTTP method for a service subdomain."""
-    method = request.method.upper()
+    # The method token exactly as sent: it is case-sensitive (RFC 9110 §9.1), so `delete` is an
+    # unknown method, answered on the route map like TRACE (PA-10), and the guard signs it as sent.
+    method = request.method
     path = request.path_params.get("path", "").strip("/")
     captured = request.path_params.get("service", "")
 
@@ -347,7 +349,7 @@ def create_app() -> Starlette:
                 allow_origins=cors_origins(),
                 allow_methods=list(ALL_METHODS),
                 allow_headers=[DEFINER_HEADER, "WebSpec-Guard", "WebSpec-Nonce", "WebSpec-Clearance",
-                               "WebSpec-Approval", "WebSpec-Provenance", "Idempotency-Key", "Content-Type"],
+                               "WebSpec-Approval", "Idempotency-Key", "Content-Type"],
                 expose_headers=["Allow", "Link", "WebSpec-Level", "WebSpec-Tier", "WebSpec-Taint",
                                 "WebSpec-Status", "WebSpec-Tool-Count", "WebSpec-Service", "Idempotent-Replayed"],
             ),

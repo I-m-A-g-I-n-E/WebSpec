@@ -46,7 +46,6 @@ LEVEL_NAMES = {0: "local", 1: "signed", 2: "bound", 3: "cleared", 4: "witnessed"
 # ── Methods ──
 
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
-DISCOVERY_METHODS = frozenset({"HEAD", "OPTIONS"})  # never invoke a tool
 INVOKING_METHODS = ("GET", "POST", "PUT", "PATCH", "DELETE")
 ALL_METHODS = ("HEAD", "OPTIONS") + INVOKING_METHODS  # canonical order (routes, CORS, Allow)
 
@@ -124,12 +123,6 @@ def admissible_methods(contract: ToolContract) -> frozenset[str]:
             methods.add("PUT")
         return frozenset(methods)
     return frozenset({"DELETE", "PUT" if contract.idempotent else "POST"})
-
-
-def allow_header(contract: ToolContract) -> str:
-    """RFC 9110 Allow header value for a tool path."""
-    allowed = admissible_methods(contract) | DISCOVERY_METHODS
-    return ", ".join(m for m in ALL_METHODS if m in allowed)
 
 
 def contract_from_annotations(annotations: Any, meta: Mapping[str, Any] | None = None) -> ToolContract:
@@ -313,18 +306,6 @@ def requirements(method: str, contract: ToolContract, level: int) -> Requirement
             contract.risk >= 2 or contract.tier == "dangerous" or (contract.risk >= 1 and contract.open_world)
         ),
     )
-
-
-def describe(contract: ToolContract, level: int) -> dict[str, Any]:
-    """Machine-readable contract + per-method requirements, for OPTIONS discovery."""
-    methods = sorted(admissible_methods(contract))
-    return {
-        "methods": methods,
-        "contract": contract.as_dict(),
-        "level": level,
-        "level_name": LEVEL_NAMES[level],
-        "requirements": {m: requirements(m, contract, level).as_dict() for m in methods},
-    }
 
 
 def parse_level(raw: Any, *, guard: bool, service: str = "?") -> int:

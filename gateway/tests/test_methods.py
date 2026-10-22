@@ -12,10 +12,8 @@ from webspec.methods import (
     ContractPins,
     ToolContract,
     admissible_methods,
-    allow_header,
     apply_override,
     contract_from_annotations,
-    describe,
     parse_level,
     requirements,
 )
@@ -59,11 +57,6 @@ def test_meta_tier_can_only_raise():
     assert down.tier == "sensitive"  # a server can't lower its own tier
     junk = contract_from_annotations(None, {"webspec/tier": "whatever"})
     assert junk.tier == "sensitive"
-
-
-def test_allow_header_lists_discovery_plus_admissible():
-    assert allow_header(contract_from_annotations(ToolAnnotations(readOnlyHint=True))) == "HEAD, OPTIONS, GET"
-    assert allow_header(ToolContract()) == "HEAD, OPTIONS, POST, DELETE"
 
 
 # ── lattice ──
@@ -167,12 +160,6 @@ def test_contract_and_tier_rules():
     assert requirements("GET", sensitive_read, 3).clearance
     dangerous_read = ToolContract(read_only=True, destructive=False, idempotent=True, tier="dangerous")
     assert requirements("GET", dangerous_read, 4).approval
-
-
-def test_describe_lists_requirements_per_admissible_method():
-    d = describe(ToolContract(), 4)
-    assert d["methods"] == ["DELETE", "POST"] and set(d["requirements"]) == {"DELETE", "POST"}
-    assert d["level_name"] == "witnessed"
 
 
 # ── levels ──

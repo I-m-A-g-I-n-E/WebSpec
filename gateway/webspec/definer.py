@@ -71,9 +71,12 @@ def validate_definer(method: str, header_value: str | None) -> DefinerResult | D
         return DefinerResult(canonical="")
 
     # DF-2: exactly one verb token. An empty value, the old "VERB:bookend" form, repeated
-    # lines combined with a comma, or a word in no family are all unknown definers.
-    verb = header_value.strip()
-    verb = verb.upper() if verb.isascii() else ""
+    # lines combined with a comma, or a word in no family are all unknown definers. Only the
+    # spaces and tabs around a field value (RFC 9110 §5.5) are not part of it: str.strip() would
+    # also remove characters that h11 passes in a value (\x1c-\x1f, \x85, \xa0), so a value that
+    # an intermediary sees as something else would still select the verb.
+    verb = header_value.strip(" \t")
+    verb = verb.upper() if verb.isascii() and verb.isalpha() else ""
     if verb not in VERB_TO_FAMILY:
         return DefinerError(
             error_type="unknown_definer",

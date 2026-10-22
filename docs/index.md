@@ -15,8 +15,8 @@ hide:
 <h1>Make every AI tool call<br> <em>say what it does.</em></h1>
 
 <p class="ws-lede">WebSpec gives each MCP tool its own URL, and each call an HTTP method that
-matches what the tool does. A gateway in front of your unchanged MCP servers checks that every
-part of a request agrees, and refuses the calls that don't.</p>
+matches what the tool does. A gateway in front of your unchanged MCP servers refuses any method
+a tool's contract doesn't admit, and any change whose one-word verb doesn't match its method.</p>
 
 <div class="ws-actions" markdown="1">
 [Run it in ten minutes <span>→</span>](guide/index.md){ .ws-button .ws-button--solid }
@@ -85,11 +85,11 @@ browsers, proxies, and logs already look.</p>
 
 <p class="ws-kicker">Read it like a sentence</p>
 
-## Every part says one thing, and the parts must agree.
+## Every part says one thing, and the gateway checks them. { #every-part-says-one-thing-and-the-parts-must-agree }
 
 <p class="ws-intro">The gateway learns what a tool does, its <em>contract</em>, from the
 annotations its MCP server declares or from the operator, never from the request. It checks
-every part of the request against that contract and against the other parts.</p>
+the method against that contract and, on every change, the definer against the method.</p>
 
 <div class="ws-anatomy">
 
@@ -130,7 +130,7 @@ Bodies must be strict JSON, and each query key may appear once.</p>
 <div class="ws-part">
 <span class="ws-part__token ws-p--definer">REMOVE</span>
 <p><span class="ws-part__role">The verb, said aloud</span>Like the amount in words on a check,
-the definer restates the method in one word, and the two must agree. A page on another origin
+the definer restates the method of every change in one word, and the two must agree. A page on another origin
 can't add this header without a CORS preflight, and by default the gateway refuses the
 preflight.</p>
 <p><span class="ws-refusal"><code>REMOVE</code> on a <span class="ws-keep"><code>POST</code>:</span>

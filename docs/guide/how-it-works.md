@@ -1,8 +1,8 @@
 # How it works
 
 WebSpec makes each AI tool call an ordinary HTTP request whose parts say what the call does,
-and puts a gateway in front of your MCP servers that checks those parts agree. This page
-follows one request part by part, then shows where its authority comes from.
+and puts a gateway in front of your MCP servers that checks the method against what the tool
+declares. This page follows one request part by part, then shows where its authority comes from.
 
 ## One URL per tool
 
@@ -51,8 +51,9 @@ What WebSpec takes from REST is the meaning of the method.
 The gateway learns what kind of act a tool performs, its **contract**, from the hints its MCP
 server declares (annotations) or from the operator who runs the gateway, never from the
 request. A tool that declares nothing counts as destructive, which is MCP's own default. The
-gateway checks each part of a request against the contract and against the other parts. Every
-status code below is a real answer from the reference gateway.
+gateway checks the method against the contract and, on every change, the definer against the
+method; arguments it checks for form only. Every status code below is a real answer from the
+reference gateway.
 
 ### Who handles it: the host
 

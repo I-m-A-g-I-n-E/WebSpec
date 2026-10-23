@@ -26,14 +26,14 @@ contract doesn't admit.</p>
 </div>
 
 <div class="ws-seal">
-<figure class="ws-specimen" aria-label="A request to the reference gateway">
-<div class="ws-specimen__band"><span>Request<span class="ws-wide"> · reference gateway</span></span><span class="ws-specimen__status">200 OK</span></div>
-<pre><code><span><b class="ws-p ws-p--method">DELETE</b> <span class="ws-p ws-p--path">/note</span>?<span class="ws-p ws-p--args">id=welcome</span></span><span><span class="ws-p--key">Host:</span> <span class="ws-p ws-p--host">notes.localhost</span></span></code></pre>
+<figure class="ws-specimen" data-methods aria-label="Requests to the reference gateway">
+<div class="ws-specimen__band"><span>Request<span class="ws-wide"> · reference gateway</span></span><span class="ws-specimen__status">200 OK</span><span class="ws-methods" role="tablist" aria-label="Method" hidden><button type="button" role="tab" id="ws-method-get" aria-controls="ws-request-get" aria-selected="false" tabindex="-1" data-method="get">GET</button><button type="button" role="tab" id="ws-method-post" aria-controls="ws-request-post" aria-selected="false" tabindex="-1" data-method="post">POST</button><button type="button" role="tab" id="ws-method-delete" aria-controls="ws-request-delete" aria-selected="true" data-method="delete">DELETE</button></span></div>
+<pre id="ws-request-get" role="tabpanel" aria-labelledby="ws-method-get" data-method="get" hidden><code><span><b class="ws-p ws-p--method">GET</b> <span class="ws-p ws-p--path">/note</span>?<span class="ws-p ws-p--args">id=welcome</span></span><span><span class="ws-p--key">Host:</span> <span class="ws-p ws-p--host">notes.localhost</span></span></code></pre><pre id="ws-request-post" role="tabpanel" aria-labelledby="ws-method-post" data-method="post" hidden><code><span><b class="ws-p ws-p--method">POST</b> <span class="ws-p ws-p--path">/email</span></span><span><span class="ws-p--key">Host:</span> <span class="ws-p ws-p--host">notes.localhost</span></span><span><span class="ws-p--key">Content-Type:</span> application/json</span><span><span class="ws-p--key">WebSpec-Definer:</span> <span class="ws-p ws-p--definer">SEND</span></span><span> </span><span class="ws-p ws-p--args">{"id":"welcome","to":"ana@example.com"}</span></code></pre><pre id="ws-request-delete" role="tabpanel" aria-labelledby="ws-method-delete" data-method="delete"><code><span><b class="ws-p ws-p--method">DELETE</b> <span class="ws-p ws-p--path">/note</span>?<span class="ws-p ws-p--args">id=welcome</span></span><span><span class="ws-p--key">Host:</span> <span class="ws-p ws-p--host">notes.localhost</span></span></code></pre>
 <ul class="ws-legend">
 <li class="ws-p--host"><i></i>who</li>
 <li class="ws-p--method"><i></i>what kind</li>
 <li class="ws-p--path"><i></i>on what</li>
-<li class="ws-p--args"><i></i>with what</li>
+<li class="ws-p--args"><i></i>with what</li><li class="ws-p--definer" data-only="post" hidden><i></i>which action</li>
 </ul>
 </figure>
 </div>

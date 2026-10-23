@@ -743,6 +743,80 @@ body {
   padding: 1.3rem 1.3rem 1rem;
 }
 
+/* The specimen's method tabs (webspec.js): the walkthrough's read, send and delete. Without
+   the script only the delete shows. The tabs take a second row of the band; the requests
+   share one grid cell, so the card keeps the tallest one's height and a shorter one sits
+   centered in it. */
+
+.ws-specimen__band:has(.ws-methods:not([hidden])) {
+  flex-wrap: wrap;
+  row-gap: 0.55rem;
+}
+
+.ws-methods:not([hidden]) {
+  order: 3;
+  flex-basis: 100%;
+  display: flex;
+  gap: 0.3rem;
+  margin-left: -0.65rem;
+  letter-spacing: normal;
+}
+
+.ws-methods button {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-family: var(--md-code-font-family);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--ws-ink-3);
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.ws-methods button:hover {
+  color: var(--ws-ink);
+}
+
+.ws-methods button:focus-visible {
+  outline: 2px solid var(--ws-green);
+  outline-offset: 2px;
+}
+
+.ws-methods button[aria-selected="true"] {
+  color: var(--ws-part-method);
+  border-color: color-mix(in srgb, var(--ws-part-method) 45%, transparent);
+  background: color-mix(in srgb, var(--ws-part-method) 8%, transparent);
+}
+
+.ws-home .ws-specimen--live {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* a long line scrolls inside its request */
+  grid-template-rows: auto 1fr auto;
+}
+
+.ws-specimen--live > .ws-specimen__band {
+  grid-row: 1;
+}
+
+.ws-specimen--live > pre {
+  grid-row: 2;
+  grid-column: 1;
+  align-self: center;
+  visibility: hidden;
+}
+
+.ws-specimen--live > pre.is-on {
+  visibility: visible;
+}
+
+.ws-specimen--live > .ws-legend {
+  grid-row: 3;
+}
+
 .md-typeset .ws-legend:not([hidden]) {
   display: flex;
   flex-wrap: wrap;
@@ -760,6 +834,10 @@ body {
   display: flex;
   align-items: center;
   gap: 0.45em;
+}
+
+[dir] .md-typeset .ws-legend li[hidden] {
+  display: none;
 }
 
 .ws-legend i {
@@ -1371,6 +1449,17 @@ body {
   .ws-specimen code > span:nth-child(1) { animation-delay: 0.35s; }
   .ws-specimen code > span:nth-child(2) { animation-delay: 0.5s; }
   .ws-specimen code > span:nth-child(3) { animation-delay: 0.65s; }
+
+  /* A request the method tabs bring in: its lines rise in quickly, one after another. */
+  .ws-specimen pre.ws-in code > span {
+    animation: ws-rise-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .ws-specimen pre.ws-in code > span:nth-child(1) { animation-delay: 0s; }
+  .ws-specimen pre.ws-in code > span:nth-child(2) { animation-delay: 0.06s; }
+  .ws-specimen pre.ws-in code > span:nth-child(3) { animation-delay: 0.12s; }
+  .ws-specimen pre.ws-in code > span:nth-child(4) { animation-delay: 0.18s; }
+  .ws-specimen pre.ws-in code > span:nth-child(n+5) { animation-delay: 0.24s; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1385,6 +1474,13 @@ body {
   from {
     opacity: 0;
     transform: translateY(12px);
+  }
+}
+
+@keyframes ws-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
 }
 

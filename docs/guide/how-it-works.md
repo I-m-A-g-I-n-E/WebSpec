@@ -34,9 +34,8 @@ A WebSpec gateway sits in front of unchanged MCP servers and gives each tool its
 is the same delete, from a real exchange with the reference gateway:
 
 ```text
-DELETE /delete_note?id=welcome
+DELETE /note?id=welcome
 Host: notes.localhost
-X-Gimme-Definer: REMOVE
 ```
 
 The gateway called `delete_note` on the demo MCP server it knows as `notes` and answered
@@ -69,7 +68,7 @@ The tool's contract, not the caller, picks the methods that may run it. HTTP def
 `GET` every link, so **the gateway lets a `GET` reach only a tool whose contract says it is
 read-only.** `delete_note` declares itself destructive and idempotent, so it admits `DELETE` and
 `PUT`, HTTP's other idempotent write method. A browser sends either one cross-origin only after
-a CORS preflight. `GET /delete_note?id=welcome` gets `405 Method Not Allowed` with `Allow: HEAD, OPTIONS, PUT, DELETE`.
+a CORS preflight. `PUT /note` gets `405 Method Not Allowed` with `Allow: HEAD, OPTIONS, GET, DELETE`.
 `HEAD` and `OPTIONS` describe a tool and never run it.
 
 ### Which act: the path
@@ -138,10 +137,10 @@ model never needs the key. Here is a signed read from the walkthrough's
 [level-1 run](walkthrough.md#level-1-signed):
 
 ```text
-GET /read_note?id=welcome
+GET /note?id=welcome
 Host: notes.localhost
-X-WebSpec-Nonce: 403c28aba42fa462a23469b97db9b204
-X-WebSpec-Guard: ef56efa3
+WebSpec-Nonce: 4e77ef8d78b024923fb44820805d6547
+WebSpec-Guard: 2702dbea
 ```
 
 The gateway issued that nonce for `notes`, and it works once: the same bytes sent again get

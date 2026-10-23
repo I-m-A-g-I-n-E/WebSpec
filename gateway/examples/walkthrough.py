@@ -29,15 +29,14 @@ from shim import Exchange, Shim  # noqa: E402
 DEMO_KEY = bytes.fromhex("5e" * 32)  # a fixed demo guard key; real keys come from a vault
 HOST, DESTINATION = "notes.localhost", "notes"
 NOTE = {"id": "welcome", "to": "ana@example.com"}
+WELCOME = {"id": "welcome"}
 
-SHOWN_REQUEST = ["Host", "Content-Type", "X-Gimme-Definer", "Idempotency-Key", "X-UFO-Clearance",
-                 "X-WebSpec-Approval", "X-WebSpec-Nonce", "X-WebSpec-Guard"]
-SHOWN_RESPONSE = ["allow", "cache-control", "idempotent-replayed", "x-webspec-level", "x-webspec-tier",
-                  "x-ufo-taint", "x-gimme-definer-canonical", "x-gimme-definer-tier", "retry-after"]
-DISPLAY = {"x-webspec-level": "X-WebSpec-Level", "x-webspec-tier": "X-WebSpec-Tier",
-           "x-ufo-taint": "X-UFO-Taint", "idempotent-replayed": "Idempotent-Replayed",
-           "x-gimme-definer-canonical": "X-Gimme-Definer-Canonical",
-           "x-gimme-definer-tier": "X-Gimme-Definer-Tier"}
+SHOWN_REQUEST = ["Host", "Content-Type", "WebSpec-Definer", "Idempotency-Key", "WebSpec-Clearance",
+                 "WebSpec-Approval", "WebSpec-Nonce", "WebSpec-Guard"]
+SHOWN_RESPONSE = ["allow", "cache-control", "idempotent-replayed", "webspec-level", "webspec-tier",
+                  "webspec-taint", "retry-after"]
+DISPLAY = {"webspec-level": "WebSpec-Level", "webspec-tier": "WebSpec-Tier",
+           "webspec-taint": "WebSpec-Taint", "idempotent-replayed": "Idempotent-Replayed"}
 
 
 def make_approver(workdir: Path) -> tuple[Path, Path]:
@@ -68,6 +67,7 @@ def scenario(level: int, workdir: Path) -> list[tuple[str, list[Exchange]]]:
 
     # Each level is a fresh gateway process: nothing one-time carries over between levels.
     handlers.contract_pins = ContractPins()
+    handlers.route_maps = {}
     idempotency.store = idempotency.IdempotencyStore()
     approval.store = approval.ApprovalStore()
     guard.spent_clearances = guard._SpentClearances()
@@ -94,42 +94,42 @@ def scenario(level: int, workdir: Path) -> list[tuple[str, list[Exchange]]]:
             steps.append((caption, shown))
             return result
 
-        shim.discover("read_note"), shim.discover("send_note"), shim.discover("delete_note")
+        shim.discover()  # OPTIONS /: the route map, GET /note, POST /email SEND and DELETE /note
 
         if level == 0:
-            step("Read", lambda: shim.call("GET", "read_note", {"id": "welcome"}))
-            step("A read can't reach a delete", lambda: shim.call("GET", "delete_note", {"id": "welcome"}))
-            step("Send", lambda: shim.call("POST", "send_note", NOTE, "SEND"))
-            step("Delete", lambda: shim.call("DELETE", "delete_note", {"id": "welcome"}, "REMOVE"))
+            step("Read", lambda: shim.call("GET", "/note", WELCOME))
+            step("A method /note doesn't map", lambda: shim.call("PUT", "/note", WELCOME))
+            step("Send", lambda: shim.call("POST", "/email", NOTE, "SEND"))
+            step("Delete", lambda: shim.call("DELETE", "/note", WELCOME))
         elif level == 1:
             step("Nonce", lambda: shim._nonce())
-            step("Read, signed", lambda: shim.call("GET", "read_note", {"id": "welcome"}))
+            step("Read, signed", lambda: shim.call("GET", "/note", WELCOME))
             last = shim.log[-1]
             step("The same request again", lambda: shim._send(last.method, last.target.split("?")[0],
                                                               last.target.partition("?")[2], last.body,
                                                               {k: v for k, v in last.headers.items() if k != "Host"}))
         elif level == 2:
-            step("Send", lambda: shim.call("POST", "send_note", NOTE, "SEND", idempotency_key="k-7f3a"))
-            step("Retry with the same key", lambda: shim.call("POST", "send_note", NOTE, "SEND",
+            step("Send", lambda: shim.call("POST", "/email", NOTE, "SEND", idempotency_key="k-7f3a"))
+            step("Retry with the same key", lambda: shim.call("POST", "/email", NOTE, "SEND",
                                                               idempotency_key="k-7f3a"))
             step("Same key, different request", lambda: shim.call(
-                "POST", "send_note", {**NOTE, "to": "bo@example.com"}, "SEND", idempotency_key="k-7f3a"))
+                "POST", "/email", {**NOTE, "to": "bo@example.com"}, "SEND", idempotency_key="k-7f3a"))
         elif level == 3:
             shim.vouch = lambda method, tool, args: False
-            step("Send, not vouched for", lambda: shim.call("POST", "send_note", NOTE, "SEND"))
+            step("Send, not vouched for", lambda: shim.call("POST", "/email", NOTE, "SEND"))
             shim.vouch = lambda method, tool, args: True
-            step("Send, vouched for", lambda: shim.call("POST", "send_note", NOTE, "SEND"))
-            step("Read (tier open: no clearance needed)", lambda: shim.call("GET", "read_note", {"id": "welcome"}))
+            step("Send, vouched for", lambda: shim.call("POST", "/email", NOTE, "SEND"))
+            step("Read (tier open: no clearance needed)", lambda: shim.call("GET", "/note", WELCOME))
         else:
-            step("Read (no approval needed)", lambda: shim.call("GET", "read_note", {"id": "welcome"}))
-            first = step("Send", lambda: shim.call("POST", "send_note", NOTE, "SEND", idempotency_key="k-91c2"))
+            step("Read (no approval needed)", lambda: shim.call("GET", "/note", WELCOME))
+            first = step("Send", lambda: shim.call("POST", "/email", NOTE, "SEND", idempotency_key="k-91c2"))
             header = approve(approver_key, first.json())
-            step("Send again, with the approval", lambda: shim.call("POST", "send_note", NOTE, "SEND",
+            step("Send again, with the approval", lambda: shim.call("POST", "/email", NOTE, "SEND",
                                                                     approval=header, idempotency_key="k-91c2"))
-            first = step("Delete", lambda: shim.call("DELETE", "delete_note", {"id": "welcome"}, "REMOVE"))
+            first = step("Delete", lambda: shim.call("DELETE", "/note", WELCOME))
             header = approve(approver_key, first.json())
-            step("Delete again, with the approval", lambda: shim.call("DELETE", "delete_note", {"id": "welcome"},
-                                                                      "REMOVE", approval=header))
+            step("Delete again, with the approval", lambda: shim.call("DELETE", "/note", WELCOME,
+                                                                      approval=header))
     return steps
 
 
@@ -142,7 +142,7 @@ def render(exchange: Exchange) -> str:
     for name in SHOWN_REQUEST:
         if name in exchange.headers:
             value = exchange.headers[name]
-            lines.append(f"{name}: {_short(value) if name == 'X-WebSpec-Approval' else value}")
+            lines.append(f"{name}: {_short(value) if name == 'WebSpec-Approval' else value}")
     if exchange.body:
         lines += ["", exchange.body.decode()]
     lines += ["", f"→ {exchange.status} {HTTPStatus(exchange.status).phrase}"]

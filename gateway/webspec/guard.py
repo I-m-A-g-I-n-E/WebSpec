@@ -127,7 +127,7 @@ def compute_guard_hmac(
     HMAC-SHA256(key, METHOD:host:path:nonce:sha256(body)[:?query][:!definer][:#idempotency-key]),
     truncated. Each suffix is present only when that part is present, so a request with
     none of them signs exactly as before. ``query`` must already be canonical; ``definer``
-    and ``idempotency_key`` are the raw X-Gimme-Definer / Idempotency-Key header values.
+    and ``idempotency_key`` are the raw WebSpec-Definer / Idempotency-Key header values.
     """
     body_hash = hashlib.sha256(body).hexdigest()
     message = f"{method}:{host}:{path}:{nonce}:{body_hash}"
@@ -179,7 +179,7 @@ def validate_guard(
     For all other requests: HMAC + valid nonce required.
     """
     if not guard_header:
-        return GuardError("guard_missing", "X-WebSpec-Guard header required", 401)
+        return GuardError("guard_missing", "WebSpec-Guard header required", 401)
 
     # For nonce requests, nonce field in HMAC is empty string
     nonce_value = "" if is_nonce_request else (nonce_header or "")
@@ -195,7 +195,7 @@ def validate_guard(
 
     # All other requests need a valid nonce
     if not nonce_header:
-        return GuardError("nonce_missing", "X-WebSpec-Nonce header required", 401)
+        return GuardError("nonce_missing", "WebSpec-Nonce header required", 401)
 
     # Audience = the destination service label. Callers pass it explicitly because with
     # qualifier labels (eu.slack.<domain>) the leftmost label is not the destination.
@@ -299,7 +299,7 @@ def validate_clearance_token(
     session_key: bytes, tool: str, args: dict, header: str | None, *, service: str = "", method: str = "",
     spend: bool = True,
 ) -> str | None:
-    """Validate X-UFO-Clearance header (and, by default, spend it). Returns None on success, else an error."""
+    """Validate WebSpec-Clearance header (and, by default, spend it). Returns None on success, else an error."""
     if not header:
         return "clearance_missing"
 
@@ -347,7 +347,7 @@ def build_provenance_link(session_key: bytes, source: str, target: str, action: 
 def validate_provenance_chain(
     session_key: bytes, chain_header: str | None, action: str
 ) -> ProvenanceResult:
-    """Validate X-UFO-Provenance header. Walks the chain and verifies each link."""
+    """Validate WebSpec-Provenance header. Walks the chain and verifies each link."""
     if not chain_header:
         return ProvenanceResult(valid=False, origin="unknown", error="provenance_missing")
 

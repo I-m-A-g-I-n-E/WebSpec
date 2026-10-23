@@ -1,8 +1,9 @@
 """A tiny MCP server for the WebSpec guide: one read, one send, one delete.
 
-Nothing leaves the machine — ``send_note`` only appends to an in-memory outbox — but its
-annotations say what a real sending tool would say (it reaches the open world), so the
-gateway treats it like one.
+The gateway routes them as ``GET /note``, ``POST /email`` with ``WebSpec-Definer: SEND``, and
+``DELETE /note``. Nothing leaves the machine — ``send_email`` only appends to an in-memory
+outbox — but its annotations say what a real sending tool would say (it reaches the open
+world), so the gateway treats it like one.
 """
 
 from fastmcp import FastMCP
@@ -19,8 +20,8 @@ def read_note(id: str) -> str:
 
 
 @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "openWorldHint": True})
-def send_note(id: str, to: str) -> dict:
-    """Send a note to someone (simulated: queued in an in-memory outbox)."""
+def send_email(id: str, to: str) -> dict:
+    """Email a note to someone (simulated: queued in an in-memory outbox)."""
     OUTBOX.append({"to": to, "text": NOTES.get(id, "")})
     return {"queued": len(OUTBOX), "to": to}
 

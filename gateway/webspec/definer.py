@@ -1,11 +1,14 @@
-"""Tier 1 + Tier 2 definer validation and bookend HMAC binding."""
+"""Definer validation (DF-1 to DF-3): the ``WebSpec-Definer`` header.
+
+``POST`` must carry a definer; ``PUT``, ``PATCH`` and ``DELETE`` may. A definer that is sent
+is exactly one verb of the request method's family, matched without regard to (ASCII) case.
+"""
 
 from __future__ import annotations
 
-import hashlib
-import hmac
 from dataclasses import dataclass
 
+DEFINER_HEADER = "WebSpec-Definer"
 
 # Definer verb families — which verbs belong to which HTTP method
 DEFINER_FAMILIES: dict[str, set[str]] = {
@@ -21,91 +24,67 @@ for method, verbs in DEFINER_FAMILIES.items():
     for verb in verbs:
         VERB_TO_FAMILY[verb] = method
 
-# Methods that require a definer
-DEFINER_REQUIRED_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+# DF-1: the method that must carry a definer, and the methods that may.
+DEFINER_REQUIRED_METHODS = frozenset({"POST"})
+DEFINER_METHODS = frozenset(DEFINER_FAMILIES)
 
 
 @dataclass
 class DefinerResult:
-    tier: int  # 1 or 2
-    canonical: str  # the resolved definer verb (e.g. "INVOKE")
-    bookend_hash: str | None = None  # the provided hash if Tier 2
+    canonical: str  # the verb in upper case (e.g. "INVOKE"); empty when none was sent
 
 
 @dataclass
 class DefinerError:
-    error_type: str  # "missing_definer", "definer_family_mismatch", "unknown_definer", "bookend_mismatch"
+    error_type: str  # "missing_definer", "unknown_definer", "definer_family_mismatch"
     detail: str
     status_code: int  # HTTP status code to return
 
 
-def parse_definer_header(header_value: str | None) -> tuple[str | None, str | None]:
-    """Parse X-Gimme-Definer header into (verb, bookend_hash_or_none)."""
-    if not header_value:
-        return None, None
-    parts = header_value.strip().split(":", 1)
-    verb = parts[0].strip().upper()
-    bookend = parts[1].strip() if len(parts) > 1 else None
-    return verb, bookend
+def definer_header(headers) -> str | None:
+    """The definer exactly as received, or None when the header is absent.
 
-
-def compute_bookend_hash(session_key: bytes, method: str, definer: str, payload: bytes) -> str:
-    """Compute Tier 2 bookend HMAC hash.
-
-    Format: truncate(HMAC-SHA256(session_key, METHOD:DEFINER:head(16):tail(16)), 4).hex()
-
-    Edge cases per spec:
-    - empty payload: head and tail are both empty bytes
-    - payload < 16 bytes: head = tail = full payload
-    - payload == 16 bytes: head = tail = full payload
-    - payload > 16 bytes: head = first 16 bytes, tail = last 16 bytes
+    Repeated header lines are combined with ", " (RFC 9110 §5.3), so they reach DF-2 as one
+    value with a comma and are refused, and the guard (GD-2) signs the same value that is
+    validated here.
     """
-    if len(payload) <= 16:
-        head = payload
-        tail = payload
-    else:
-        head = payload[:16]
-        tail = payload[-16:]
-
-    message = f"{method}:{definer}:".encode() + head + b":" + tail
-    mac = hmac.new(session_key, message, hashlib.sha256).digest()
-    return mac[:4].hex()
+    values = headers.getlist(DEFINER_HEADER)
+    return ", ".join(values) if values else None
 
 
-def validate_definer(
-    method: str,
-    header_value: str | None,
-    payload: bytes,
-    session_key: bytes,
-) -> DefinerResult | DefinerError:
-    """Validate the X-Gimme-Definer header for a request.
+def validate_definer(method: str, header_value: str | None) -> DefinerResult | DefinerError:
+    """Validate the definer of a request (DF-1, DF-2).
 
-    Returns DefinerResult on success, DefinerError on failure.
+    ``header_value`` is :func:`definer_header`'s result: None when the header is absent.
     """
     method = method.upper()
+    if method not in DEFINER_METHODS:
+        return DefinerResult(canonical="")
 
-    # Only unsafe methods (POST/PUT/PATCH/DELETE) require definers
-    if method not in DEFINER_REQUIRED_METHODS:
-        return DefinerResult(tier=0, canonical="")
+    if header_value is None:
+        if method in DEFINER_REQUIRED_METHODS:
+            return DefinerError(
+                error_type="missing_definer",
+                detail=f"{method} requires the {DEFINER_HEADER} header",
+                status_code=400,
+            )
+        return DefinerResult(canonical="")
 
-    # Missing header
-    verb, bookend = parse_definer_header(header_value)
-    if not verb:
-        return DefinerError(
-            error_type="missing_definer",
-            detail=f"{method} requires X-Gimme-Definer header",
-            status_code=400,
-        )
-
-    # Unknown verb
+    # DF-2: exactly one verb token. An empty value, the old "VERB:bookend" form, repeated
+    # lines combined with a comma, or a word in no family are all unknown definers. Only the
+    # spaces and tabs around a field value (RFC 9110 §5.5) are not part of it: str.strip() would
+    # also remove characters that h11 passes in a value (\x1c-\x1f, \x85, \xa0), so a value that
+    # an intermediary sees as something else would still select the verb.
+    verb = header_value.strip(" \t")
+    verb = verb.upper() if verb.isascii() and verb.isalpha() else ""
     if verb not in VERB_TO_FAMILY:
         return DefinerError(
             error_type="unknown_definer",
-            detail=f"Unknown definer verb: {verb}. Valid verbs: {', '.join(sorted(VERB_TO_FAMILY.keys()))}",
+            detail=f"{DEFINER_HEADER} must be exactly one verb of {method}'s family: "
+                   f"{', '.join(sorted(DEFINER_FAMILIES[method]))}",
             status_code=400,
         )
 
-    # Family mismatch
     expected_family = VERB_TO_FAMILY[verb]
     if expected_family != method:
         return DefinerError(
@@ -114,17 +93,4 @@ def validate_definer(
             status_code=400,
         )
 
-    # Tier 1 validated — check for Tier 2
-    if bookend is None:
-        return DefinerResult(tier=1, canonical=verb)
-
-    # Tier 2: verify bookend HMAC
-    expected = compute_bookend_hash(session_key, method, verb, payload)
-    if not hmac.compare_digest(bookend.lower(), expected.lower()):
-        return DefinerError(
-            error_type="bookend_mismatch",
-            detail="Tier 2 bookend hash does not match payload",
-            status_code=403,
-        )
-
-    return DefinerResult(tier=2, canonical=verb, bookend_hash=bookend)
+    return DefinerResult(canonical=verb)

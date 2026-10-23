@@ -199,5 +199,5 @@ def test_without_the_requirement_the_gateway_still_starts_without_a_key(tmp_path
         assert serves(port, proc) == 200
     finally:
         err = stop(proc)
-    assert "No usable guard key, so every guarded request and every unsafe request is refused" in err
+    assert "No usable guard key, so every guarded request is refused" in err
     assert "not starting" not in err

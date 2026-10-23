@@ -1149,6 +1149,6 @@ printf '  %s caddy-sync\n' "${CTL/sudo /sudo WEBSPEC_DOMAIN=<domain> }"
 echo "  ${RESTART_GATEWAY}"
 if [ "$earlier_setup" = 1 ]; then
     echo ""
-    warn "the Caddy that ran before this script logged without filters (DP-6). Its error entries in the journal (journalctl -u ${UNIT}) hold full request URIs, query strings (GET arguments) included, and the X-WebSpec-Guard and X-UFO-Clearance headers, and root and the members of the adm and systemd-journal groups can read them (getent group adm systemd-journal). journald cannot delete the entries of one unit: to drop them, rotate the journal and delete every entry older than now, of every unit (sudo journalctl --rotate && sudo journalctl --vacuum-time=1s), or make sure that no one else is in those groups."
+    warn "the Caddy that ran before this script logged without filters (DP-6). Its error entries in the journal (journalctl -u ${UNIT}) hold full request URIs, query strings (GET arguments) included, and the WebSpec-Guard and WebSpec-Clearance headers, and root and the members of the adm and systemd-journal groups can read them (getent group adm systemd-journal). journald cannot delete the entries of one unit: to drop them, rotate the journal and delete every entry older than now, of every unit (sudo journalctl --rotate && sudo journalctl --vacuum-time=1s), or make sure that no one else is in those groups."
 fi
 [ "$verify_failed" = 0 ] || exit 1

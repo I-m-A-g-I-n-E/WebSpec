@@ -16,8 +16,8 @@ from webspec import audit, handlers
 from webspec.guard import compute_guard_hmac, loads_strict
 from webspec.idempotency import IdempotencyStore, StoredResponse, snapshot_response
 
-from tests._gateway import (GUARD_KEY_HEX, HAVE_SSH_KEYGEN, KEY, bookend, clearance, entry, make_client,
-                            request, tool)
+from tests._gateway import (GUARD_KEY_HEX, HAVE_SSH_KEYGEN, KEY, clearance, entry, make_client, request,
+                            tool)
 
 H = "svc.localhost"
 # One allowed-signers entry. The tests that use it never reach ssh-keygen (they stop at the
@@ -48,7 +48,7 @@ def _audit_lines(tmp_path):
 
 def test_duplicate_query_keys_are_refused_and_audited(monkeypatch, tmp_path):
     client, pool = make_client(monkeypatch, [entry(level=1)], _tools())
-    r = request(client, "GET", H, "/read_thing", query="id=1&id=2", guarded=True)
+    r = request(client, "GET", H, "/thing", query="id=1&id=2", guarded=True)
     assert r.status_code == 400 and r.json()["error"] == "duplicate_query_key"
     assert pool.calls == []
     assert _audit_lines(tmp_path)[-1]["reason"] == "duplicate_query_key"
@@ -57,13 +57,19 @@ def test_duplicate_query_keys_are_refused_and_audited(monkeypatch, tmp_path):
 # ── A3: the Idempotency-Key follows the tool, so DELETE can't dodge it ──
 
 def test_delete_on_a_non_idempotent_tool_needs_and_honors_a_key(monkeypatch):
+    # The route rule never gives a non-idempotent tool DELETE (PA-4, RFC 9110 §9.2.2), so a
+    # DELETE cannot reach purge at all, and the method it does take, POST with INVOKE, needs
+    # and honors the key.
     client, pool = make_client(monkeypatch, [entry(level=2)], _tools())
-    hdr = {"X-Gimme-Definer": bookend("DELETE", "PURGE", b"")}
-    r = request(client, "DELETE", H, "/purge", query="older_than=30", guarded=True, headers=hdr)
+    r = request(client, "DELETE", H, "/purge", query="older_than=30", guarded=True,
+                headers={"WebSpec-Definer": "PURGE"})
+    assert r.status_code == 405 and r.headers["allow"] == "HEAD, OPTIONS, POST"
+    hdr = {"WebSpec-Definer": "INVOKE"}
+    r = request(client, "POST", H, "/purge", query="older_than=30", guarded=True, headers=hdr)
     assert r.json()["error"] == "idempotency_key_required"
     hdr["Idempotency-Key"] = "p-1"
-    first = request(client, "DELETE", H, "/purge", query="older_than=30", guarded=True, headers=hdr)
-    again = request(client, "DELETE", H, "/purge", query="older_than=30", guarded=True, headers=hdr)
+    first = request(client, "POST", H, "/purge", query="older_than=30", guarded=True, headers=hdr)
+    again = request(client, "POST", H, "/purge", query="older_than=30", guarded=True, headers=hdr)
     assert first.status_code == 200 and again.headers["idempotent-replayed"] == "true"
     assert len(pool.calls) == 1
 
@@ -74,11 +80,11 @@ def test_definer_and_key_cannot_be_swapped_in_flight(monkeypatch):
     client, pool = make_client(monkeypatch, [entry(level=1)], _tools())
     body = b'{"to":"x"}'
     boot = compute_guard_hmac(KEY, "GET", H, "/__nonce", "", b"")
-    nonce = client.get("/__nonce", headers={"Host": H, "X-WebSpec-Guard": boot}).json()["nonce"]
-    mac = compute_guard_hmac(KEY, "POST", H, "/send_thing", nonce, body, definer="SEND", idempotency_key="k")
-    r = client.post("/send_thing", content=body, headers={
-        "Host": H, "X-WebSpec-Guard": mac, "X-WebSpec-Nonce": nonce,
-        "X-Gimme-Definer": "CREATE", "Idempotency-Key": "k"})  # verb swapped after signing
+    nonce = client.get("/__nonce", headers={"Host": H, "WebSpec-Guard": boot}).json()["nonce"]
+    mac = compute_guard_hmac(KEY, "POST", H, "/thing", nonce, body, definer="SEND", idempotency_key="k")
+    r = client.post("/thing", content=body, headers={
+        "Host": H, "WebSpec-Guard": mac, "WebSpec-Nonce": nonce,
+        "WebSpec-Definer": "CREATE", "Idempotency-Key": "k"})  # verb swapped after signing
     assert r.status_code == 403 and r.json()["error"] == "guard_invalid"
     assert pool.calls == []
 
@@ -90,8 +96,8 @@ def test_clearance_is_bound_and_single_use(monkeypatch):
     body = b'{"to":"x"}'
 
     def post(host, key, clr):
-        return request(client, "POST", host, "/send_thing", body=body, guarded=True, headers={
-            "X-Gimme-Definer": bookend("POST", "SEND", body), "Idempotency-Key": key, "X-UFO-Clearance": clr})
+        return request(client, "POST", host, "/thing", body=body, guarded=True, headers={
+            "WebSpec-Definer": "SEND", "Idempotency-Key": key, "WebSpec-Clearance": clr})
 
     clr = clearance("send_thing", {"to": "x"}, service="svc", method="POST")
     assert post("other.localhost", "k1", clr).json()["error"] == "clearance_invalid"  # wrong destination
@@ -108,9 +114,9 @@ def test_level4_challenges_an_open_world_send(monkeypatch, tmp_path):
     monkeypatch.setenv("WEBSPEC_SSH_KEYGEN", "ssh-keygen")
     client, pool = make_client(monkeypatch, [entry(level=4)], _tools())
     body = b'{"to":"attacker@example.com"}'
-    r = request(client, "POST", H, "/send_mail", body=body, guarded=True, headers={
-        "X-Gimme-Definer": bookend("POST", "SEND", body), "Idempotency-Key": "m-1",
-        "X-UFO-Clearance": clearance("send_mail", {"to": "attacker@example.com"}, method="POST")})
+    r = request(client, "POST", H, "/mail", body=body, guarded=True, headers={
+        "WebSpec-Definer": "SEND", "Idempotency-Key": "m-1",
+        "WebSpec-Clearance": clearance("send_mail", {"to": "attacker@example.com"}, method="POST")})
     assert r.status_code == 428 and pool.calls == []
 
 
@@ -124,15 +130,15 @@ def test_level4_with_an_allowed_signers_file_that_names_nobody_fails_closed(monk
     assert not approval_mod.approvers_available()
     client, pool = make_client(monkeypatch, [entry(level=4)], _tools())
     body = b'{"to":"ana@example.com"}'
-    hdrs = {"X-Gimme-Definer": bookend("POST", "SEND", body), "Idempotency-Key": "m-2",
-            "X-UFO-Clearance": clearance("send_mail", {"to": "ana@example.com"}, method="POST")}
-    r = request(client, "POST", H, "/send_mail", body=body, guarded=True, headers=hdrs)
+    hdrs = {"WebSpec-Definer": "SEND", "Idempotency-Key": "m-2",
+            "WebSpec-Clearance": clearance("send_mail", {"to": "ana@example.com"}, method="POST")}
+    r = request(client, "POST", H, "/mail", body=body, guarded=True, headers=hdrs)
     assert r.status_code == 503 and r.json()["error"] == "approval_unavailable" and pool.calls == []
 
     signers.write_text(signers.read_text() + SIGNER)  # name someone, and the challenge is issued
     assert approval_mod.approvers_available()
-    hdrs["X-UFO-Clearance"] = clearance("send_mail", {"to": "ana@example.com"}, method="POST")
-    r = request(client, "POST", H, "/send_mail", body=body, guarded=True, headers=hdrs)
+    hdrs["WebSpec-Clearance"] = clearance("send_mail", {"to": "ana@example.com"}, method="POST")
+    r = request(client, "POST", H, "/mail", body=body, guarded=True, headers=hdrs)
     assert r.status_code == 428 and pool.calls == []
 
 
@@ -192,7 +198,7 @@ def test_cancelled_verification_does_not_strand_the_challenge(monkeypatch, tmp_p
 @pytest.mark.parametrize("body", [b'{"older_than": 30,}', b'[1,2]', b'{"x": NaN}', b'{"x": 1e400}', b'"str"'])
 def test_malformed_bodies_are_refused_not_dropped(monkeypatch, body):
     client, pool = make_client(monkeypatch, [entry(level=0)], _tools())
-    r = request(client, "POST", H, "/send_thing", body=body, headers={"X-Gimme-Definer": "SEND"})
+    r = request(client, "POST", H, "/thing", body=body, headers={"WebSpec-Definer": "SEND"})
     assert r.status_code == 400 and r.json()["error"] == "invalid_arguments"
     assert pool.calls == []
 
@@ -217,7 +223,7 @@ def test_get_arguments_are_typed_by_the_input_schema(monkeypatch):
 
 def test_an_argument_cannot_come_from_both_query_and_body(monkeypatch):
     client, pool = make_client(monkeypatch, [entry(level=0)], _tools())
-    r = request(client, "POST", H, "/send_thing", query="to=a", body=b'{"to":"b"}', headers={"X-Gimme-Definer": "SEND"})
+    r = request(client, "POST", H, "/thing", query="to=a", body=b'{"to":"b"}', headers={"WebSpec-Definer": "SEND"})
     assert r.status_code == 400 and pool.calls == []
 
 
@@ -226,11 +232,11 @@ def test_an_argument_cannot_come_from_both_query_and_body(monkeypatch):
 def test_unserializable_result_marks_the_key_unknown(monkeypatch, tmp_path):
     client, pool = make_client(monkeypatch, [entry(level=2)], _tools())
     body = b'{"to":"x"}'
-    hdrs = {"X-Gimme-Definer": bookend("POST", "SEND", body), "Idempotency-Key": "u-1"}
+    hdrs = {"WebSpec-Definer": "SEND", "Idempotency-Key": "u-1"}
     with patch.object(handlers, "serialize_tool_result", side_effect=TypeError("boom")):
-        r = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
+        r = request(client, "POST", H, "/thing", body=body, guarded=True, headers=hdrs)
     assert r.status_code == 500 and r.json()["error"] == "result_unserializable"
-    r = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
+    r = request(client, "POST", H, "/thing", body=body, guarded=True, headers=hdrs)
     assert r.status_code == 409 and r.json()["error"] == "idempotency_outcome_unknown"
     assert len(pool.calls) == 1
     assert any(e["reason"] == "result_unserializable" and e["outcome"] == "invoked" for e in _audit_lines(tmp_path))
@@ -242,12 +248,12 @@ def test_a_closed_connection_is_outcome_unknown_not_a_rejection(monkeypatch):
     from mcp.types import CONNECTION_CLOSED
     client, pool = make_client(monkeypatch, [entry(level=2)], _tools())
     body = b'{"to":"x"}'
-    hdrs = {"X-Gimme-Definer": bookend("POST", "SEND", body), "Idempotency-Key": "c-1"}
+    hdrs = {"WebSpec-Definer": "SEND", "Idempotency-Key": "c-1"}
     pool.raise_on_call = McpError(ErrorData(code=CONNECTION_CLOSED, message="Connection closed"))
-    r = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
+    r = request(client, "POST", H, "/thing", body=body, guarded=True, headers=hdrs)
     assert r.status_code == 503 and r.json()["error"] == "service_unavailable"
     pool.raise_on_call = None
-    r = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
+    r = request(client, "POST", H, "/thing", body=body, guarded=True, headers=hdrs)
     assert r.status_code == 409 and r.json()["error"] == "idempotency_outcome_unknown"
     assert len(pool.calls) == 1
 
@@ -257,27 +263,29 @@ def test_head_survives_a_non_ascii_description(monkeypatch):
     t.description = "Says hi 👋 — très bien"
     client, _ = make_client(monkeypatch, [entry(level=0)], [t])
     r = client.head("/say_hi", headers={"Host": H})
-    assert r.status_code == 200 and r.headers["x-webspec-description"] == "Says hi ? ? tr?s bien"
+    # The description and the tool name are no longer sent as headers (DS-2): nothing to garble.
+    assert r.status_code == 200 and r.headers["allow"] == "HEAD, OPTIONS, GET"
+    assert not [name for name in r.headers if name.endswith(("-description", "-tool"))]
 
 
 def test_a_protocol_rejection_frees_the_key(monkeypatch):
     client, pool = make_client(monkeypatch, [entry(level=2)], _tools())
     body = b'{"to":"x"}'
-    hdrs = {"X-Gimme-Definer": bookend("POST", "SEND", body), "Idempotency-Key": "r-1"}
+    hdrs = {"WebSpec-Definer": "SEND", "Idempotency-Key": "r-1"}
     pool.raise_on_call = McpError(ErrorData(code=-32602, message="invalid params"))
-    r = request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
+    r = request(client, "POST", H, "/thing", body=body, guarded=True, headers=hdrs)
     assert r.status_code == 502 and r.json()["error"] == "tool_rejected"
     pool.raise_on_call = None
-    assert request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs).status_code == 200
+    assert request(client, "POST", H, "/thing", body=body, guarded=True, headers=hdrs).status_code == 200
 
 
 # ── B14: decisions made before a tool is resolved are audited too ──
 
 def test_early_denials_are_audited(monkeypatch, tmp_path):
     client, _ = make_client(monkeypatch, [entry(level=1)], _tools())
-    client.get("/read_thing", headers={"Host": H, "X-WebSpec-Guard": "00000000", "X-WebSpec-Nonce": "x"})
+    client.get("/thing", headers={"Host": H, "WebSpec-Guard": "00000000", "WebSpec-Nonce": "x"})
     request(client, "GET", H, "/no_such_tool", guarded=True)
-    request(client, "GET", "eu.svc.localhost", "/read_thing")
+    request(client, "GET", "eu.svc.localhost", "/thing")
     reasons = [e["reason"] for e in _audit_lines(tmp_path)]
     assert "guard_invalid" in reasons and "tool_not_found" in reasons and "unknown_qualifier" in reasons
     assert audit.verify_chain(tmp_path / "audit.jsonl") is None
@@ -404,24 +412,25 @@ def test_failed_idempotency_commit_does_not_burn_the_approval(monkeypatch, tmp_p
     key, signers = make_approver(tmp_path)
     monkeypatch.setenv("WEBSPEC_APPROVERS_FILE", str(signers))
     client, pool = make_client(monkeypatch, [entry(level=4)], _tools())
-    hdrs = {"X-Gimme-Definer": bookend("DELETE", "PURGE", b""), "Idempotency-Key": "p-1",
-            "X-UFO-Clearance": clearance("purge", {"days": "30"}, method="DELETE")}
-    ch = request(client, "DELETE", H, "/purge", query="days=30", guarded=True, headers=hdrs).json()
-    hdrs["X-WebSpec-Approval"] = f"{ch['challenge']}:{ssh_sign(key, sign_message(ch['challenge'], ch['fingerprint']))}"
+    # purge is destructive and not idempotent, so it takes POST /purge with INVOKE (PA-4).
+    hdrs = {"WebSpec-Definer": "INVOKE", "Idempotency-Key": "p-1",
+            "WebSpec-Clearance": clearance("purge", {"days": "30"}, method="POST")}
+    ch = request(client, "POST", H, "/purge", query="days=30", guarded=True, headers=hdrs).json()
+    hdrs["WebSpec-Approval"] = f"{ch['challenge']}:{ssh_sign(key, sign_message(ch['challenge'], ch['fingerprint']))}"
 
-    # A concurrent attempt holds the key, so this commit loses the race (409)…
-    fp = idempotency.request_fingerprint("DELETE", "/purge", canonical_query("days=30"), b"")
-    idempotency.store.begin("svc", "p-1", fp)
-    r = request(client, "DELETE", H, "/purge", query="days=30", guarded=True, headers=hdrs)
+    # A concurrent attempt at the same request holds the key, so this commit loses the race (409)…
+    fp = idempotency.request_fingerprint("POST", "/purge", canonical_query("days=30"), b"")
+    idempotency.store.begin("svc", "p-1", fp, "purge")
+    r = request(client, "POST", H, "/purge", query="days=30", guarded=True, headers=hdrs)
     assert r.status_code == 409 and pool.calls == []
     # …but neither the human's signature nor the clearance was spent: the retry succeeds.
     idempotency.store.abandon("svc", "p-1")
-    r = request(client, "DELETE", H, "/purge", query="days=30", guarded=True, headers=hdrs)
+    r = request(client, "POST", H, "/purge", query="days=30", guarded=True, headers=hdrs)
     assert r.status_code == 200, r.text
     assert len(pool.calls) == 1
     # Once committed, both are spent.
     hdrs["Idempotency-Key"] = "p-2"
-    assert request(client, "DELETE", H, "/purge", query="days=30", guarded=True, headers=hdrs).json()["error"] in (
+    assert request(client, "POST", H, "/purge", query="days=30", guarded=True, headers=hdrs).json()["error"] in (
         "clearance_reused", "approval_reused")
 
 
@@ -430,12 +439,12 @@ def test_failed_idempotency_commit_does_not_burn_the_approval(monkeypatch, tmp_p
 def test_idempotency_audit_entries_have_status(monkeypatch, tmp_path):
     client, _ = make_client(monkeypatch, [entry(level=2)], _tools())
     body = b'{"to":"x"}'
-    hdrs = {"X-Gimme-Definer": bookend("POST", "SEND", body), "Idempotency-Key": "s-1"}
-    request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)
-    request(client, "POST", H, "/send_thing", body=body, guarded=True, headers=hdrs)  # replay
+    hdrs = {"WebSpec-Definer": "SEND", "Idempotency-Key": "s-1"}
+    request(client, "POST", H, "/thing", body=body, guarded=True, headers=hdrs)
+    request(client, "POST", H, "/thing", body=body, guarded=True, headers=hdrs)  # replay
     other = b'{"to":"y"}'
-    request(client, "POST", H, "/send_thing", body=other, guarded=True,
-            headers={"X-Gimme-Definer": bookend("POST", "SEND", other), "Idempotency-Key": "s-1"})  # mismatch
+    request(client, "POST", H, "/thing", body=other, guarded=True,
+            headers={"WebSpec-Definer": "SEND", "Idempotency-Key": "s-1"})  # mismatch
     idem_entries = [e for e in _audit_lines(tmp_path) if e["outcome"].startswith("idempotency:")]
     assert [(e["outcome"], e["status"]) for e in idem_entries] == [
         ("idempotency:replay", 200), ("idempotency:mismatch", 422)]
@@ -534,11 +543,11 @@ def test_a_level4_approval_verifies_in_that_minimal_environment(monkeypatch, tmp
     monkeypatch.setenv("WEBSPEC_SSH_KEYGEN", str(keygen))
     monkeypatch.setenv("SOME_TOKEN", "tok-must-not-leak")
     client, pool = make_client(monkeypatch, [entry(level=4)], _tools())  # sets WEBSPEC_GUARD_KEY
-    hdrs = {"X-Gimme-Definer": bookend("DELETE", "PURGE", b""), "Idempotency-Key": "p-1",
-            "X-UFO-Clearance": clearance("purge", {"days": "30"}, method="DELETE")}
-    ch = request(client, "DELETE", H, "/purge", query="days=30", guarded=True, headers=hdrs).json()
-    hdrs["X-WebSpec-Approval"] = f"{ch['challenge']}:{ssh_sign(key, sign_message(ch['challenge'], ch['fingerprint']))}"
-    r = request(client, "DELETE", H, "/purge", query="days=30", guarded=True, headers=hdrs)
+    hdrs = {"WebSpec-Definer": "INVOKE", "Idempotency-Key": "p-1",  # purge: POST /purge INVOKE (PA-4)
+            "WebSpec-Clearance": clearance("purge", {"days": "30"}, method="POST")}
+    ch = request(client, "POST", H, "/purge", query="days=30", guarded=True, headers=hdrs).json()
+    hdrs["WebSpec-Approval"] = f"{ch['challenge']}:{ssh_sign(key, sign_message(ch['challenge'], ch['fingerprint']))}"
+    r = request(client, "POST", H, "/purge", query="days=30", guarded=True, headers=hdrs)
     assert r.status_code == 200, r.text
     assert pool.calls == [("svc", "purge", {"days": "30"})]
     # Both runs (find-principals, then verify) got the minimal environment.

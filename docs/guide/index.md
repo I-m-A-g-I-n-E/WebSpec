@@ -1,14 +1,13 @@
 # Quickstart
 
 In about ten minutes you'll run the reference gateway in front of a small MCP server, call its
-tools with `curl`, and then raise the security level and call it through the reference shim.
-You need Python 3.11 or newer and a clone of the
-[repository](https://github.com/I-m-A-g-I-n-E/WebSpec).
+tools with `curl`, watch it refuse a call, and then raise the security level and call it
+through the reference shim. You need git and Python 3.11 or newer.
 
 ## 1. Install
 
 ```bash
-cd WebSpec
+git clone https://github.com/I-m-A-g-I-n-E/WebSpec && cd WebSpec
 python -m venv .venv && source .venv/bin/activate
 pip install ./gateway
 ```
@@ -32,9 +31,8 @@ read tool, one send tool, and one delete tool:
 
 ## 3. Start the gateway
 
-The gateway checks signed requests against a guard key. Create one now, even though nothing is
-signed until step 5: without it, the send in step 4 fails
-([Known limits](../spec/status.md#known-limits)).
+The gateway checks signed requests against a guard key. Nothing is signed until step 5, but the
+gateway takes the key from its environment when it starts, so create one now:
 
 ```bash
 # in real use, keep the key in your password manager
@@ -51,54 +49,87 @@ security levels, where the gateway serves it only under loopback names like this
 ## 4. Call it
 
 In a second terminal, list the tools. The gateway builds each tool's contract from its MCP
-annotations ([Annotating MCP servers](annotating.md)), and each tool comes with the methods its
-contract admits:
+annotations ([Annotating MCP servers](annotating.md)), and gives each tool a method and a path
+from its name ([the route rule](how-it-works.md#the-route-rule)):
 
 ```console
-$ curl -s http://notes.localhost:7001/
-{"service":"notes","level":0,"tools":[
-  {"name":"read_note","description":"Read a note.","methods":["GET"]},
-  {"name":"send_note","description":"Send a note to someone (simulated: queued in an in-memory outbox).","methods":["PATCH","POST"]},
-  {"name":"delete_note","description":"Delete a note.","methods":["DELETE","PUT"]}]}
+$ curl -s http://notes.localhost:7001/ | python3 -m json.tool
+{
+    "service": "notes",
+    "level": 0,
+    "tools": [
+        {
+            "name": "read_note",
+            "description": "Read a note.",
+            "method": "GET",
+            "path": "/note"
+        },
+        {
+            "name": "send_email",
+            "description": "Email a note to someone (simulated: queued in an in-memory outbox).",
+            "method": "POST",
+            "path": "/email",
+            "definer": "SEND"
+        },
+        {
+            "name": "delete_note",
+            "description": "Delete a note.",
+            "method": "DELETE",
+            "path": "/note"
+        }
+    ]
+}
 ```
 
 Read a note with `GET`:
 
 ```console
-$ curl -s "http://notes.localhost:7001/read_note?id=welcome"
+$ curl -s "http://notes.localhost:7001/note?id=welcome"
 {"result":"Hello from WebSpec."}
 ```
 
-Try to reach the delete tool with `GET`. The gateway refuses and says which methods would work:
+Now try to send an email with `GET`. Sending isn't read-only, so the gateway refuses, and
+`allow` lists the methods `/email` takes:
 
 ```console
-$ curl -si "http://notes.localhost:7001/delete_note?id=welcome"
+$ curl -si "http://notes.localhost:7001/email?id=welcome&to=eve@example.com"
 HTTP/1.1 405 Method Not Allowed
-allow: HEAD, OPTIONS, PUT, DELETE
-…
-{"error":"method_not_allowed","detail":"GET cannot invoke delete_note; its contract admits DELETE, PUT", …}
+date: Thu, 22 Oct 2026 21:25:06 GMT
+server: uvicorn
+allow: HEAD, OPTIONS, POST
+content-length: 96
+content-type: application/json
+vary: Origin
+cache-control: no-store
+
+{"error":"method_not_allowed","detail":"/email does not map GET; it allows HEAD, OPTIONS, POST"}
 ```
 
-Send a note with `POST`. The `X-Gimme-Definer` header restates the method in one word from
-`POST`'s verb family, here `SEND` ([the definer](how-it-works.md#the-verb-said-aloud-the-definer)):
+Send it with `POST`. A `POST` names its action in the `WebSpec-Definer` header, one word from
+`POST`'s verb family, here `SEND` ([the definer](how-it-works.md#which-action-on-post-the-definer)):
 
 ```console
-$ curl -s -X POST http://notes.localhost:7001/send_note \
-    -H 'X-Gimme-Definer: SEND' -H 'Content-Type: application/json' \
+$ curl -s -X POST http://notes.localhost:7001/email \
+    -H 'WebSpec-Definer: SEND' -H 'Content-Type: application/json' \
     -d '{"id":"welcome","to":"ana@example.com"}'
-{"result":{"queued":1,"to":"ana@example.com"},"definer_tier":1,"canonical":"SEND"}
+{"result":{"queued":1,"to":"ana@example.com"},"canonical":"SEND"}
 ```
 
-Leave `X-Gimme-Definer` out and the gateway refuses with `400 missing_definer`.
-
-Ask what a tool needs before calling it ([DS-1](../spec/methods.md#discovery)):
+Leave the definer out and the gateway refuses:
 
 ```console
-$ curl -s -X OPTIONS http://notes.localhost:7001/send_note
-{"name":"send_note", …, "methods":["PATCH","POST"],
- "contract":{"read_only":false,"destructive":false,"idempotent":false,"open_world":true, …},
- "level":0,"level_name":"local",
- "requirements":{"PATCH":{…},"POST":{"guard":false,"definer":true,"bookend":false,"idempotency_key":false, …}}, …}
+$ curl -s -X POST http://notes.localhost:7001/email \
+    -H 'Content-Type: application/json' -d '{"id":"welcome","to":"ana@example.com"}'
+{"error":"missing_definer","detail":"POST requires the WebSpec-Definer header"}
+```
+
+Ask what a call on a path needs before making it ([DS-1](../spec/methods.md#discovery)):
+
+```console
+$ curl -s -X OPTIONS http://notes.localhost:7001/email
+{"service":"notes","level":0,"entries":[{"path":"/email","method":"POST","definer":"SEND","tool":"send_email", …,
+ "contract":{"read_only":false,"destructive":false,"idempotent":false,"open_world":true,"tier":"sensitive","source":"annotations"},
+ "requirements":{"guard":false,"definer":true,"idempotency_key":false,"empty_body":false,"clearance":false,"approval":false}}]}
 ```
 
 ## 5. Raise the security level
@@ -107,8 +138,8 @@ Add `"level": 2` to the `notes` entry in `webspec.json`. The gateway picks up th
 within 30 seconds. Unsigned requests are now refused:
 
 ```console
-$ curl -s "http://notes.localhost:7001/read_note?id=welcome"
-{"error":"guard_missing","detail":"X-WebSpec-Guard header required"}
+$ curl -s "http://notes.localhost:7001/note?id=welcome"
+{"error":"guard_missing","detail":"WebSpec-Guard header required"}
 ```
 
 From here on, the reference shim, `gateway/examples/shim.py`, signs the requests as an agent's
@@ -133,21 +164,24 @@ from shim import Shim
 notes = Shim(httpx.Client(base_url="http://127.0.0.1:7001"), host="notes.localhost:7001",
              destination="notes", key=bytes.fromhex(os.environ["WEBSPEC_GUARD_KEY"]))
 
-notes.call("GET", "read_note", {"id": "welcome"}).json()
+notes.call("GET", "/note", {"id": "welcome"}).json()
 # {'result': 'Hello from WebSpec.'}
-notes.call("POST", "send_note", {"id": "welcome", "to": "ana@example.com"}, "SEND").json()
-# {'result': {'queued': 2, 'to': 'ana@example.com'}, 'definer_tier': 2, 'canonical': 'SEND'}
+notes.call("POST", "/email", {"id": "welcome", "to": "ana@example.com"}, "SEND").json()
+# {'result': {'queued': 2, 'to': 'ana@example.com'}, 'canonical': 'SEND'}
+notes.call("DELETE", "/note", {"id": "welcome"}).json()
+# {'result': 'deleted'}
 ```
 
-You gave the shim the same method, tool, arguments, and verb that you sent with `curl` at
-level 0, and that is all a model decides. The shim read the level from `OPTIONS` and added
-what level 2 requires: a single-use nonce and a guard (an HMAC over the request) on both calls,
-plus a bookend (a short tag on the verb) and an `Idempotency-Key` on the send
+You gave the shim the method, the path, the arguments, and on `POST` the verb, and that is all
+a model decides. The shim read the level and the routes from `OPTIONS /` and added
+what level 2 requires: a single-use nonce and a guard (an HMAC over the request) on every call,
+and an `Idempotency-Key` on the send, the one tool that isn't idempotent
 ([What the shim added](walkthrough.md#what-the-shim-added)).
 
 Every tool call and refusal above is also in the audit log, `~/.webspec/gateway-audit.jsonl`,
-each line chained to the one before it. Discovery (`GET /`, `OPTIONS`) and nonce issuance are
-not logged ([AU-1](../spec/audit-deployment.md#audit)).
+each line chained to the one before it. Discovery that is answered (`GET /`, `OPTIONS`) and
+nonce issuance are not logged ([AU-1](../spec/audit-deployment.md#audit)). Discovery the guard
+refuses is logged, such as the shim's first, unsigned `OPTIONS /` at level 2.
 
 ## Next
 

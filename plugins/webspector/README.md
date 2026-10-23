@@ -1,16 +1,19 @@
 # Webspector
 
-A Claude Code plugin for validating code against WebSpec protocol standards.
+A Claude Code plugin that checks code against the WebSpec spec
+(<https://i-m-a-g-i-n-e.github.io/WebSpec/spec/>). It reviews MCP servers whose tools a WebSpec
+gateway routes, clients and harness shims that call a gateway, and gateway and proxy
+configuration. Each finding cites the rule ID it rests on, such as `PA-4` or `DF-1`.
 
 ## Overview
 
-Webspector provides specialized knowledge and proactive validation agents for the WebSpec protocol, covering:
-
-- **URL Grammar** - REST URL structure, format suffixes, EBNF grammar validation
-- **HTTP Methods** - Method semantics, permission scoping, prompt injection defense
-- **Subdomain Architecture** - Isolation model, cookie/token scoping, local bridge
-- **Authentication & Authorization** - OAuth flows, JWT tokens, keychain integration
-- **Service Discovery** - NLP resolution, embedding schema, three-way join algorithm
+| Area (skill) | Rules | Covers |
+|---|---|---|
+| **URL Grammar** (`url-grammar`) | HG, PA, AR | Destination hosts, the route rule and route map, single-segment paths, arguments |
+| **HTTP Methods** (`http-methods`) | TC, MB, DF, RQ, RS | Tool contracts and annotations, method binding, `WebSpec-Definer`, response headers |
+| **Subdomain Architecture** (`subdomain-architecture`) | HG, DP-5, DP-8 | Destinations and qualifiers, public exposure, proxy forwarding, CORS |
+| **Authentication & Authorization** (`authentication-authorization`) | LV, GD, ID, CL, AP, CO, SH | Levels 0 to 4: guard and nonce, `Idempotency-Key`, clearance, human approval, key custody |
+| **Service Discovery** (`service-discovery`) | DS, PA-2, SH-2 | `GET /`, `OPTIONS`, `HEAD`, building requests from the route map |
 
 ## Installation
 
@@ -35,7 +38,7 @@ Run a full WebSpec compliance check on the current codebase.
 
 ### `/webspector:check <area>`
 
-Quick check of a specific standard area.
+Quick check of a specific area.
 
 ```bash
 /webspector:check url-grammar            # or: url
@@ -53,92 +56,41 @@ Quick check of a specific standard area.
 
 ## Proactive Agents
 
-Webspector includes proactive agents that automatically validate code when relevant changes are detected:
-
 | Agent | Triggers On |
 |-------|-------------|
-| `url-grammar-validator` | URL/endpoint code, route definitions |
-| `http-methods-reviewer` | API implementations, HTTP handlers |
-| `subdomain-security-analyzer` | Auth-related code, token/cookie handling |
-| `auth-flow-auditor` | OAuth implementations, auth code changes |
-| `service-discovery-reviewer` | NLP/embedding code, discovery logic |
+| `url-grammar-validator` | Requests built for a WebSpec gateway, MCP tool names and annotations, `labels` and `bindings` config |
+| `http-methods-reviewer` | MCP tool annotations, method and `WebSpec-Definer` choice, WebSpec response handling |
+| `subdomain-security-analyzer` | Destination and proxy config, `WEBSPEC_CORS_ORIGINS`, `WEBSPEC_HOST` |
+| `auth-flow-auditor` | Nonce, guard, `Idempotency-Key`, clearance, and approval code; guard-key custody |
+| `service-discovery-reviewer` | `GET /`, `OPTIONS`, and `HEAD` use; building requests from the route map |
 
-## Configuration
+## WebSpec in brief
 
-### Domain Whitelist
+A request names its destination in the host, its tool in the method and a single-segment
+noun path, and on `POST` its action in `WebSpec-Definer`:
 
-Webspector uses `gimme.tools` as the default WebSpec domain. For self-hosted or enterprise deployments, configure approved domains in `.claude/webspector.local.md`:
-
-```markdown
----
-allow_custom_domains: true
-require_https: true
-admin_write_access: false
----
-
-# Webspector Configuration
-
-## Approved WebSpec Domains
-
-These domains are approved for WebSpec protocol validation:
-
-- gimme.tools (default, public)
-- internal.company.com (enterprise)
-- dev.company.com (development)
+```text
+METHOD https://{destination}.{domain}/{noun}?{arguments}
 ```
 
-### Settings Reference
+The domain is the gateway's (`WEBSPEC_DOMAIN`), or `localhost` for loopback names such as
+`notes.localhost`. The route rule (`PA-4`) gives each MCP tool one entry from its name and
+contract: `read_note` → `GET /note`, `delete_note` → `DELETE /note`, `send_email` →
+`POST /email` with `WebSpec-Definer: SEND`, and a tool whose name or contract doesn't fit →
+`/{name}`. The gateway refuses a method the tool's contract doesn't admit (`405` with
+`Allow`), a `POST` without a definer (`400 missing_definer`), and a change whose definer
+belongs to another method (`400 definer_family_mismatch`). Levels 1 to 4 add a guard HMAC
+with a single-use nonce, an `Idempotency-Key`, a clearance, and a person's approval.
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `allow_custom_domains` | `true` | Allow domains beyond gimme.tools |
-| `require_https` | `true` | Require HTTPS for all WebSpec URLs |
-| `admin_write_access` | `false` | Restrict config writes to admins |
+Every header WebSpec defines is `WebSpec-<Name>`. Earlier names (`X-Gimme-Definer`,
+`X-WebSpec-*`, `X-UFO-*`) are not recognized.
 
-## WebSpec Protocol Reference
+## What this plugin no longer checks
 
-This plugin validates compliance with the WebSpec protocol standards:
-
-### The Four Rules
-
-1. **Subdomain = Provider** - `slack.gimme.tools`, `notion.gimme.tools`
-2. **Path = REST Hierarchy** - `/collection/id/collection/id...`
-3. **Suffix = Format** - `.json`, `.md`, `.pdf`, `.html`, `.txt`, `.csv`, `.xml`
-4. **Query = Filtering** - `?limit=50&after=M400` (never hierarchy)
-
-### URL Grammar
-
-```
-https://{subdomain}.gimme.tools/{path}[.{format}][?{query}]
-```
-
-Valid examples:
-```
-GET slack.gimme.tools/channels/C123/messages
-GET gdrive.gimme.tools/files/abc123.pdf
-POST notion.gimme.tools/pages/xyz789/blocks
-```
-
-### HTTP Method Semantics
-
-| Method | Semantic | Absorbed Verbs |
-|--------|----------|----------------|
-| GET | read | fetch, retrieve, list, show, view |
-| POST | create | add, insert, new, submit, send |
-| PUT | replace | set, overwrite |
-| PATCH | update | modify, change, edit |
-| DELETE | remove | trash, archive, destroy |
-
-### Permission Scoping
-
-```
-SCOPE := METHOD ":" HOST? PATH_PATTERN
-```
-
-Examples:
-- `GET:slack.gimme.tools/channels/*` - Read any channel
-- `POST:*/messages` - Create messages on any provider
-- `*:gdrive.gimme.tools/files/shared/*` - Full access to shared files
+Earlier versions of this plugin were written against a design that predates the current
+spec: a fixed `gimme.tools` domain, REST hierarchies in the path, format suffixes, METHOD
+tokenization, `METHOD:host/path` scopes, OAuth and JWT flows, and NLP-based service
+discovery. None of these is in the spec, and the plugin no longer reports their absence.
 
 ## License
 

@@ -1,5 +1,5 @@
 site_name: WebSpec
-site_description: A spec and reference gateway that gives each MCP tool its own URL and each call an HTTP method that says what it does, then refuses the calls whose parts disagree.
+site_description: A spec and reference gateway that gives each MCP tool an HTTP method and a path from its name, then refuses any method the tool's contract doesn't admit.
 site_url: https://i-m-a-g-i-n-e.github.io/WebSpec/
 repo_url: https://github.com/I-m-A-g-I-n-E/WebSpec
 repo_name: I-m-A-g-I-n-E/WebSpec

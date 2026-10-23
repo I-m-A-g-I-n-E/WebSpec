@@ -89,3 +89,92 @@
   }, { threshold: 0.5 });
   observer.observe(dial);
 })();
+
+// Home page: the request specimen's method tabs.
+//
+// Each tab shows one of the walkthrough's level-0 exchanges, all answered 200 OK: a read
+// (GET), a send (POST, with its definer) and a delete. Without this script the page shows
+// the delete only.
+(() => {
+  const specimen = document.querySelector(".ws-specimen[data-methods]");
+  if (!specimen) return;
+
+  const tablist = specimen.querySelector(".ws-methods");
+  const tabs = [...tablist.querySelectorAll("[role=tab]")];
+  const requests = [...specimen.querySelectorAll(":scope > pre")];
+  const only = [...specimen.querySelectorAll("[data-only]")];
+  let touched = false;
+
+  function show(method, animate = true) {
+    for (const tab of tabs) {
+      const on = tab.dataset.method === method;
+      tab.setAttribute("aria-selected", String(on));
+      tab.tabIndex = on ? 0 : -1;
+    }
+    for (const request of requests) {
+      const on = request.dataset.method === method;
+      const appearing = on && !request.classList.contains("is-on");
+      request.classList.toggle("is-on", on);
+      request.classList.remove("ws-in");
+      if (animate && appearing) {
+        void request.offsetWidth; // restart the animation
+        request.classList.add("ws-in");
+      }
+    }
+    for (const item of only) item.hidden = item.dataset.only !== method;
+  }
+
+  for (const tab of tabs) {
+    tab.addEventListener("click", () => {
+      touched = true;
+      show(tab.dataset.method);
+    });
+  }
+
+  tablist.addEventListener("keydown", (event) => {
+    const current = tabs.findIndex((tab) => tab.getAttribute("aria-selected") === "true");
+    const next = { ArrowRight: current + 1, ArrowLeft: current - 1, Home: 0, End: tabs.length - 1 }[event.key];
+    if (next === undefined) return;
+    event.preventDefault();
+    touched = true;
+    const tab = tabs[(next + tabs.length) % tabs.length];
+    tab.focus();
+    show(tab.dataset.method);
+  });
+
+  for (const request of requests) request.hidden = false;
+  tablist.hidden = false;
+  specimen.classList.add("ws-specimen--live");
+  show("delete", false);
+
+  // Hold the card at its tallest height, so switching never resizes it. The requests share one
+  // grid cell, so only the legend changes: the send's has one more entry. Measure it with that
+  // entry shown, then restore; again once the web fonts have loaded, and on resize.
+  let measuredWidth = 0;
+  function reserve(force = false) {
+    if (!force && specimen.offsetWidth === measuredWidth) return;
+    measuredWidth = specimen.offsetWidth;
+    const shown = only.map((item) => item.hidden);
+    specimen.style.minHeight = "";
+    for (const item of only) item.hidden = false;
+    specimen.style.minHeight = `${specimen.offsetHeight}px`;
+    only.forEach((item, i) => { item.hidden = shown[i]; });
+  }
+  reserve(true);
+  document.fonts?.ready.then(() => reserve(true));
+  addEventListener("resize", () => reserve());
+
+  // Show each method once, ending on the delete, the first time the card is in view.
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) return;
+  const tour = ["get", "post", "delete"];
+  const observer = new IntersectionObserver(([entry]) => {
+    if (!entry.isIntersecting) return;
+    observer.disconnect();
+    let step = 0;
+    const timer = setInterval(() => {
+      if (touched || step >= tour.length) return clearInterval(timer);
+      show(tour[step++]);
+    }, 2200);
+  }, { threshold: 0.5 });
+  observer.observe(specimen);
+})();

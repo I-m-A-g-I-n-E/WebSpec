@@ -202,6 +202,40 @@ def test_the_home_page_shows_the_walkthroughs_delete():
         DOCS / "guide" / "walkthrough.md").read_text()
 
 
+def test_the_specimens_methods_are_the_walkthroughs_level_0_exchanges():
+    # The hero's method tabs show a read, a send and a delete, each exactly as the walkthrough's
+    # level 0 sends it (test_examples.py replays them: 200 each). One <span> per request line.
+    from html.parser import HTMLParser
+
+    class Lines(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.depth, self.lines = 0, []
+
+        def handle_starttag(self, tag, attrs):
+            self.depth += 1
+            if self.depth == 1:
+                self.lines.append("")
+
+        def handle_endtag(self, tag):
+            self.depth -= 1
+
+        def handle_data(self, data):
+            if self.depth:
+                self.lines[-1] += data
+
+    walk = (DOCS / "guide" / "walkthrough.md").read_text()
+    level_0 = walk[walk.index("## Level 0"):walk.index("## Level 1")]
+    shown = dict(re.findall(r'<pre id="ws-request-(\w+)"[^>]*><code>(.*?)</code></pre>', HOME))
+    assert sorted(shown) == ["delete", "get", "post"]
+    for method, code in shown.items():
+        parser = Lines()
+        parser.feed(code)
+        request = "\n".join(line.strip() for line in parser.lines)
+        assert request.split(" ", 1)[0] == method.upper()
+        assert f"```text\n{request}\n\n→ 200 OK\n" in level_0, method
+
+
 def test_the_dial_shows_requests_valid_under_the_demo_key():
     # Each level's nonce and guard come from a real send at that level (see the page's footnote);
     # the nonces are spent, but the tags must still verify under the walkthrough's demo key.

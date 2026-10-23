@@ -11,8 +11,9 @@ real MCP servers over stdio, including one that crashes in the middle of a call.
 | Area | State |
 |---|---|
 | [Host routing](addressing.md#host), qualifier allow-lists (qualifiers fail closed) | **Implemented** |
+| [Route map and binding pins](addressing.md#path) | **Implemented** |
 | [Tool contracts, pinning, method binding](methods.md) | **Implemented** |
-| [Guard](levels.md#level-1-signed), [definers and bookend](methods.md#per-method-rules), [`Idempotency-Key`](levels.md#level-2-bound), [clearance](levels.md#level-3-cleared), [human approval](levels.md#level-4-witnessed) | **Implemented** |
+| [Guard](levels.md#level-1-signed), [definers](methods.md#per-method-rules), [`Idempotency-Key`](levels.md#level-2-bound), [clearance](levels.md#level-3-cleared), [human approval](levels.md#level-4-witnessed) | **Implemented** |
 | [Audit chain](audit-deployment.md#audit), non-dumpable process on Linux ([DP-2](audit-deployment.md#deployment)) | **Implemented** |
 | [Reference deployments](../guide/deploy.md): Linux system service and Caddy, macOS LaunchDaemon, Docker stack | **Implemented** |
 | Everything under [Roadmap](#roadmap) | **Proposed** |
@@ -24,10 +25,10 @@ These are true of the reference gateway today. Some come from the rules themselv
 
 - **No check of intent.** Nothing checks that a call matches what the user asked for. At
   level 4 a person does, for the calls that need approval ([RQ-1](methods.md#requirements)).
-- **One symmetric key.** The guard, the bookend, and the clearance are all keyed with the guard
-  key, so whoever holds it can produce everything that levels 1 to 3 require. Only level 4
-  rests on a separate, asymmetric key that a person holds.
-- **Short tags, cheap guesses.** Guard, bookend, and clearance tags are 32 bits. A failed guard
+- **One symmetric key.** The guard and the clearance are both keyed with the guard key, so
+  whoever holds it can produce everything that levels 1 to 3 require. Only level 4 rests on a
+  separate, asymmetric key that a person holds.
+- **Short tags, cheap guesses.** Guard and clearance tags are 32 bits. A failed guard
   check does not consume its nonce, and the tag on `GET /__nonce` signs the same message every
   time, so whoever sees it once can get nonces for that host indefinitely. Online guessing is
   therefore limited only by request rate. The Linux reference Caddy (`setup-caddy.sh`) allows
@@ -40,11 +41,20 @@ These are true of the reference gateway today. Some come from the rules themselv
   clearances minted in the same second for the identical call are therefore the same token,
   and the second is refused as `clearance_reused`. A harness that really means to repeat a call
   must wait a second.
-- **The bookend adds nothing over the guard.** At the levels that require a bookend, the guard
-  already signs the whole body and the definer header.
 - **Memory-only state.** A restart forgets nonces, clearances, approvals, idempotency records
-  (including "outcome unknown" ones), and contract pins. After a restart, the gateway trusts
-  the first tool listing it sees again.
+  (including "outcome unknown" ones), contract pins, and binding pins. After a restart, the
+  gateway trusts the first tool listing it sees again, so a server that renames a tool while the
+  gateway restarts can put the new tool on the old key without a `binding_changed`
+  ([PA-8](addressing.md#building-the-map)).
+- **A new name is a new tool.** Contract pins and overrides are keyed by tool name
+  ([TC-5, TC-6](methods.md#tool-contracts)), and binding pins by route key
+  ([PA-8](addressing.md#building-the-map)). A server that re-lists a tool under a new name, on a
+  key that no tool held, gets the contract that its new listing claims, and no override written
+  for the old name applies. For example, a destructive `purge_notes` re-listed as a read-only
+  `get_notes` is served on `GET /notes`. When the new tool shares the old one's path, a `POST`
+  with the old verb answers `400 unknown_action`, and its body points to `OPTIONS /{noun}`,
+  which lists the new verb
+  ([PA-10](addressing.md#allow-and-refusals)).
 - **Stdio servers run as the gateway's user.** Each one can read what the gateway reads (on
   macOS, the guard-key file and every secret), read the other servers' environment, write the
   audit log, and signal the gateway, forcing a restart that empties its memory. Run only stdio
@@ -57,7 +67,7 @@ These are true of the reference gateway today. Some come from the rules themselv
   carry data out in its arguments with neither a clearance nor an approval, at any level, unless
   its tier is raised: `sensitive` brings a clearance from level 3, and `dangerous` also a person
   at level 4 ([RQ-1](methods.md#requirements)).
-- **Taint is declared, not observed.** `X-UFO-Taint` marks open-world output as untrusted, and
+- **Taint is declared, not observed.** `WebSpec-Taint` marks open-world output as untrusted, and
   acting on it is left to the harness. The reference shim (`gateway/examples/shim.py`) has no
   taint policy: it mints a clearance for every call that needs one unless you give it a `vouch`
   function. The gateway does not track which data steered a call.
@@ -72,9 +82,6 @@ These are true of the reference gateway today. Some come from the rules themselv
 - **Idempotency is best effort under load.** When a destination's store is full, completed
   records are evicted oldest first, and a retry whose record was evicted runs again
   ([ID-5](levels.md#level-2-bound)).
-- **A key is needed even at level 0.** The reference gateway needs a guard key
-  (`WEBSPEC_GUARD_KEY` or `WEBSPEC_GUARD_KEY_FILE`) for every unsafe request at every level
-  ([GD-5](levels.md#level-1-signed)).
 - **The reference deployments leave some rules to the operator.** None of them sets up DP-3:
   the agent's egress is confined by the operator ([Deploying](../guide/deploy.md#egress-dp-3)).
   The macOS deployment ships no proxy, so DP-5 and DP-6 there rest on the operator's own, and
@@ -92,7 +99,8 @@ All proposed.
 
 - Replace the guard with RFC 9421 HTTP Message Signatures, using an independent signer per
   level. The harness signs level 1, a policy service signs level 3, and a person signs level 4.
-  The gateway would then hold only public keys.
+  The gateway would then hold only public keys. Moving `WebSpec-Guard` and `WebSpec-Approval`
+  to RFC 9421's fields is a separate decision from the header names of this version.
 - Widen all tags to at least 128 bits. Consume a nonce on a failed guard check, and give
   nonce requests a tag that expires.
 
@@ -100,7 +108,7 @@ All proposed.
 
 - A durable, crash-safe store (for example SQLite) for nonces, idempotency records, and
   approvals.
-- Persistent contract pins backed by an operator-approved snapshot.
+- Persistent contract and binding pins, backed by an operator-approved snapshot.
 
 **Policy**
 
@@ -108,11 +116,11 @@ All proposed.
   clearances that depend on it.
 - An intent layer that checks a call against the user's stated task.
 - Full `inputSchema` validation.
-- Scoped tokens: `METHOD:host/path` patterns per caller, in place of today's allow-all default
-  (each tool's `OPTIONS` already names its scopes).
+- Scoped tokens: `METHOD:host/path` patterns per caller, in place of today's allow-all
+  default.
 - Proof of read: `If-Match` with a gateway-issued ETag on `PUT`, `PATCH`, and `DELETE`, so that
   an agent can only overwrite what it has seen.
-- Provenance: an `X-UFO-Provenance` header that records who a request passed through, such as
+- Provenance: a `WebSpec-Provenance` header that records who a request passed through, such as
   a person and then an agent, with each link signed, bound to the request fingerprint and
   nonce, and enforced by the gateway. Today the gateway ignores the header.
 - Refuse duplicate keys in JSON bodies.
@@ -121,6 +129,8 @@ All proposed.
 
 - Per-qualifier backends, with edge support (Caddy host blocks and per-destination wildcard
   certificates).
+- Optional item paths, `/{noun}/{id}`, with a path rule of their own. Today the path is one
+  segment, and an item id is an argument ([PA-1](addressing.md#path)).
 
 **Audit and approval**
 
@@ -153,13 +163,10 @@ authentication, and is not part of the reference deployments.
 
 ## Open questions
 
-1. **Path word order.** In what order should a path name what it is, what it does, and what it
-   is done to ([Path](addressing.md#path))?
-2. **Retire the bookend?** It adds nothing over the guard ([Known limits](#known-limits)).
-3. **Clearance key.** Until independent signers exist, should level 3 at least use a key
+1. **Clearance key.** Until independent signers exist, should level 3 at least use a key
    separate from the guard key?
-4. **Public index.** Should the bare domain stop listing destinations?
-5. **Open-world reads.** Should a read-only open-world tool need a clearance at level 3 (and a
+2. **Public index.** Should the bare domain stop listing destinations?
+3. **Open-world reads.** Should a read-only open-world tool need a clearance at level 3 (and a
    person at level 4) by default, rather than only when it is raised to `dangerous`?
 
 ## Versions
@@ -167,3 +174,28 @@ authentication, and is not part of the reference deployments.
 - **2026-10.** The spec was rewritten to match the gateway: method binding, tool contracts,
   levels 0–4, and reference deployments for Linux, macOS, and Docker. Earlier drafts are
   retired and remain in the git history.
+- **2026-10, revised.** Paths and header names changed, with no transition period:
+    - The path is a noun, and the method is the verb. A closed route rule maps each tool to one
+      method and one single-segment path, so `delete_note` is `DELETE /note`
+      ([PA-4](addressing.md#the-route-rule)). A tool keeps its full name as its path when its
+      name is not a verb of the rule followed by `_` and a noun, when that verb's method is not
+      admissible for its contract, or when its entry collides with another. `/` is no longer
+      folded to `_`. Binding pins keep a renamed tool from taking over another tool's key
+      unnoticed ([PA-8](addressing.md#building-the-map)). This closes the open question on path
+      word order.
+    - The definer is required only on `POST`, where it selects the action, and is optional on
+      `PUT`, `PATCH`, and `DELETE` ([DF-1 to DF-3](methods.md#per-method-rules)). The bookend is
+      retired, which closes the open question on it. The guard, clearance, and approval messages
+      are unchanged.
+    - Every header WebSpec defines is now `WebSpec-<Name>` ([Conventions](index.md#conventions)).
+      `X-Gimme-Definer` is now `WebSpec-Definer`. `X-WebSpec-Guard`, `-Nonce`, `-Approval`,
+      `-Level`, `-Tier`, `-Status`, `-Tool-Count`, and `-Service` dropped the `X-`.
+      `X-UFO-Clearance`, `X-UFO-Taint`, and `X-UFO-Provenance` are now `WebSpec-Clearance`,
+      `WebSpec-Taint`, and `WebSpec-Provenance`. `X-Gimme-Allowed`, `X-Gimme-Definer-Canonical`,
+      `X-Gimme-Definer-Tier`, `X-WebSpec-Tool`, and `X-WebSpec-Description` were removed.
+    - A gateway does not recognize the old names. A request that needs a header and sends it
+      only under its old name is refused as if the header were missing. An optional header sent
+      only under its old name, such as the definer on `DELETE`, is ignored, and at level 0 the
+      request is served. An old path that no longer maps a tool, such as `/delete_note`, answers
+      `404`. A harness that still looks for `X-UFO-Taint` sees no taint mark, so it must look for
+      `WebSpec-Taint` ([RS-2](methods.md#responses)).

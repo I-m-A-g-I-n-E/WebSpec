@@ -18,8 +18,6 @@ environment variables.
     - discovery (`HEAD`, `OPTIONS`, `GET /`), nonce issuance, or the retired `/__challenge`
     - the list of destinations (`GET /` on the bare domain)
     - requests that match no route, among them a `CONNECT` to `host:port`, which names no path
-    - methods it does not route (`TRACE`, `CONNECT`, and extension methods), which the web
-      framework answers with `405`
     - rejected CORS preflights
     - errors raised outside the invocation handler
 
@@ -28,9 +26,9 @@ environment variables.
 
 - **AU-2** Each entry is one line of canonical JSON with these fields: `ts`, `service`, `host`,
   `method`, `path`, `tool`, `level`, `tier`, `risk`, `outcome`, `status`, `reason`, `definer`
-  (on invoked calls that carried one), `query_sha256`, `body_sha256`, and `prev`. The method,
-  host, path, and tool are recorded in the clear. The query and body are recorded only as
-  SHA-256 hashes, because arguments may contain secrets. The hashes are unsalted, so short or
+  (on invoked calls whose definer was checked), `query_sha256`, `body_sha256`, and `prev`. The
+  method, host, path, and tool are recorded in the clear. The query and body are recorded only
+  as SHA-256 hashes, because arguments may contain secrets. The hashes are unsalted, so short or
   guessable arguments can be recovered by hashing candidates. Once the tool is resolved,
   `query_sha256` hashes the canonical query ([GD-3](levels.md#level-1-signed)); before that,
   for example for a failed guard or an unknown tool, it hashes the raw query.
@@ -45,6 +43,13 @@ environment variables.
   restarts after the rename and before its next write, the new file starts again from 64 zeros.
   Truncating the file in place is indistinguishable from tampering, by design.
 
+- **AU-5** The gateway MUST also append an entry when a rebuild first finds a pinned key
+  resolving to a different tool, and another when a `bindings` entry confirms that change and
+  the key is pinned again ([PA-8](addressing.md#building-the-map)). Such an entry has the fields
+  of AU-2 that apply to it. Its `method`, `path`, and for a `POST` key `definer` give the key.
+  `tool`, `tier`, and `risk` describe the tool the key now resolves to, and the extra fields
+  `pinned_tool`, `pinned_tier`, and `pinned_risk` describe the tool it was pinned to.
+
 The `outcome` field says what the gateway decided:
 
 | `outcome` | Meaning |
@@ -53,6 +58,8 @@ The `outcome` field says what the gateway decided:
 | `denied` | The gateway refused the request without calling the tool |
 | `approval_challenged` | The gateway answered `428` with a level-4 approval challenge |
 | `idempotency:{kind}` | The `Idempotency-Key` decided the answer, and the tool was not called. `{kind}` is `replay`, `mismatch`, `in_flight`, `unknown`, or `full` ([Level 2](levels.md#level-2-bound)) |
+| `binding_changed` | A rebuild found a pinned key resolving to a different tool (AU-5) |
+| `binding_confirmed` | A `bindings` entry confirmed that change, and the key was pinned again (AU-5) |
 | `rejected` | The MCP server refused the call (`502 tool_rejected`) |
 | `timeout` | The MCP server did not answer in time (`504 tool_timeout`) |
 | `error` | Anything else failed, such as an unavailable guard key (`500 guard_key_unavailable`) or a broken connection (`503`) |
@@ -111,8 +118,8 @@ In the reference gateway:
   turns it on), and proxies SHOULD keep query strings, request headers, and any credentials
   (`user:pass@`) in the request line out of their logs.
 
-- **DP-7** Run a single gateway process. Nonces, contract pins, clearances, approvals, and
-  idempotency records are held in memory, per process, and a restart forgets them
+- **DP-7** Run a single gateway process. Nonces, contract pins, binding pins, clearances,
+  approvals, and idempotency records are held in memory, per process, and a restart forgets them
   ([Known limits](status.md#known-limits)). A service manager SHOULD stop the gateway by
   signalling the gateway process alone, not the stdio servers it started, and SHOULD wait
   longer than its graceful shutdown (35 s in the reference gateway) before killing it: a call
@@ -123,10 +130,19 @@ In the reference gateway:
   empty value counts as unset. A listening socket handed to the gateway (DP-9) is used only if
   it is bound to loopback or to exactly the address `WEBSPEC_HOST` names, which must then be an
   IP address, not a name. Unless `WEBSPEC_CORS_ORIGINS` lists an origin, a page from another
-  origin cannot read the gateway's responses, and it cannot add the headers an unsafe call
-  needs, because the gateway refuses the CORS preflight they require. A form it posts therefore
-  arrives without a definer and is refused. Its plain `GET`s still reach read-only tools on
-  level-0 destinations, though it cannot read the answers.
+  origin cannot read the gateway's responses, and it cannot send anything that needs a CORS
+  preflight, because the gateway refuses the preflight. `PUT`, `PATCH`, and `DELETE` need one by
+  themselves. `POST` is the only unsafe method a page can send without one, and a `POST` must
+  carry the definer, a header that needs one ([DF-1](methods.md#per-method-rules)). A form it
+  posts therefore arrives without a definer and is refused. Its plain `GET`s still reach
+  read-only tools on level-0 destinations, though it cannot read the answers. When
+  `WEBSPEC_CORS_ORIGINS` lists an origin, the gateway MUST let that origin send
+  `WebSpec-Definer`, `WebSpec-Guard`, `WebSpec-Nonce`, `WebSpec-Clearance`, `WebSpec-Approval`,
+  `Idempotency-Key`, and `Content-Type` (`Access-Control-Allow-Headers`), and MUST let it read
+  `Allow`, `Link`, `WebSpec-Level`, `WebSpec-Tier`, `WebSpec-Taint`, `WebSpec-Status`,
+  `WebSpec-Tool-Count`, `WebSpec-Service`, and `Idempotent-Replayed`
+  (`Access-Control-Expose-Headers`). Otherwise a harness in that origin could not see the taint
+  mark ([RS-2](methods.md#responses)).
 
 - **DP-9** The listening ports of the proxy and the gateway SHOULD be held by something that
   outlives their processes, such as systemd or launchd socket activation or a container's init,
@@ -144,7 +160,7 @@ you.
 ## Configuration
 
 The gateway reads MCP server definitions from a JSON file (`WEBSPEC_CONFIG`, by default
-`~/.claude.json`) under `mcpServers`. It uses the same entries an MCP client uses, plus four
+`~/.claude.json`) under `mcpServers`. It uses the same entries an MCP client uses, plus five
 WebSpec keys:
 
 ```json
@@ -176,6 +192,7 @@ WebSpec keys:
 | `guard` | Legacy switch. `true` means at least level 1 |
 | `labels` | Allowed qualifier labels, in canonical order ([HG-3](addressing.md#host)). The reference gateway refuses hosts that carry them ([HG-5](addressing.md#host)) |
 | `tools` | Operator overrides per tool ([TC-5](methods.md#tool-contracts)) |
+| `bindings` | Operator confirmations of changed route keys, as `{"METHOD /path[ DEFINER]": "tool"}` ([PA-8](addressing.md#building-the-map)) |
 
 `${VAR}` in HTTP headers and in a stdio server's `env` values is filled from the gateway's
 environment when the file is loaded. An unresolved `${VAR}` is sent literally, and a variable

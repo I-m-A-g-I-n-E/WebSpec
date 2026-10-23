@@ -11,7 +11,7 @@ def session_key():
 
 @pytest.fixture(autouse=True)
 def _isolate_gateway_state(tmp_path, monkeypatch):
-    """Keep every test's audit log, idempotency keys, approvals and contract pins private.
+    """Keep every test's audit log, idempotency keys, approvals, contract pins and route maps private.
 
     Also points the gateway at a nonexistent config so no test ever reads ~/.claude.json, and
     gives PATH back after each test: webspec-ctl's main() sets it to SAFE_PATH when it runs as
@@ -28,6 +28,7 @@ def _isolate_gateway_state(tmp_path, monkeypatch):
     monkeypatch.setenv("WEBSPEC_CONFIG", str(tmp_path / "no-such-claude.json"))
     monkeypatch.setenv("WEBSPEC_ENV_FILE", str(tmp_path / "no-such.env"))
     monkeypatch.setattr(handlers, "contract_pins", ContractPins())
+    monkeypatch.setattr(handlers, "route_maps", {})  # binding pins and moved tools (PA-6 to PA-8)
     monkeypatch.setattr(idempotency, "store", idempotency.IdempotencyStore())
     monkeypatch.setattr(approval, "store", approval.ApprovalStore())
     monkeypatch.setattr(guard, "spent_clearances", guard._SpentClearances())

@@ -13,22 +13,32 @@ arguments:
 
 # WebSpec Full Compliance Validation
 
-Run a comprehensive WebSpec compliance check across all standard areas.
+Run a WebSpec compliance check across all areas. Every finding cites the rule ID it rests on,
+from the spec at https://i-m-a-g-i-n-e.github.io/WebSpec/spec/.
 
 ## Validation Areas
 
-1. **URL Grammar** - REST URL patterns, format suffixes, path hierarchy
-2. **HTTP Methods** - Method semantics, permission scoping, tokenization
-3. **Subdomain Architecture** - Isolation model, cookie/token scoping
-4. **Authentication & Authorization** - OAuth flows, JWT tokens, sessions
-5. **Service Discovery** - NLP resolution, embedding schema, three-way join
+1. **URL Grammar** - destination hosts, the route rule and route map, arguments (HG, PA, AR)
+2. **HTTP Methods** - tool contracts, method binding, `WebSpec-Definer`, responses (TC, MB,
+   DF, RQ, RS)
+3. **Subdomain Architecture** - destinations, qualifiers, public exposure, proxy, CORS (HG,
+   DP-5, DP-8)
+4. **Authentication & Authorization** - levels 1 to 4: guard, `Idempotency-Key`, clearance,
+   approval, key custody (LV, GD, ID, CL, AP, CO, SH)
+5. **Service Discovery** - `GET /`, `OPTIONS`, `HEAD`, requests built from the route map (DS,
+   PA-2, SH-2)
 
 ## Process
 
-1. Scan the codebase for relevant code patterns
-2. Validate each pattern against WebSpec standards
-3. Report issues with severity and location
-4. Provide fixes based on `--action` flag
+1. Find the code that matters: MCP servers and their tool annotations, clients and shims that
+   call a WebSpec gateway, gateway and proxy configuration
+2. Check each against the rules of its area
+3. Report issues with severity, location, and rule ID
+4. Provide fixes based on the `--action` flag
+
+Report only what the spec requires. Its [known limits](https://i-m-a-g-i-n-e.github.io/WebSpec/spec/status/#known-limits)
+are not implementation bugs, and its [roadmap](https://i-m-a-g-i-n-e.github.io/WebSpec/spec/status/#roadmap)
+items are not requirements.
 
 ## Output Modes
 
@@ -45,19 +55,19 @@ WebSpec Compliance Report
 ✓ Service Discovery: 3 patterns checked, 0 issues
 
 Issues Found:
-  [HTTP-METHOD] warning: POST used for read operation
-    src/api/messages.ts:45
-  [HTTP-METHOD] warning: Raw verb in payload
-    src/api/tasks.ts:112
-  [AUTH-FLOW] critical: Missing PKCE in OAuth flow
-    src/auth/oauth.ts:28
+  [HTTP-METHOD] warning: POST without WebSpec-Definer (DF-1)
+    src/harness/send.ts:45
+  [HTTP-METHOD] warning: harness reads X-UFO-Taint, which the gateway no longer sends (RS-2)
+    src/harness/policy.ts:112
+  [LEVELS] critical: guard key written to the agent's log (GD-5, SH-1)
+    src/shim/config.ts:28
 
 Total: 3 issues (1 critical, 2 warnings)
 ```
 
 ### With `--verbose`
 
-Includes spec references and detailed explanations for each issue.
+Includes the rule text and a link to the spec for each issue.
 
 ### With `--action=suggest`
 
@@ -68,9 +78,9 @@ Provides specific code suggestions for each issue without modifying files.
 Adds inline comments to code at issue locations:
 
 ```javascript
-// [WEBSPEC] warning: POST used for read operation
-// Use GET for read semantics (see HTTP Methods skill)
-app.post('/messages', ...)
+// [WEBSPEC] warning: POST without WebSpec-Definer (DF-1)
+// Send the verb of the route map entry, here SEND
+fetch(`${base}/email`, { method: 'POST', body })
 ```
 
 ### With `--action=revise`
@@ -79,9 +89,9 @@ Proposes automatic fixes with confirmation:
 
 ```
 Proposed fixes:
-  1. src/api/messages.ts:45 - Change POST to GET
-  2. src/api/tasks.ts:112 - Tokenize verb as [M:DELETE]
-  3. src/auth/oauth.ts:28 - Add PKCE code_challenge
+  1. src/harness/send.ts:45 - Add header WebSpec-Definer: SEND
+  2. src/harness/policy.ts:112 - Read WebSpec-Taint instead of X-UFO-Taint
+  3. src/shim/config.ts:28 - Stop logging the guard key
 
 Apply these fixes? [y/N]
 ```
@@ -98,9 +108,5 @@ Apply these fixes? [y/N]
 
 ## Skills Used
 
-This command leverages all Webspector skills:
-- url-grammar
-- http-methods
-- subdomain-architecture
-- authentication-authorization
-- service-discovery
+This command uses all Webspector skills: `url-grammar`, `http-methods`,
+`subdomain-architecture`, `authentication-authorization`, `service-discovery`.

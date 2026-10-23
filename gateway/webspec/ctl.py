@@ -460,8 +460,8 @@ def cmd_add(args: argparse.Namespace) -> int:
         entry["namespace"] = args.namespace
 
     # Security settings are never silently dropped by --force: keep the existing
-    # level / tool overrides / qualifier labels unless explicitly replaced.
-    for key in ("level", "tools", "labels"):
+    # level / tool overrides / qualifier labels / binding confirmations unless explicitly replaced.
+    for key in ("level", "tools", "labels", "bindings"):
         if key in previous:
             entry[key] = previous[key]
     if args.level is not None:

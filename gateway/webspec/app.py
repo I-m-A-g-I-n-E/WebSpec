@@ -8,14 +8,16 @@ import os
 from contextlib import asynccontextmanager
 
 from starlette.applications import Starlette
+from starlette.datastructures import MutableHeaders
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
-from starlette.responses import JSONResponse, Response
-from starlette.routing import Host, Route
+from starlette.responses import JSONResponse, PlainTextResponse, Response
+from starlette.routing import Host, Route, request_response
 
 from .config import GuardKeyError, ServiceRegistry, get_session_key, is_public_host
 from . import audit
+from .definer import DEFINER_HEADER, definer_header
 from .guard import GuardError, duplicate_query_keys, generate_nonce, validate_guard
 from .handlers import (
     handle_index,
@@ -66,8 +68,9 @@ async def _config_reload_loop() -> None:
                     for removed in old_names - new_names:
                         logger.info("Config reload: removing service %s", removed)
                         await pool.remove_service(removed)
-                        # Contract pins are deliberately kept: removing and re-adding a
-                        # service must not be a way to reset them (methods.ContractPins).
+                        # Contract pins and route maps (binding pins, moved tools) are
+                        # deliberately kept: removing and re-adding a service must not be a
+                        # way to reset them (TC-6, PA-8).
                     # Modified/added services will be lazily re-created
                     for added in new_names - old_names:
                         logger.info("Config reload: new service available: %s", added)
@@ -87,7 +90,9 @@ def _deny(request: Request, service: str, status: int, error: str, detail: str) 
 
 async def _service_dispatch(request: Request) -> Response:
     """Dispatch to the correct handler based on HTTP method for a service subdomain."""
-    method = request.method.upper()
+    # The method token exactly as sent: it is case-sensitive (RFC 9110 §9.1), so `delete` is an
+    # unknown method, answered on the route map like TRACE (PA-10), and the guard signs it as sent.
+    method = request.method
     path = request.path_params.get("path", "").strip("/")
     captured = request.path_params.get("service", "")
 
@@ -107,6 +112,9 @@ async def _service_dispatch(request: Request) -> Response:
     if dupes:
         return _deny(request, service, 400, "duplicate_query_key",
                      f"Query keys must not repeat ({', '.join(dupes)}); encode lists as JSON.")
+    # DF-2: at most one definer field line, whatever the method, refused before the guard.
+    if len(request.headers.getlist(DEFINER_HEADER)) > 1:
+        return _deny(request, service, 400, "unknown_definer", f"Send at most one {DEFINER_HEADER} field line.")
 
     if registry is not None:
         entry = registry.get(service)
@@ -145,11 +153,11 @@ async def _service_dispatch(request: Request) -> Response:
                 host=host_header,
                 path=f"/{path}" if path else "/",
                 body=body,
-                guard_header=request.headers.get("X-WebSpec-Guard"),
-                nonce_header=request.headers.get("X-WebSpec-Nonce"),
+                guard_header=request.headers.get("WebSpec-Guard"),
+                nonce_header=request.headers.get("WebSpec-Nonce"),
                 query=request.url.query,
                 audience=service,
-                definer=request.headers.get("X-Gimme-Definer", ""),
+                definer=definer_header(request.headers) or "",
                 idempotency_key=request.headers.get("Idempotency-Key", ""),
             )
             if isinstance(guard_result, GuardError):
@@ -161,7 +169,8 @@ async def _service_dispatch(request: Request) -> Response:
         return await handle_service_options(request, service, pool, registry)
     if method == "GET" and not path:
         return await handle_service_list(request, service, pool, registry)
-    # Starlette's Route(methods=ALL_METHODS) has already refused anything else with 405.
+    # Every other method, TRACE and extension methods included, is resolved on the route map
+    # (PA-10), which answers a method it does not map with 405 and the path's Allow.
     return await handle_service_invoke(request, service, pool, registry)
 
 
@@ -179,7 +188,7 @@ async def _handle_nonce(request: Request, service: str) -> Response:
         host=host,
         path="/__nonce",
         body=b"",
-        guard_header=request.headers.get("X-WebSpec-Guard"),
+        guard_header=request.headers.get("WebSpec-Guard"),
         nonce_header=None,
         is_nonce_request=True,
     )
@@ -212,12 +221,53 @@ async def _index_dispatch(request: Request) -> Response:
 
 # ── Service sub-app routes ──
 
+class _EveryMethod:
+    """An endpoint as an ASGI app, so that Route() passes it every method, TRACE included, and
+    the gateway answers each one itself (PA-10). Route() limits a function endpoint to the
+    methods it lists."""
+
+    def __init__(self, endpoint) -> None:
+        self.app = request_response(endpoint)
+
+    async def __call__(self, scope, receive, send) -> None:
+        await self.app(scope, receive, send)
+
+
 service_routes = Starlette(
     routes=[
-        Route("/", _service_dispatch, methods=list(ALL_METHODS)),
-        Route("/{path:path}", _service_dispatch, methods=list(ALL_METHODS)),
+        Route("/", _EveryMethod(_service_dispatch)),
+        Route("/{path:path}", _EveryMethod(_service_dispatch)),
     ],
 )
+
+
+class NoStore:
+    """``Cache-Control: no-store`` on every response that sets none (RS-4, DS-3, GD-4).
+
+    That covers refusals, the web framework's own included (a host that matches no route, a
+    rejected CORS preflight), discovery answers and nonces: a cache must not keep a 404 or
+    a 405 after the route map changes, and nothing else the gateway serves is cacheable.
+    """
+
+    def __init__(self, app) -> None:
+        self.app = app
+
+    async def __call__(self, scope, receive, send) -> None:
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+
+        async def send_no_store(message) -> None:
+            if message["type"] == "http.response.start":
+                MutableHeaders(scope=message).setdefault("cache-control", "no-store")
+            await send(message)
+
+        await self.app(scope, receive, send_no_store)
+
+
+def _internal_error(request: Request, exc: Exception) -> Response:
+    """The plain-text 500 for an unhandled error, which is answered outside every middleware."""
+    return PlainTextResponse("Internal Server Error", status_code=500, headers={"Cache-Control": "no-store"})
+
 
 index_routes = Starlette(
     routes=[
@@ -236,8 +286,8 @@ def _report_guard_key() -> None:
     try:
         get_session_key()
     except GuardKeyError as exc:
-        logger.warning("No usable guard key, so every guarded request and every unsafe request is "
-                       "refused with a plain-text 500 until there is one (GD-5): %s", exc)
+        logger.warning("No usable guard key, so every guarded request is refused with a plain-text 500 "
+                       "until there is one (GD-5): %s", exc)
 
 
 def create_app() -> Starlette:
@@ -291,15 +341,20 @@ def create_app() -> Starlette:
     app = Starlette(
         routes=routes,
         middleware=[
+            Middleware(NoStore),
+            # DP-8: what an origin in WEBSPEC_CORS_ORIGINS may send, and what it may read. Without
+            # WebSpec-Taint in the exposed list a harness in that origin could not see the mark (RS-2).
             Middleware(
                 CORSMiddleware,
                 allow_origins=cors_origins(),
                 allow_methods=list(ALL_METHODS),
-                allow_headers=["X-WebSpec-Guard", "X-WebSpec-Nonce", "X-Gimme-Definer",
-                               "X-UFO-Clearance", "X-UFO-Provenance", "X-WebSpec-Approval",
-                               "Idempotency-Key", "Content-Type"],
+                allow_headers=[DEFINER_HEADER, "WebSpec-Guard", "WebSpec-Nonce", "WebSpec-Clearance",
+                               "WebSpec-Approval", "Idempotency-Key", "Content-Type"],
+                expose_headers=["Allow", "Link", "WebSpec-Level", "WebSpec-Tier", "WebSpec-Taint",
+                                "WebSpec-Status", "WebSpec-Tool-Count", "WebSpec-Service", "Idempotent-Replayed"],
             ),
         ],
+        exception_handlers={Exception: _internal_error},
         lifespan=lifespan,
     )
 

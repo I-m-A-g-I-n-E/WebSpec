@@ -1,312 +1,161 @@
 ---
 name: Subdomain Architecture
-description: This skill should be used when working with WebSpec subdomain isolation, cookie/token scoping, origin security, the local.gimme.tools bridge, or local service architecture. Trigger phrases include "subdomain isolation", "cookie scope", "local.gimme.tools", "token audience", "origin security", "same-origin policy", "local bridge".
-version: 1.0.0
+description: This skill should be used when checking how WebSpec destinations map to hosts and origins - the destination label, qualifier labels, loopback names versus a public domain, per-destination state, the proxy in front of the gateway, and CORS (WEBSPEC_CORS_ORIGINS, preflights, the headers an allowed origin may send and read). Trigger phrases include "destination", "subdomain", "qualifier", "origin", "CORS", "preflight", "localhost destination", "public domain", "unguarded_public", "proxy forwarding".
+version: 2.0.0
 ---
 
-# WebSpec Subdomain Architecture
+# WebSpec destinations, hosts, and origins
 
-> **Domain Note**: This skill uses `gimme.tools` as the default WebSpec domain. For self-hosted or enterprise deployments, substitute your configured domain.
+This skill follows the normative spec pages
+[Addressing](https://i-m-a-g-i-n-e.github.io/WebSpec/spec/addressing/#host) (rules `HG-1` to
+`HG-7`) and [Audit, deployment, and configuration](https://i-m-a-g-i-n-e.github.io/WebSpec/spec/audit-deployment/#deployment)
+(rules `DP-5`, `DP-8`). Cite a rule by its ID in every finding. Where this summary and the spec
+differ, the spec wins.
 
-## Overview
+## One destination per host
 
-WebSpec inherits the browser's same-origin policy to create natural security boundaries. Each subdomain operates as an isolated security context, with cookies and tokens scoped to prevent cross-service access.
-
-## Subdomain Isolation Model
-
-### Trust Boundaries
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        gimme.tools                               │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐│
-│  │   auth.     │ │   api.      │ │   slack.    │ │   notion.   ││
-│  │             │ │             │ │             │ │             ││
-│  │ Session     │ │ Gateway     │ │ Slack API   │ │ Notion API  ││
-│  │ management  │ │ LLM routing │ │ proxy       │ │ proxy       ││
-│  │             │ │             │ │             │ │             ││
-│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘│
-│         ↑               ↑               ↑               ↑       │
-│         │               │               │               │       │
-│    ┌────┴───────────────┴───────────────┴───────────────┴────┐  │
-│    │                    Same-Origin Policy                    │  │
-│    │    Cookies and tokens scoped to each subdomain          │  │
-│    └─────────────────────────────────────────────────────────┘  │
-│                                                                  │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │                      local.gimme.tools                       ││
-│  │     WebSocket tunnel to localhost services                   ││
-│  └─────────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────┘
+```text
+host = 0*4( qualifier "." ) destination "." domain
 ```
 
-### Special Subdomains
+- **HG-1** The destination, the label immediately left of the domain, is the only label that
+  selects a service. Contracts, levels, nonce and clearance audiences, idempotency scopes, and
+  approval queues are all per destination. An unconfigured destination is
+  `404 unknown_service`.
+- **HG-2** Every label is a lowercase DNS label, else `404 invalid_host`.
+- **HG-6** A nonce, clearance, approval, or idempotency key issued for one destination is never
+  honored for another.
 
-| Subdomain | Purpose | Trust Level |
-|-----------|---------|-------------|
-| `auth.gimme.tools` | Session management, OAuth flows | Highest (root of trust) |
-| `api.gimme.tools` | Gateway, LLM routing, service discovery | High |
-| `local.gimme.tools` | Bridge to localhost services | Local trust |
-| `{service}.gimme.tools` | Service-specific API proxy | Scoped to service |
+The reference gateway derives each destination from its MCP server's name in the config: it
+drops bracketed parts, lowercases, turns runs of `_` or whitespace into `-`, drops other
+characters, and trims hyphens, so `MCP_DOCKER` becomes `mcp-docker`. A name longer than 63
+characters is not a valid label, and every request for it gets `404 invalid_host`.
 
-### Subdomain Rules
+## Qualifiers route; they never isolate
 
-1. **Each subdomain is isolated**: Cookies set on `slack.gimme.tools` cannot be read by `notion.gimme.tools`
-2. **Root domain cookies are forbidden**: No cookies on bare `gimme.tools`
-3. **Tokens are audience-bound**: JWT `aud` claim must match subdomain
-4. **Cross-origin requires explicit CORS**: Services can't call each other without permission
+- **HG-3** A qualifier is in the destination's `labels` allow-list, appears once, follows the
+  list's order, and a host carries at most four. Otherwise `404 unknown_qualifier`. The
+  default list is empty.
+- **HG-4** A qualifier may change where a request lands, never what it means (method, path,
+  definer) or who asks (the signed credentials). Labels are public: no tenant or user identity.
+- **HG-5** A gateway that cannot route a qualifier to its own backend refuses it with
+  `404 qualifier_not_routable` rather than serving it from the default backend. The reference
+  gateway has no per-qualifier backends, so it refuses every qualifier.
 
-## Cookie & Token Scoping
+The web already ties a qualifier to its destination: a cookie set for `mail.example.com` is
+also sent to `eu.mail.example.com`, every host under one registrable domain is same-site, and
+hosts with qualifiers need per-destination wildcard certificates, which Certificate
+Transparency logs publish. A qualifier therefore lives inside its destination's trust zone.
+Isolation comes from the destination label, which is its own origin.
 
-### Cookie Configuration
+## Loopback names and the public domain
 
-```
-Set-Cookie: session_token=xxx;
-  Domain=auth.gimme.tools;
-  Path=/;
-  HttpOnly;
-  Secure;
-  SameSite=Strict;
-  Max-Age=604800
-```
+- **HG-7** A destination below level 1 is not served on a public domain
+  (`403 unguarded_public`). It is served only under loopback names such as
+  `notes.localhost`, which keep it on the machine only while DP-5 and DP-8 hold.
+- **DP-5** A proxy in front of the gateway forwards only WebSpec hosts, refuses every other
+  host, and preserves the `Host` header, which the guard signs. Loopback names are WebSpec
+  hosts only on connections from the host itself: a loopback name that arrived through the
+  public path would reach level-0 destinations without the guard. The reference proxy answers
+  `421` to every host it refuses.
 
-**Critical cookie attributes:**
+## Origins and CORS (DP-8)
 
-| Attribute | Value | Purpose |
-|-----------|-------|---------|
-| `Domain` | Specific subdomain | Prevents cross-service access |
-| `HttpOnly` | true | Prevents JavaScript access |
-| `Secure` | true | HTTPS only |
-| `SameSite` | Strict | Prevents CSRF |
-| `Path` | / | Full subdomain scope |
+The gateway binds to loopback unless `WEBSPEC_HOST` says otherwise. Unless
+`WEBSPEC_CORS_ORIGINS` lists an origin:
 
-### Cookie Scoping Rules
+- a page from another origin cannot read the gateway's responses;
+- the gateway refuses every CORS preflight, so the page cannot send `PUT`, `PATCH`, or `DELETE`,
+  or any request with a non-safelisted header;
+- `POST` is the only unsafe method a page can send without a preflight, and a `POST` must carry
+  `WebSpec-Definer`, a header that needs one. A form the page posts arrives without a definer
+  and is refused with `400 missing_definer`;
+- its plain `GET`s still reach read-only tools on level-0 destinations, though it cannot read
+  the answers.
 
-```
-❌ WRONG: Cookies on root domain
-Set-Cookie: token=xxx; Domain=gimme.tools
+When `WEBSPEC_CORS_ORIGINS` lists an origin, that origin may send `WebSpec-Definer`,
+`WebSpec-Guard`, `WebSpec-Nonce`, `WebSpec-Clearance`, `WebSpec-Approval`, `Idempotency-Key`,
+and `Content-Type` (`Access-Control-Allow-Headers`), and may read `Allow`, `Link`,
+`WebSpec-Level`, `WebSpec-Tier`, `WebSpec-Taint`, `WebSpec-Status`, `WebSpec-Tool-Count`,
+`WebSpec-Service`, and `Idempotent-Replayed` (`Access-Control-Expose-Headers`). Without
+`WebSpec-Taint` in that list, a harness in the origin could not see the taint mark.
 
-✅ CORRECT: Cookies on specific subdomain
-Set-Cookie: token=xxx; Domain=auth.gimme.tools
-```
+## Real exchanges
 
-### Token Audience Binding
+These are real answers of the reference gateway (`gateway/`), with the demo server
+(`gateway/examples/demo_server.py`) configured as the level-0 destination `notes`, abridged to
+the headers that matter.
 
-Every JWT must include an `aud` (audience) claim matching the subdomain:
+```text
+GET /note?id=welcome
+Host: mail.localhost
 
-```json
-{
-  "iss": "auth.gimme.tools",
-  "sub": "user_12345",
-  "aud": "slack.gimme.tools",
-  "exp": 1704067200,
-  "scope": "GET:channels/*,POST:channels/*/messages",
-  "session_id": "sess_abc123",
-  "device_id": "dev_xyz789"
-}
-```
+→ 404 Not Found
+Cache-Control: no-store
 
-### Token Validation
-
-```javascript
-function validateToken(token, request) {
-  const payload = decodeJWT(token);
-  const requestSubdomain = new URL(request.url).hostname;
-
-  // Audience must match request subdomain
-  if (payload.aud !== requestSubdomain) {
-    return { valid: false, error: 'Token audience mismatch' };
-  }
-
-  // Check expiration
-  if (Date.now() > payload.exp * 1000) {
-    return { valid: false, error: 'Token expired' };
-  }
-
-  // Check scope covers requested action
-  if (!scopeCovers(payload.scope, request)) {
-    return { valid: false, error: 'Insufficient scope' };
-  }
-
-  return { valid: true, payload };
-}
+{"error": "unknown_service", "detail": "Unknown service: mail", "available": ["notes"]}
 ```
 
-## local.gimme.tools Bridge
+```text
+GET /note?id=welcome
+Host: eu.notes.localhost
 
-### Architecture
+→ 404 Not Found
+Cache-Control: no-store
 
-The local bridge provides secure access to localhost services through a WebSocket tunnel:
-
-```
-┌───────────────────────────────────────────────────────────────┐
-│                         Browser/Agent                          │
-│                              │                                 │
-│                    HTTPS request to                            │
-│                  local.gimme.tools/...                         │
-│                              │                                 │
-│                              ▼                                 │
-│  ┌─────────────────────────────────────────────────────────┐  │
-│  │              local.gimme.tools (Cloud)                   │  │
-│  │                                                          │  │
-│  │   1. Validates session token                             │  │
-│  │   2. Checks device binding                               │  │
-│  │   3. Routes through WebSocket tunnel                     │  │
-│  │                                                          │  │
-│  └────────────────────────┬────────────────────────────────┘  │
-│                           │                                    │
-│                    WebSocket tunnel                            │
-│                    (authenticated)                             │
-│                           │                                    │
-│                           ▼                                    │
-│  ┌─────────────────────────────────────────────────────────┐  │
-│  │              Local Bridge Agent                          │  │
-│  │              (runs on user's machine)                    │  │
-│  │                                                          │  │
-│  │   1. Validates tunnel authentication                     │  │
-│  │   2. Maps to local Unix socket                           │  │
-│  │   3. Returns response through tunnel                     │  │
-│  │                                                          │  │
-│  └────────────────────────┬────────────────────────────────┘  │
-│                           │                                    │
-│                    Unix socket                                 │
-│                           │                                    │
-│                           ▼                                    │
-│  ┌─────────────────────────────────────────────────────────┐  │
-│  │              Local Service                               │  │
-│  │              (filesystem, clipboard, etc.)               │  │
-│  └─────────────────────────────────────────────────────────┘  │
-└───────────────────────────────────────────────────────────────┘
+{"error": "unknown_qualifier", "detail": "These qualifier labels are not allowed for this destination."}
 ```
 
-### WebSocket Protocol
+```text
+OPTIONS /email
+Host: notes.localhost
+Origin: https://evil.example
+Access-Control-Request-Method: POST
+Access-Control-Request-Headers: content-type, webspec-definer
 
-```javascript
-// Client → Server: Request
-{
-  "type": "request",
-  "id": "req_123",
-  "method": "GET",
-  "path": "/clipboard",
-  "headers": { "Authorization": "Bearer ..." }
-}
+→ 400 Bad Request
+Cache-Control: no-store
 
-// Server → Client: Response
-{
-  "type": "response",
-  "id": "req_123",
-  "status": 200,
-  "headers": { "Content-Type": "text/plain" },
-  "body": "clipboard contents..."
-}
+Disallowed CORS origin
 ```
 
-### Device Binding
+```text
+POST /email
+Host: notes.localhost
+Origin: https://evil.example
+Content-Type: application/x-www-form-urlencoded
 
-Local bridge requires device binding verification:
+id=welcome&to=eve%40example.com
 
-```json
-{
-  "aud": "local.gimme.tools",
-  "device_id": "dev_xyz789",
-  "device_verified": true,
-  "local_scopes": ["clipboard:read", "filesystem:read"]
-}
+→ 400 Bad Request
+Cache-Control: no-store
+
+{"error": "missing_definer", "detail": "POST requires the WebSpec-Definer header"}
 ```
 
-## Local Service Architecture
+## What to check
 
-### Unix Socket Isolation
+**Gateway and proxy configuration**
 
-Local services communicate through Unix domain sockets for security:
+- Every destination reachable on the public domain has `level` 1 or higher (HG-7).
+- The proxy forwards only `{destination}.{domain}` hosts, and loopback names only from local
+  connections; it preserves `Host` (DP-5).
+- `WEBSPEC_HOST` is unset, so the gateway binds to loopback (DP-8). A wider bind is a finding
+  unless the gateway sits in a network of its own, as in the Docker stack.
+- `WEBSPEC_CORS_ORIGINS` lists only origins that run a harness you trust; a wildcard or a
+  reflected `Origin` is a finding.
+- `labels` names only qualifiers that are safe to publish (HG-4).
 
-```
-/var/run/gimme/
-├── clipboard.sock      # Clipboard access
-├── filesystem.sock     # File operations
-├── terminal.sock       # Terminal access
-└── browser.sock        # Browser automation
-```
+**Clients and harnesses**
 
-**Benefits of Unix sockets:**
-- No network exposure (localhost-only)
-- File permission controls
-- Fast IPC without network overhead
-- Natural sandboxing
+- Each destination has its own nonces, clearances, approvals, and idempotency keys; never
+  reuse one across destinations (HG-6).
+- A browser-based harness on an allowed origin reads `WebSpec-Taint` from the exposed headers
+  and treats tainted bodies as data.
 
-### Service Registration
+## Not part of WebSpec
 
-```yaml
-# /etc/gimme/services.d/clipboard.yaml
-service:
-  name: clipboard
-  socket: /var/run/gimme/clipboard.sock
-  capabilities:
-    - clipboard:read
-    - clipboard:write
-  owner: _gimme
-  mode: 0660
-```
-
-### Sandbox Configuration (macOS)
-
-```
-;; macOS sandbox profile for gimme services
-(version 1)
-(deny default)
-
-;; Allow socket communication
-(allow network* (local-socket (path "/var/run/gimme/")))
-
-;; Allow clipboard access
-(allow mach-lookup (global-name "com.apple.pasteboard.1"))
-
-;; Deny network
-(deny network-outbound)
-(deny network-inbound)
-```
-
-### Sandbox Configuration (Linux/systemd)
-
-```ini
-# /etc/systemd/system/gimme-clipboard.service
-[Service]
-User=gimme
-Group=gimme
-
-# Filesystem isolation
-ProtectSystem=strict
-ProtectHome=true
-PrivateTmp=true
-
-# Network isolation
-PrivateNetwork=true
-
-# Socket activation
-ListenStream=/var/run/gimme/clipboard.sock
-```
-
-## Security Validation Checklist
-
-When reviewing subdomain and security configuration:
-
-- [ ] Cookies are scoped to specific subdomains (not root)
-- [ ] HttpOnly flag set on all session cookies
-- [ ] SameSite=Strict for CSRF protection
-- [ ] JWT `aud` claim matches target subdomain
-- [ ] Token expiration is enforced
-- [ ] Local services use Unix sockets (not TCP)
-- [ ] Sandbox profiles limit service capabilities
-- [ ] Device binding verified for local bridge access
-- [ ] No cross-origin requests without explicit CORS
-- [ ] Session tokens never exposed to JavaScript
-
-## Common Security Issues
-
-| Issue | Risk | Fix |
-|-------|------|-----|
-| Root domain cookies | Cross-service token theft | Scope to specific subdomain |
-| Missing HttpOnly | XSS can steal tokens | Add HttpOnly flag |
-| Audience mismatch | Token replay attacks | Validate aud claim |
-| TCP local services | Network exposure | Use Unix sockets |
-| Missing device binding | Unauthorized local access | Require device verification |
+Earlier drafts of this plugin described `auth.`, `api.`, and `local.` subdomains under a fixed
+domain, JWT audience claims, cookie attributes, and a WebSocket bridge to local services. None
+of these is in the spec, and their absence is not a finding. General cookie and session
+hardening is still good practice, but cite it as such, not as a WebSpec rule.

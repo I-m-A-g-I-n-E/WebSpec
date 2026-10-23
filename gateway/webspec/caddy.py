@@ -177,7 +177,7 @@ CLIENT_KEY = "webspec_client"
 
 # DP-6: the field filters for every access log and for the default logger.
 # Field paths follow Caddy's JSON log entry. Header keys appear in Go's canonical form
-# (X-Webspec-Guard, not X-WebSpec-Guard), so a deny-list written with the spec's spelling
+# (Webspec-Guard, not WebSpec-Guard), so a deny-list written with the spec's spelling
 # would silently match nothing. Dropping the whole header objects avoids that problem.
 # The URI keeps its path only: the query goes (GET arguments), and so do the scheme, authority
 # and userinfo of an absolute-form target (`GET http://user:pass@host/...`) and the userinfo of
@@ -186,7 +186,7 @@ CLIENT_KEY = "webspec_client"
 URI_FILTER = "^[A-Za-z][A-Za-z0-9+.-]*://[^/?]*|^[^/?]*@|[?].*"
 LOG_FILTER_FIELDS: tuple[str, ...] = (
     f'request>uri regexp {URI_FILTER} ""',  # keep the path only
-    "request>headers delete",  # X-WebSpec-*, X-UFO-*, X-Gimme-Definer, Authorization, Cookie, ...
+    "request>headers delete",  # WebSpec-*, Authorization, Cookie, ...
     "resp_headers delete",  # Set-Cookie, and Location URLs that may carry a query
 )
 

@@ -29,13 +29,15 @@ import logging
 from dataclasses import dataclass, field, replace
 from typing import Any, Mapping
 
+from .definer import DEFINER_REQUIRED_METHODS
+
 logger = logging.getLogger("webspec.methods")
 
 # ── Levels (the security dial) ──
 
 L0_LOCAL = 0       # loopback only; structural grammar rules only
 L1_SIGNED = 1      # + guard HMAC + single-use audience-bound nonce (enforced in app.py)
-L2_BOUND = 2       # + Tier-2 bookend on unsafe methods; Idempotency-Key on POST/PATCH
+L2_BOUND = 2       # + Idempotency-Key for every non-idempotent tool
 L3_CLEARED = 3     # + UFO clearance token for sensitive/dangerous tiers and non-read-only tools
 L4_WITNESSED = 4   # + human approval (Ed25519 signature) for destructive tools / dangerous tier
 MIN_LEVEL, MAX_LEVEL = L0_LOCAL, L4_WITNESSED
@@ -44,7 +46,6 @@ LEVEL_NAMES = {0: "local", 1: "signed", 2: "bound", 3: "cleared", 4: "witnessed"
 # ── Methods ──
 
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
-DISCOVERY_METHODS = frozenset({"HEAD", "OPTIONS"})  # never invoke a tool
 INVOKING_METHODS = ("GET", "POST", "PUT", "PATCH", "DELETE")
 ALL_METHODS = ("HEAD", "OPTIONS") + INVOKING_METHODS  # canonical order (routes, CORS, Allow)
 
@@ -122,12 +123,6 @@ def admissible_methods(contract: ToolContract) -> frozenset[str]:
             methods.add("PUT")
         return frozenset(methods)
     return frozenset({"DELETE", "PUT" if contract.idempotent else "POST"})
-
-
-def allow_header(contract: ToolContract) -> str:
-    """RFC 9110 Allow header value for a tool path."""
-    allowed = admissible_methods(contract) | DISCOVERY_METHODS
-    return ", ".join(m for m in ALL_METHODS if m in allowed)
 
 
 def contract_from_annotations(annotations: Any, meta: Mapping[str, Any] | None = None) -> ToolContract:
@@ -230,6 +225,10 @@ class ContractPins:
         self._pins[key] = effective
         return effective
 
+    def get(self, service: str, tool_name: str) -> ToolContract | None:
+        """The pinned contract of a tool listed since startup, or None."""
+        return self._pins.get((service, tool_name))
+
     # Pins live for the process lifetime and deliberately survive a service being
     # removed from config and re-added (otherwise editing the config would be a way to
     # reset them). TODO(C): persist pins across restarts (operator-approved contract
@@ -246,11 +245,16 @@ def effective_contract(
     """observed (annotations) → pinned join → operator override."""
     observed = contract_from_tool(tool)
     pinned = pins.observe(service, tool.name, observed)
+    return overridden(pinned, service, tool.name, overrides)
+
+
+def overridden(contract: ToolContract, service: str, tool_name: str,
+               overrides: Mapping[str, Any] | None = None) -> ToolContract:
+    """``contract`` under the destination's ``tools`` overrides (TC-5)."""
     if overrides and not isinstance(overrides, Mapping):
         logger.error("Service %s: 'tools' overrides must be an object — failing closed", service)
         return STRICTEST
-    override = (overrides or {}).get(tool.name)
-    return apply_override(pinned, override)
+    return apply_override(contract, (overrides or {}).get(tool_name))
 
 
 # ── Requirements ──
@@ -260,19 +264,17 @@ def effective_contract(
 class Requirements:
     """What a request must carry. ``guard`` is enforced in app.py, before the handler."""
 
-    guard: bool = False            # X-WebSpec-Guard HMAC + single-use nonce
-    definer: bool = False          # X-Gimme-Definer from this method's family
-    bookend: bool = False          # Tier-2 bookend HMAC in the definer header
-    idempotency_key: bool = False  # Idempotency-Key header (POST/PATCH)
+    guard: bool = False            # WebSpec-Guard HMAC + single-use WebSpec-Nonce
+    definer: bool = False          # WebSpec-Definer from this method's family (POST only)
+    idempotency_key: bool = False  # Idempotency-Key header (non-idempotent tools)
     empty_body: bool = False       # request body MUST be empty (GET)
-    clearance: bool = False        # X-UFO-Clearance token bound to (tool, args)
-    approval: bool = False         # X-WebSpec-Approval: human Ed25519 signature
+    clearance: bool = False        # WebSpec-Clearance token bound to (tool, args)
+    approval: bool = False         # WebSpec-Approval: human Ed25519 signature
 
     def as_dict(self) -> dict[str, bool]:
         return {
             "guard": self.guard,
             "definer": self.definer,
-            "bookend": self.bookend,
             "idempotency_key": self.idempotency_key,
             "empty_body": self.empty_body,
             "clearance": self.clearance,
@@ -289,9 +291,9 @@ def requirements(method: str, contract: ToolContract, level: int) -> Requirement
     unsafe = method not in SAFE_METHODS
     return Requirements(
         guard=level >= L1_SIGNED,
-        # Method rules
-        definer=unsafe,
-        bookend=unsafe and level >= L2_BOUND,
+        # Method rules. Only POST must carry a definer (DF-1); on PUT, PATCH and DELETE it
+        # is optional, and the handler checks it only when it is sent.
+        definer=method in DEFINER_REQUIRED_METHODS,
         empty_body=method == "GET",
         # Contract rules. The key follows the *tool*, not the method: a non-idempotent
         # tool needs one whichever unsafe method reaches it (DELETE included).
@@ -304,18 +306,6 @@ def requirements(method: str, contract: ToolContract, level: int) -> Requirement
             contract.risk >= 2 or contract.tier == "dangerous" or (contract.risk >= 1 and contract.open_world)
         ),
     )
-
-
-def describe(contract: ToolContract, level: int) -> dict[str, Any]:
-    """Machine-readable contract + per-method requirements, for OPTIONS discovery."""
-    methods = sorted(admissible_methods(contract))
-    return {
-        "methods": methods,
-        "contract": contract.as_dict(),
-        "level": level,
-        "level_name": LEVEL_NAMES[level],
-        "requirements": {m: requirements(m, contract, level).as_dict() for m in methods},
-    }
 
 
 def parse_level(raw: Any, *, guard: bool, service: str = "?") -> int:

@@ -64,7 +64,7 @@ on an installed host. The gateway picks up the change within 30 seconds.
 ## 4. Approve a request
 
 When a call needs approval, the gateway answers `428 Precondition Required`. The body is a
-challenge that describes exactly that request ([AP-1](../spec/levels.md#level-4-witnessed)
+challenge that describes that request ([AP-1](../spec/levels.md#level-4-witnessed)
 shows one in full). The harness hands the whole body to a person, for example by saving it as
 `challenge.json`, and the person runs the following. The request here is the
 [walkthrough's](walkthrough.md#level-4-witnessed) send:
@@ -81,15 +81,15 @@ $ webspec-ctl approve challenge.json --key ~/.ssh/webspec-approver.pub
   "body_sha256": "00f8f87d43343409d8bd484d75f05317569f4d37b7af69bfc41940b22aa12075",
   "host": "notes.localhost",
   "method": "POST",
-  "path": "/send_note",
+  "path": "/email",
   "service": "notes",
-  "tool": "send_note",
+  "tool": "send_email",
   "v": 1
 }
-fingerprint: 4f935160084ad6289b3eb2b1216fd7079f09e6bddc8ea822d4507299599dbb84
+fingerprint: a7f83b4e4407c38945721d25b3491eed7feb56b614a14484ec94a18b888782a1
 
 Type 'approve' to sign this exact request: approve
-X-WebSpec-Approval: e6bcb018cdffb4cc91c2a460bab50b9e:U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAg…
+WebSpec-Approval: 9921eec474816b9dff2590622f73af86:U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAg…
 ```
 
 Before it signs, `webspec-ctl approve` does three things:
@@ -116,10 +116,10 @@ level is 4:
 
 ```python
 note = {"id": "welcome", "to": "ana@example.com"}
-first = notes.call("POST", "send_note", note, "SEND", idempotency_key="k-91c2")    # 428
+first = notes.call("POST", "/email", note, "SEND", idempotency_key="k-91c2")    # 428
 open("challenge.json", "w").write(first.text)   # for the person in step 4
-header = "…"   # the X-WebSpec-Approval value from webspec-ctl approve
-notes.call("POST", "send_note", note, "SEND", approval=header, idempotency_key="k-91c2")  # 200
+header = "…"   # the WebSpec-Approval value from webspec-ctl approve
+notes.call("POST", "/email", note, "SEND", approval=header, idempotency_key="k-91c2")  # 200
 ```
 
 The signature is safe to hand back to the agent, because it approves only that one request,

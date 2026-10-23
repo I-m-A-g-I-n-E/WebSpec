@@ -56,8 +56,11 @@ A contract is five facts about a tool:
   would reset them.
 
 Pinning defends against a "rug pull": a server that re-lists a destructive tool as read-only to
-unlock `GET`. The reference gateway keeps pins in memory, so a restart resets them, and a stdio
-server, which runs as the gateway's user, can force a restart
+unlock `GET`. A binding pin ([PA-8](addressing.md#building-the-map)) stops a renamed tool from
+taking over a key that another tool held. A tool listed under a new name, on a key that no tool
+held, is a new tool: its contract is pinned from that listing, and overrides written for the
+old name do not apply to it. The reference gateway keeps pins in memory, so a restart resets
+them, and a stdio server, which runs as the gateway's user, can force a restart
 ([known limits](status.md#known-limits)).
 
 ## Method binding
@@ -72,39 +75,51 @@ server, which runs as the gateway's user, can force a restart
   the tool's contract, according to the table above.
 
 - **MB-2** If the contract does not admit the request's method, the gateway MUST refuse it with
-  `405 method_not_allowed` and an `Allow` header. The header lists the admissible methods plus
-  `HEAD` and `OPTIONS`.
+  `405 method_not_allowed` and the path's `Allow` header
+  ([PA-9](addressing.md#allow-and-refusals)).
 
 - **MB-3** `HEAD` and `OPTIONS` are available on every tool path, and they MUST NOT invoke the
   tool.
 
 ## Per-method rules and definers { #per-method-rules }
 
-| Method | Safe | Arguments | Definer family |
-|---|---|---|---|
-| `HEAD` | yes | none | none |
-| `OPTIONS` | yes | none | none |
-| `GET` | yes | query only, empty body | none |
-| `POST` | no | JSON object body and/or query | `CREATE` `SEND` `INVOKE` `TRIGGER` `UPLOAD` |
-| `PUT` | no | JSON object body and/or query | `REPLACE` `OVERWRITE` `SET` |
-| `PATCH` | no | JSON object body and/or query | `MODIFY` `APPEND` `AMEND` `RENAME` |
-| `DELETE` | no | query and/or JSON object body | `REMOVE` `REVOKE` `ARCHIVE` `CANCEL` `PURGE` |
+| Method | Safe | Arguments | Definer | Definer family |
+|---|---|---|---|---|
+| `HEAD` | yes | none | ignored | none |
+| `OPTIONS` | yes | none | ignored | none |
+| `GET` | yes | query only, empty body | ignored | none |
+| `POST` | no | JSON object body and/or query | required | `CREATE` `SEND` `INVOKE` `TRIGGER` `UPLOAD` |
+| `PUT` | no | JSON object body and/or query | optional | `REPLACE` `OVERWRITE` `SET` |
+| `PATCH` | no | JSON object body and/or query | optional | `MODIFY` `APPEND` `AMEND` `RENAME` |
+| `DELETE` | no | query and/or JSON object body | optional | `REMOVE` `REVOKE` `ARCHIVE` `CANCEL` `PURGE` |
 
-- **DF-1** Every `POST`, `PUT`, `PATCH`, and `DELETE` MUST carry `X-Gimme-Definer: VERB`, where
-  the verb belongs to that method's family. Verbs are case-insensitive. A missing header is
-  `400 missing_definer`, an unknown verb is `400 unknown_definer`, and a verb from another family
-  is `400 definer_family_mismatch`.
+- **DF-1** Every `POST` MUST carry `WebSpec-Definer` (`400 missing_definer`). A `PUT`, `PATCH`,
+  or `DELETE` MAY carry it. A definer sent on one of these four methods MUST be a verb of that
+  method's family (`400 definer_family_mismatch`). On `GET`, `HEAD`, and `OPTIONS` a definer is
+  not checked, echoed, or logged, though the guard still signs it
+  ([GD-2](levels.md#level-1-signed)).
 
-- **DF-2** A definer MAY carry a bookend, written `X-Gimme-Definer: VERB:bookend`. From level 2
-  on, the bookend is required (`403 bookend_required`). If a bookend is present, it MUST verify at
-  every level (`403 bookend_mismatch`). The bookend is the hex encoding of the first 4 bytes of
-  `HMAC-SHA256(guard key, METHOD ":" VERB ":" head ":" tail)`, where `VERB` is the verb in upper
-  case, whatever case was sent, and `head` and `tail` are the first and last 16 bytes of the body
-  (the whole body if it is 16 bytes or shorter).
+- **DF-2** A request MUST carry at most one `WebSpec-Definer` field line. Two or more are
+  `400 unknown_definer`, whatever the method. On `POST`, `PUT`, `PATCH`, and `DELETE` the value
+  is exactly one verb of the families above, matched without regard to case. Anything else
+  there is `400 unknown_definer` too: an empty value, a value with a `:` (the bookend form of
+  earlier versions), a value with a comma (as when a server or proxy combined two field lines,
+  RFC 9110 §5.3), or a word that is in no family.
 
-- **DF-3** The definer does not select the tool, and it does not change the method's rules. It
-  states the intent aloud so that the intent is signed ([GD-2](levels.md#level-1-signed)),
-  logged ([AU-2](audit-deployment.md#audit)), and checked against the method.
+- **DF-3** On `POST` the definer names the action; on other methods it is optional and only
+  confirms. On `POST` it is part of the route key, so it selects the tool among the `POST`
+  entries on the path ([PA-6, PA-10](addressing.md#path)). On `PUT`, `PATCH`, and `DELETE` it
+  never selects a tool and never changes the method's rules. Either way, a definer that is sent
+  is signed by the guard ([GD-2](levels.md#level-1-signed)) and logged
+  ([AU-2](audit-deployment.md#audit)).
+
+**The verb, signed with its contents.** The clearance ([CL-1](levels.md#level-3-cleared)) and
+the approval ([AP-1](levels.md#level-4-witnessed)) bind the method and the tool that the request
+resolves to. They do not take the definer as an input. On `POST` the tool is the one the definer
+selected, so they bind the action that the definer named, and the verb is signed with its
+contents without any new input. On `PUT`, `PATCH`, and `DELETE` the definer is checked against
+the method's family only, never against the tool: `ARCHIVE` is accepted on a tool that deletes
+outright.
 
 ## Requirements
 
@@ -113,9 +128,8 @@ server, which runs as the gateway's user, can force a restart
     | Requirement | Applies when |
     |---|---|
     | Guard (HMAC and nonce) | the level is 1 or higher, on every request except `GET /__nonce`, which carries the tag without a nonce ([GD-4](levels.md#level-1-signed)), and the retired `GET /__challenge` |
-    | Definer | the method is `POST`, `PUT`, `PATCH`, or `DELETE` |
+    | Definer | the method is `POST` |
     | Empty body | the method is `GET` |
-    | Bookend | the method is unsafe and the level is 2 or higher |
     | `Idempotency-Key` | the method is unsafe, the tool is not idempotent, and the level is 2 or higher |
     | Clearance | the level is 3 or higher, and the tool is not read-only or its tier is above `open` |
     | Human approval | the level is 4, and the tool is destructive, or `dangerous`, or open-world and not read-only |
@@ -134,25 +148,25 @@ by default is an [open question](status.md#open-questions).
 ## Responses
 
 - **RS-1** Every response that carries a tool result (`200`, `422`, or a replay) MUST carry
-  `Cache-Control: no-store`, `X-WebSpec-Level`, and `X-WebSpec-Tier`.
+  `Cache-Control: no-store`, `WebSpec-Level`, and `WebSpec-Tier`.
 
-- **RS-2** If the tool is open-world, the response MUST carry `X-UFO-Taint: open-world`. The
+- **RS-2** If the tool is open-world, the response MUST carry `WebSpec-Taint: open-world`. The
   harness MUST treat that body as untrusted data, which cannot authorize later calls.
 
 - **RS-3** A successful call answers `200 {"result": …}`. A tool that reports an error (MCP
   `isError`) answers `422 {"result": …, "error": true}`. Each text block that parses as strict
   JSON is returned as JSON, and several blocks become an array. MCP `structuredContent` is not
-  passed through. If a definer was validated, the response carries its verb, in upper case, in
-  `X-Gimme-Definer-Canonical`, and how it was checked in `X-Gimme-Definer-Tier`: `1` for the
-  verb alone, `2` for the verb and a verified bookend. The definer tier is unrelated to the
-  tool's `tier`. The body repeats both as `canonical` and `definer_tier`.
+  passed through. If a definer was checked ([DF-1, DF-2](#per-method-rules)), the body also
+  gives its verb, in upper case, as `canonical`.
 
 - **RS-4** The gateway refuses with a JSON object `{"error": code, "detail": text, …}` and the
   status that the rule names. A few answers come from the web framework before the gateway's
-  handlers run, and they have plain-text bodies: a host that matches no route (`404`), a method
-  not in the [per-method table](#per-method-rules) (`405`), a rejected CORS preflight (`400`),
+  handlers run, and they have plain-text bodies: a host that matches no route (`404`), a rejected CORS
+  preflight (`400`),
   and an unhandled error (`500`). A request that needs the guard key while no usable key is set
-  also gets a plain-text `500` ([GD-5](levels.md#level-1-signed)).
+  also gets a plain-text `500` ([GD-5](levels.md#level-1-signed)). Every refusal, the plain-text
+  ones included, MUST carry `Cache-Control: no-store`, so that no cache keeps a `404` or `405`
+  after the route map changes.
 
 Failures after commit ([CO-1](levels.md#commit)), when any clearance and approval have already
 been spent:
@@ -169,53 +183,35 @@ server and reconnects on the next request.
 
 ## Discovery
 
-- **DS-1** `OPTIONS /{tool}` returns the tool's input schema, contract, admissible methods,
-  and level, together with the requirements for each admissible method, plus an `Allow` header.
-  That is enough for a client to build a correct request before it sends one, except for a
-  level-4 approval, which needs the challenge from the `428` answer to a first attempt
-  ([AP-1](levels.md#level-4-witnessed)). `OPTIONS /` returns the same information for every
-  tool.
+- **DS-1** `OPTIONS /{noun}` answers with the path's `Allow`
+  ([PA-9](addressing.md#allow-and-refusals)) and a body with one entry for each method mapped on
+  the path, and on `POST` one entry for each definer. If the path maps nothing, it answers
+  `404 tool_not_found`. Each entry names its method, and on `POST` its definer, and gives the tool
+  it resolves to (`tool`), the tool's `inputSchema`, its `contract`, and the `requirements` for
+  that method at the destination's level. `requirements` has one boolean for each row of
+  [RQ-1](#requirements): `guard`, `definer`, `empty_body`, `idempotency_key`, `clearance`, and
+  `approval`. That is enough for a client to build a correct request before it sends one, except
+  for a level-4 approval, which needs the challenge from the `428` answer to a first attempt
+  ([AP-1](levels.md#level-4-witnessed)). An entry whose key is closed names no tool and gives,
+  as `error`, the code it answers: `route_collision` or `binding_changed`. `OPTIONS /` returns
+  the entries of every path, with their paths: the whole route map.
 
-- **DS-2** `HEAD /{tool}` answers `200` with `Allow`, `X-WebSpec-Tool`, `X-WebSpec-Tier`,
-  `X-WebSpec-Level`, and `X-WebSpec-Description` (the first 200 characters of the description,
-  as ASCII), or `404` if there is no such tool. `HEAD /` reports health in
-  `X-WebSpec-Status` (`connected` or `degraded`) and `X-WebSpec-Tool-Count`.
+- **DS-2** `HEAD /{noun}` answers `200` with `Allow` and `Link: </>; rel="service-desc"`
+  (RFC 8631), or `404` if the path maps nothing. It never invokes a tool, so it reports the
+  route, not whether an item exists. That departs from RFC 9110 §9.3.2, under which `HEAD` would
+  answer as `GET` does. `HEAD /` reports health in `WebSpec-Status` (`connected` or
+  `degraded`), the number of tools in `WebSpec-Tool-Count`, and the destination in
+  `WebSpec-Service`.
 
-- **DS-3** `GET /` lists the tools with their descriptions and admissible methods.
+- **DS-3** `GET /` lists the tools with their descriptions and their entries: the method, the
+  path, and on `POST` the definer. Every discovery response MUST carry
+  `Cache-Control: no-store`.
 
 On a destination at level 1 or higher, discovery requests carry the guard like any other
-request. Here is the answer to `OPTIONS /send_note` at level 4, from the demo server in
-[A request at every level](../guide/walkthrough.md). Its `Allow` header is
-`HEAD, OPTIONS, POST, PATCH`, and its body is:
-
-```json
-{
-  "name": "send_note",
-  "description":
-    "Send a note to someone (simulated: queued in an in-memory outbox).",
-  "inputSchema": {"type": "object", "required": ["id", "to"],
-                  "properties": {"id": {"type": "string"},
-                                 "to": {"type": "string"}}},
-  "methods": ["PATCH", "POST"],
-  "contract": {"read_only": false, "destructive": false, "idempotent": false,
-               "open_world": true, "tier": "sensitive", "source": "annotations"},
-  "level": 4,
-  "level_name": "witnessed",
-  "requirements": {
-    "PATCH": {"guard": true, "definer": true, "bookend": true,
-              "idempotency_key": true, "empty_body": false,
-              "clearance": true, "approval": true},
-    "POST":  {"guard": true, "definer": true, "bookend": true,
-              "idempotency_key": true, "empty_body": false,
-              "clearance": true, "approval": true}
-  },
-  "scopes_required": {"PATCH": "PATCH:notes.localhost/send_note",
-                      "POST": "POST:notes.localhost/send_note"}
-}
-```
+request. On the demo server of [A request at every level](../guide/walkthrough.md),
+`OPTIONS /note` has two entries, `GET` to `read_note` and `DELETE` to `delete_note`, and
+`OPTIONS /email` has one, `POST` with `SEND` to `send_email`.
 
 `contract.source` says where the contract came from: `annotations`, `default` (the server
 gave none), `override`, `pinned` (a join of different sources), or `strictest` (an invalid
-override). `scopes_required` names the `METHOD:host/path` scope that each method would need
-under scoped tokens. Scoped tokens are [proposed](status.md#roadmap). Today every scope is
-granted.
+override).

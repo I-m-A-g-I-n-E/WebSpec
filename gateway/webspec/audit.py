@@ -62,7 +62,7 @@ def _append_fd(path: Path) -> int:
 @dataclass(frozen=True)
 class Context:
     service: str
-    host: str
+    host: str | None  # None for a record that no request made (a binding change, AU-5)
     method: str
     path: str
     tool: str | None = None
@@ -97,7 +97,7 @@ def _last_hash(path: Path) -> str:
 def record_request(request, *, service: str, outcome: str, status: int | None, reason: str | None) -> None:
     """Audit a decision made before a tool was resolved (bad host, failed guard, unknown tool…)."""
     path = request.url.path or "/"
-    record(Context(service=service, host=request.headers.get("host", ""), method=request.method.upper(),
+    record(Context(service=service, host=request.headers.get("host", ""), method=request.method,
                    path=path, query=request.url.query or ""),
            outcome=outcome, status=status, reason=reason)
 

@@ -156,7 +156,7 @@ from webspec import approve_cli
 
 
 def _challenge():
-    summary = approval_mod.request_summary("DELETE", "svc", "svc.localhost", "/delete_thing",
+    summary = approval_mod.request_summary("DELETE", "svc", "svc.localhost", "/thing",
                                            "delete_thing", {"id": "1\x1b[2K"}, b"")
     return approval_mod.store.issue(summary)
 
@@ -191,7 +191,7 @@ def test_approve_signs_and_gateway_verifies(monkeypatch, tmp_path, capsys):
     ch = _challenge()
     rc, _ = _run(monkeypatch, tmp_path, ch, key=str(key))
     assert rc == 0
-    header = capsys.readouterr().out.strip().removeprefix("X-WebSpec-Approval: ")
+    header = capsys.readouterr().out.strip().removeprefix("WebSpec-Approval: ")
     assert asyncio.run(approval_mod.store.verify(header, ch["fingerprint"])) is None
 
 

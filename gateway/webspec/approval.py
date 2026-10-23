@@ -2,7 +2,7 @@
 
 Flow (spec: docs/spec/levels.md § Level 4: witnessed):
 
-1. A request that needs approval arrives without ``X-WebSpec-Approval`` → the gateway
+1. A request that needs approval arrives without ``WebSpec-Approval`` → the gateway
    answers ``428 Precondition Required`` with a challenge whose ``fingerprint`` is the
    SHA-256 of a canonical summary of *exactly* the request it will accept.
 2. A human runs ``webspec-ctl approve`` on the challenge. It re-derives the fingerprint
@@ -10,7 +10,7 @@ Flow (spec: docs/spec/levels.md § Level 4: witnessed):
    the controlling TTY, and signs ``sign_message`` with an SSH key in namespace
    ``webspec-approval`` — ideally a key held by 1Password's SSH agent so every signature
    costs a biometric gesture.
-3. The client retries the identical request with ``X-WebSpec-Approval: <challenge>:<sig>``.
+3. The client retries the identical request with ``WebSpec-Approval: <challenge>:<sig>``.
    The gateway verifies the signature with OpenSSH (``ssh-keygen -Y verify``) against
    the operator's allowed-signers file. Challenges are single-use and expire.
 
@@ -153,7 +153,7 @@ class ApprovalStore:
             "error": "approval_required",
             "detail": "This action requires human approval (level 4). "
                       "Sign the challenge with `webspec-ctl approve` and retry the identical "
-                      "request with the X-WebSpec-Approval header it prints.",
+                      "request with the WebSpec-Approval header it prints.",
             "challenge": cid,
             "fingerprint": fingerprint,
             "summary": summary,

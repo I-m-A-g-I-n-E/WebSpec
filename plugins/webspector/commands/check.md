@@ -16,36 +16,26 @@ arguments:
 
 # WebSpec Area-Specific Check
 
-Run a focused WebSpec compliance check on a specific standard area.
+Run a focused WebSpec compliance check on one area. Every finding cites the rule ID it rests
+on, from the spec at https://i-m-a-g-i-n-e.github.io/WebSpec/spec/.
 
 ## Available Areas
 
-| Area | Aliases | Focus |
-|------|---------|-------|
-| `url-grammar` | `url` | URL patterns, REST hierarchy, format suffixes |
-| `http-methods` | `http` | Method semantics, permission scoping, tokenization |
-| `subdomain-architecture` | `subdomain` | Isolation, cookie/token scoping, origins |
-| `authentication-authorization` | `auth` | OAuth flows, JWT tokens, sessions |
-| `service-discovery` | `discovery` | NLP resolution, embeddings, three-way join |
+| Area | Aliases | Rules | Focus |
+|------|---------|-------|-------|
+| `url-grammar` | `url` | HG, PA, AR | Destination hosts, the route rule and route map, single-segment paths, arguments |
+| `http-methods` | `http` | TC, MB, DF, RQ, RS | Tool contracts and annotations, method binding, `WebSpec-Definer`, response headers |
+| `subdomain-architecture` | `subdomain` | HG, DP-5, DP-8 | Destinations and qualifiers, public exposure, proxy forwarding, CORS |
+| `authentication-authorization` | `auth` | LV, GD, ID, CL, AP, CO, SH | Levels 1 to 4: guard and nonce, `Idempotency-Key`, clearance, human approval, key custody |
+| `service-discovery` | `discovery` | DS, PA-2, SH-2 | `GET /`, `OPTIONS`, `HEAD`, building requests from the route map |
 
 ## Usage Examples
 
 ```bash
-# Check URL grammar
 /webspector:check url-grammar
-/webspector:check url
-
-# Check HTTP methods with verbose output
-/webspector:check http-methods --verbose
 /webspector:check http --verbose
-
-# Check auth with suggestions
 /webspector:check auth --action=suggest
-
-# Check subdomain security with auto-fix
 /webspector:check subdomain --action=revise
-
-# Check discovery with inline comments
 /webspector:check discovery --action=comment
 ```
 
@@ -53,49 +43,43 @@ Run a focused WebSpec compliance check on a specific standard area.
 
 ### URL Grammar (`url-grammar` / `url`)
 
-Validates:
-- Subdomain is valid provider identifier
-- Path follows REST collection/id pattern
-- Format suffixes are standard (.json, .md, .pdf, etc.)
-- Query params are filtering only (not hierarchy)
-- No provider redundancy in path
+- Hosts are `{destination}.{domain}` with lowercase labels; qualifiers only if allow-listed
+- Paths are the single-segment noun of the tool's route map entry, never `/{tool_name}` by
+  guesswork or `/{verb}/{noun}`
+- Ids and other arguments in the query or a JSON body; `GET` has no body; query keys once
+- MCP tool names and annotations give the intended entry under the route rule
 
 ### HTTP Methods (`http-methods` / `http`)
 
-Validates:
-- Methods match semantic intent (GET for read, POST for create, etc.)
-- Permission scopes follow `METHOD:host/path_pattern` grammar
-- Payloads use METHOD tokenization for action verbs
-- Idempotency requirements are met
-- HEAD/OPTIONS used appropriately
+- MCP annotations match what each tool does; unannotated tools take the strict defaults
+- The method is one the tool's contract admits, and the one its entry maps
+- Every `POST` carries one `WebSpec-Definer` verb from `POST`'s family; definers on `PUT`,
+  `PATCH`, `DELETE` are from their method's family or absent
+- `WebSpec-*` header names; no `X-Gimme-*`, `X-WebSpec-*`, or `X-UFO-*`
+- `WebSpec-Taint: open-world` bodies treated as untrusted data
 
 ### Subdomain Architecture (`subdomain-architecture` / `subdomain`)
 
-Validates:
-- Cookies scoped to specific subdomains (not root)
-- HttpOnly, Secure, SameSite flags present
-- JWT audience claims match subdomain
-- CORS configuration is not overly permissive
-- Local bridge uses device binding
+- Destinations on a public domain run at level 1 or higher
+- The proxy forwards only WebSpec hosts and preserves `Host`; loopback names only locally
+- `WEBSPEC_CORS_ORIGINS` unset or limited to trusted origins
+- Tokens and keys never reused across destinations
 
 ### Authentication (`authentication-authorization` / `auth`)
 
-Validates:
-- OAuth 2.0 with PKCE implementation
-- JWT signature verification
-- Token expiration checks
-- Audience and issuer validation
-- Scope verification
-- Refresh token handling
+- A fresh nonce per request; the guard message signs the trimmed path, canonical query,
+  definer, and idempotency key
+- `Idempotency-Key` on unsafe calls to non-idempotent tools from level 2, reused only to
+  retry
+- Clearances bound to the tool of the route map entry, minted within 30 s
+- `428` retries repeat the same method, path, arguments, and body with fresh credentials
+- The guard key stays in the shim, out of the model's context, logs, and the repo
 
 ### Service Discovery (`service-discovery` / `discovery`)
 
-Validates:
-- Intent extraction handles common verbs/objects
-- Verb normalization to HTTP method categories
-- Multi-vector embedding schema
-- Three-way join includes connected, keychain, available
-- Scoring formula with proper weights
+- Requests built from `GET /` or `OPTIONS /` entries, with their `requirements`
+- Closed entries (`error`) not retried as transient
+- The map refreshed after refusals on a key; `HEAD` not used to test item existence
 
 ## Output Format
 
@@ -108,39 +92,19 @@ WebSpec Check: HTTP Methods
 Patterns checked: 8
 Issues found: 2
 
-⚠ warning: POST used for read operation
-  src/api/messages.ts:45
+⚠ warning: POST without WebSpec-Definer (DF-1)
+  src/harness/send.ts:45
 
-⚠ warning: Raw verb in payload
-  src/api/tasks.ts:112
+⚠ warning: tool marked read-only but writes a file (TC-1)
+  server/tools.py:112
 
 Summary: 2 warnings, 0 critical
 ```
 
 ### With `--verbose`
 
-```
-WebSpec Check: HTTP Methods
-═══════════════════════════════════════
-
-Patterns checked: 8
-Issues found: 2
-
-⚠ warning: POST used for read operation
-  Location: src/api/messages.ts:45
-  Code: app.post('/api/messages', async (req, res) => { ... })
-
-  WebSpec Requirement:
-    HTTP methods carry semantic meaning. POST is for creating
-    new resources, while GET should be used for reading.
-
-  Reference: HTTP Methods > Method Semantics
-
-  Suggestion:
-    Change to: app.get('/api/messages', async (req, res) => { ... })
-
-...
-```
+Adds, for each issue, the code, the rule text it violates with a link to the spec, and a
+suggested fix.
 
 ### With `--action=suggest`
 
@@ -156,9 +120,5 @@ Proposes fixes with confirmation before applying.
 
 ## Skills Used
 
-Each area check uses the corresponding skill:
-- `url-grammar` area → url-grammar skill
-- `http-methods` area → http-methods skill
-- `subdomain-architecture` area → subdomain-architecture skill
-- `authentication-authorization` area → authentication-authorization skill
-- `service-discovery` area → service-discovery skill
+Each area check uses the skill of the same name: `url-grammar`, `http-methods`,
+`subdomain-architecture`, `authentication-authorization`, `service-discovery`.

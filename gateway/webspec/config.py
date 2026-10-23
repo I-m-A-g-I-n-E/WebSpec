@@ -46,6 +46,8 @@ class ServiceEntry:
     tools: dict[str, dict] = field(default_factory=dict)
     # Allowed qualifier labels left of this destination (hostgrammar.py), in canonical order.
     labels: tuple[str, ...] = ()
+    # Operator confirmations of changed route keys (PA-8): {"POST /email CREATE": "add_email"}.
+    bindings: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         # One source of truth: guard <=> level >= 1. Take the stricter of the two.
@@ -91,7 +93,7 @@ def is_public_host(host: str) -> bool:
 
 
 # Variables never expanded into an MCP server's env or headers: the guard key signs every
-# guard tag, bookend and clearance, and no backend may hold it (GD-5).
+# guard tag and clearance, and no backend may hold it (GD-5).
 NEVER_EXPANDED_PREFIX = "WEBSPEC_GUARD_KEY"  # WEBSPEC_GUARD_KEY, WEBSPEC_GUARD_KEY_FILE, ...
 
 
@@ -148,6 +150,17 @@ def _object(value: object, what: str) -> dict:
     return value
 
 
+def _bindings(raw: object, service: str) -> dict[str, str]:
+    """A destination's ``bindings`` (PA-8). A malformed value confirms nothing (fails closed), and is logged."""
+    if raw is None:
+        return {}
+    if isinstance(raw, dict) and all(isinstance(k, str) and isinstance(v, str) for k, v in raw.items()):
+        return dict(raw)
+    logger.error("Service %s: 'bindings' must be an object of strings, \"METHOD /path[ DEFINER]\": \"tool\" "
+                 "— confirming no binding", service)
+    return {}
+
+
 def parse_claude_config(path: Path | None = None) -> dict[str, ServiceEntry]:
     """Parse mcpServers from ~/.claude.json, return {normalized_name: ServiceEntry}.
 
@@ -155,8 +168,8 @@ def parse_claude_config(path: Path | None = None) -> dict[str, ServiceEntry]:
     top level or mcpServers that is not an object, an entry that is not one, an http entry
     without url, headers that are not an object of strings. ServiceRegistry.reload rejects
     such a file as a whole and keeps the last good registry. Within an entry, validation is
-    shallow: a bad level fails closed, bad labels allow no qualifiers, and a malformed env or
-    tools fails when it is used.
+    shallow: a bad level fails closed, bad labels allow no qualifiers, bad bindings confirm
+    nothing, and a malformed env or tools fails when it is used.
     """
     if path is None:
         path = Path.home() / ".claude.json"
@@ -185,6 +198,7 @@ def parse_claude_config(path: Path | None = None) -> dict[str, ServiceEntry]:
         else:
             logger.error("Service %s: 'labels' must be a list of lowercase DNS labels — allowing no qualifiers", name)
             labels = ()
+        bindings = _bindings(cfg.get("bindings"), name)
 
         if transport_type == "http":
             if "url" not in cfg:
@@ -206,6 +220,7 @@ def parse_claude_config(path: Path | None = None) -> dict[str, ServiceEntry]:
                 level=level,
                 tools=tools,
                 labels=labels,
+                bindings=bindings,
             )
         else:
             entry = ServiceEntry(
@@ -219,6 +234,7 @@ def parse_claude_config(path: Path | None = None) -> dict[str, ServiceEntry]:
                 level=level,
                 tools=tools,
                 labels=labels,
+                bindings=bindings,
             )
 
         registry[name] = entry

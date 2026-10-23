@@ -43,7 +43,7 @@ def clearance_token(key, tool, args, ts):
 def get_nonce(key):
     mac = guard_hmac(key, "GET", HOST, "/__nonce", "", b"")
     r = urllib.request.Request(BASE + "/__nonce")
-    r.add_header("X-WebSpec-Guard", mac)
+    r.add_header("WebSpec-Guard", mac)
     with urllib.request.urlopen(r) as resp:
         return json.loads(resp.read())["nonce"]
 
@@ -52,13 +52,13 @@ def guarded_get(key, path, tool_name=None, tool_args=None):
     nonce = get_nonce(key)
     mac = guard_hmac(key, "GET", HOST, path, nonce, b"")
     r = urllib.request.Request(BASE + path)
-    r.add_header("X-WebSpec-Guard", mac)
-    r.add_header("X-WebSpec-Nonce", nonce)
+    r.add_header("WebSpec-Guard", mac)
+    r.add_header("WebSpec-Nonce", nonce)
     # Add UFO clearance if provided
     if tool_name:
         ts = str(int(time.time()))
         ct = clearance_token(key, tool_name, tool_args or {}, ts)
-        r.add_header("X-UFO-Clearance", f"{ct}:{ts}")
+        r.add_header("WebSpec-Clearance", f"{ct}:{ts}")
     try:
         with urllib.request.urlopen(r) as resp:
             return resp.status, json.loads(resp.read())
@@ -74,13 +74,13 @@ if __name__ == "__main__":
 
     # 1. Open tier (list_vaults) — no clearance needed
     print("\n1. Open tier: list_vaults (no clearance)")
-    status, data = guarded_get(key, "/list_vaults")
+    status, data = guarded_get(key, "/vaults")
     assert status not in (401, 403), f"Guard failed: {status} {data}"
     print(f"   PASS: status={status}")
 
     # 2. list_vaults with clearance header (should still work)
     print("\n2. Open tier: list_vaults with clearance (still works)")
-    status, data = guarded_get(key, "/list_vaults", "list_vaults", {})
+    status, data = guarded_get(key, "/vaults", "list_vaults", {})
     assert status not in (401, 403), f"Guard failed: {status} {data}"
     print(f"   PASS: status={status}")
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     print("\n3. Challenge endpoint")
     nonce_mac = guard_hmac(key, "GET", HOST, "/__challenge", "", b"")
     r = urllib.request.Request(BASE + "/__challenge?tool=run")
-    r.add_header("X-WebSpec-Guard", nonce_mac)
+    r.add_header("WebSpec-Guard", nonce_mac)
     try:
         with urllib.request.urlopen(r) as resp:
             cdata = json.loads(resp.read())

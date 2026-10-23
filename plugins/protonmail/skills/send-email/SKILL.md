@@ -17,10 +17,10 @@ Only two addresses may send mail:
 
 Traffic flow:
 ```
-mail-proton.i-a-m.live → Cloudflare tunnel → webspec-gateway (localhost:7001) → mail-proton MCP server → Protonmail Bridge SMTP (localhost:1025)
+mail-proton.i-a-m.live → Cloudflare tunnel → Caddy (127.0.0.1:7001) → webspec-gateway (127.0.0.1:7002) → mail-proton MCP server (stdio) → Protonmail Bridge SMTP (127.0.0.1:1025)
 ```
 
-The `mail-proton` MCP service is registered in `~/.claude.json` and auto-discovered by the webspec-gateway. It exposes three tools: `send_email`, `list_senders`, and `check_bridge`.
+The `mail-proton` MCP service is registered in the gateway's config (`mcpServers.mail-proton`) and auto-discovered by the webspec-gateway. It exposes three tools: `send_email`, `list_senders`, and `check_bridge`.
 
 ## Sending Email
 
@@ -43,14 +43,19 @@ with smtplib.SMTP('127.0.0.1', 1025) as s:
 
 ### Via WebSpec Gateway (HTTP API)
 
-```bash
-curl -X POST https://mail-proton.i-a-m.live/send_email \
-  -H "Content-Type: application/json" \
-  -H "X-Gimme-Definer: SEND" \
-  -d '{"to":"recipient@example.com","subject":"Subject","body":"Body text"}'
-```
+The gateway gives each tool one entry: a method, a single-segment path, and on `POST` a definer. For `mail-proton` the map is:
 
-Parameters:
+| Tool | Request |
+|---|---|
+| `send_email` | `POST /email` with `WebSpec-Definer: SEND` and a JSON body |
+| `list_senders` | `GET /senders` |
+| `check_bridge` | `GET /check_bridge` |
+
+`GET /` on the destination lists these entries, and `OPTIONS /email` gives the entry's input schema and what the destination's level requires. A `POST /email` without `WebSpec-Definer` is refused with `400 missing_definer`.
+
+The gateway serves a destination on the public domain only at level 1 or higher, so every request there also carries a fresh `WebSpec-Nonce` and a `WebSpec-Guard` tag, plus whatever else its level requires (`Idempotency-Key`, `WebSpec-Clearance`, `WebSpec-Approval`). Don't add these by hand: send the request through the reference shim (`gateway/examples/shim.py`), which holds the guard key and adds them from `OPTIONS /`. For example, `shim.call("POST", "/email", {"to": ..., "subject": ..., "body": ...}, "SEND")`. A request without the guard is refused with `401 guard_missing`.
+
+Parameters (JSON body of `POST /email`):
 - `to` (required): Recipient email address
 - `subject` (required): Email subject
 - `body` (required): Email body (plain text or HTML)
@@ -59,9 +64,9 @@ Parameters:
 
 ### Other Gateway Endpoints
 
-- `GET https://mail-proton.i-a-m.live/` — List available tools
+- `GET https://mail-proton.i-a-m.live/` — List available tools and their entries
 - `GET https://mail-proton.i-a-m.live/check_bridge` — Verify bridge is running
-- `GET https://mail-proton.i-a-m.live/list_senders` — List allowed sender addresses
+- `GET https://mail-proton.i-a-m.live/senders` — List allowed sender addresses
 
 ## Prerequisites
 
@@ -71,10 +76,7 @@ Protonmail Bridge must be running. If not:
 /usr/lib/protonmail/bridge/bridge --grpc &
 ```
 
-Check bridge status:
-```bash
-curl -s https://mail-proton.i-a-m.live/check_bridge
-```
+Check bridge status through the gateway with `GET /check_bridge`, signed by the shim as above.
 
 ## Bridge CLI Reference
 
@@ -93,4 +95,4 @@ curl -s https://mail-proton.i-a-m.live/check_bridge
 - MCP server: `~/MCP/mail-proton/server.py`
 - Bridge binary: `/usr/lib/protonmail/bridge/bridge`
 - Credentials: `~/.config/proton/proton.txt`
-- Gateway registration: `~/.claude.json` → `mcpServers.mail-proton`
+- Gateway registration: the gateway's config (`WEBSPEC_CONFIG`, default `~/.claude.json`) → `mcpServers.mail-proton`

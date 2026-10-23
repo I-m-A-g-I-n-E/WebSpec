@@ -17,7 +17,7 @@ import walkthrough  # noqa: E402
 from tests._gateway import HAVE_SSH_KEYGEN  # noqa: E402
 
 EXPECTED_STATUSES = {
-    0: [200, 405, 200, 200],   # read · GET can't reach a delete · send · delete
+    0: [200, 405, 200, 200],   # read · a method /note doesn't map · send · delete (no definer)
     1: [200, 200, 403],        # nonce · signed read · the same request again (nonce reused)
     2: [200, 200, 422],        # send · retry replayed · same key, different request
     3: [403, 200, 200],        # send without clearance · with clearance · read needs none

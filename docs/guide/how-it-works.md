@@ -115,7 +115,7 @@ and the agent speaks plain HTTP to the gateway: `GET /` lists a destination's to
 MCP tells clients to treat annotations as untrusted unless the server is trusted. Under
 WebSpec the operator makes that decision. Adding a server trusts its annotations, and an
 override in the gateway's configuration corrects any tool the operator doesn't trust. Once the
-gateway has described or called a tool, it pins the strictest contract it has seen for it, so
+gateway has listed a tool, it pins the strictest contract it has seen for it, so
 the server cannot re-list it as read-only to unlock `GET`. Pins live in memory, so a restart
 forgets them. A stdio server runs as the gateway's user, so it can stop the gateway, and the
 reference deployments then restart it with no pins
